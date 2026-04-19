@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel Models Lab v2: OLS vs Fixed Effects vs Random Effects</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --border: #d9dde3;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --soft: #f3f4f6;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --ols: #111827;
+      --fe: #2563eb;
+      --re: #dc2626;
+      --truth: #16a34a;
+      --between: #7c3aed;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .container { max-width: 1540px; margin: 0 auto; }
+    .app-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2.05fr) minmax(320px, 0.95fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .left-column, .right-column {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+    h1, h2, h3 { margin: 0 0 10px 0; }
+    p { margin: 0 0 12px 0; line-height: 1.45; }
+    .controls { display: grid; gap: 10px; }
+    .control-box {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control-title {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    button {
+      padding: 9px 12px;
+      border: 1px solid #bfc6d1;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      margin-right: 6px;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+    }
+    button:hover { background: #f8fafc; }
+    button.scenario-btn.active {
+      border-color: #94a3b8;
+      background: #eef2f7;
+      font-weight: 700;
+    }
+    .small {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .metric {
+      border: 1px solid var(--border);
+      background: var(--soft);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .metric-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .metric-value {
+      font-size: 0.98rem;
+      font-weight: 600;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: var(--soft); }
+    .legend-note { display: grid; gap: 8px; font-size: 0.92rem; }
+    .legend-item { display: flex; align-items: center; gap: 10px; }
+    .swatch {
+      width: 22px;
+      height: 0;
+      border-top-width: 3px;
+      border-top-style: solid;
+      flex: 0 0 22px;
+    }
+    .dash { border-top-style: dashed; }
+    .dot { border-top-style: dotted; }
+    #plotObserved, #plotDecomp, #plotPredict, #plotEstimates, #plotSampling {
+      width: 100%;
+      background: white;
+    }
+    #plotObserved { height: 500px; }
+    #plotDecomp { height: 460px; }
+    #plotPredict { height: 420px; }
+    #plotEstimates { height: 320px; }
+    #plotSampling { height: 320px; }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      border: 1px solid var(--border);
+      background: white;
+      margin-left: 6px;
+    }
+    @media (max-width: 980px) {
+      .app-grid { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+    <div class="left-column">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1 1 600px;min-width:280px;">
+            <h1>Panel Models Lab v2</h1>
+            <p>
+              This version is built around the main conceptual distinction students need to see: <strong>between-group variation</strong>
+              is not the same thing as <strong>within-group variation</strong>. Pooled OLS mixes both. Fixed effects uses within-group
+              change only. Random effects uses both under an exogeneity assumption.
+            </p>
+          </div>
+        </div>
+        <div class="legend-note" style="grid-template-columns:repeat(5,minmax(120px,1fr));margin-top:8px;">
+          <div class="legend-item"><span class="swatch" style="border-top-color:var(--truth);"></span><span>True slope</span></div>
+          <div class="legend-item"><span class="swatch" style="border-top-color:var(--ols);"></span><span>Pooled OLS</span></div>
+          <div class="legend-item"><span class="swatch dash" style="border-top-color:var(--fe);"></span><span>Fixed effects</span></div>
+          <div class="legend-item"><span class="swatch dot" style="border-top-color:var(--re);"></span><span>Random effects</span></div>
+          <div class="legend-item"><span class="swatch" style="border-top-color:var(--between);"></span><span>Between slope</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Observed Panel Data: Group Paths and Group Means</h3>
+        <div id="plotObserved"></div>
+        <div class="small" id="observedNote"></div>
+      </div>
+
+      <div class="card">
+        <h3>Within vs Between Decomposition <span class="tag">centerpiece</span></h3>
+        <div id="plotDecomp"></div>
+        <div class="small">
+          The left panel uses one point per group mean, so it isolates <strong>between-group</strong> differences. The right panel centers each observation within its own group,
+          so it isolates <strong>within-group</strong> differences. Fixed effects is estimated from the right-hand logic.
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>True Structural Mean vs Predicted Mean</h3>
+        <div id="plotPredict"></div>
+        <div class="small">This panel compares predictions with the noise-free structural mean used to generate the data. Prediction quality and slope bias are related, but they are not the same thing.</div>
+      </div>
+
+      <div class="card">
+        <h3>Estimate Comparison</h3>
+        <div id="plotEstimates"></div>
+      </div>
+
+      <div class="card">
+        <h3>Repeated Simulations of the Slope</h3>
+        <div id="plotSampling"></div>
+      </div>
+    </div>
+
+    <div class="right-column">
+      <div class="card">
+        <h3>Scenarios and Actions</h3>
+        <div class="controls">
+          <div class="control-box">
+            <span class="control-title">Preset scenarios</span>
+            <div class="scenario-grid">
+              <button class="scenario-btn" data-scenario="re_works">Scenario 1: RE works fairly well</button>
+              <button class="scenario-btn" data-scenario="fe_needed">Scenario 2: FE is needed</button>
+              <button class="scenario-btn" data-scenario="clustered">Scenario 3: Clustering matters for uncertainty</button>
+            </div>
+          </div>
+          <div class="control-box">
+            <span class="control-title">Actions</span>
+            <button id="resimulateData">Resimulate data</button>
+            <button id="runMany">Run 200 simulations</button>
+          </div>
+          <div class="control-box">
+            <span class="control-title">Scenario description</span>
+            <div id="scenarioDescription" class="small"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Summary</h3>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Scenario</div><div id="scenarioName" class="metric-value"></div></div>
+          <div class="metric"><div class="metric-label">Data structure</div><div id="dataShapeVal" class="metric-value mono"></div></div>
+          <div class="metric"><div class="metric-label">True slope</div><div id="trueSlopeVal" class="metric-value mono"></div></div>
+          <div class="metric"><div class="metric-label">Corr(group effect, x)</div><div id="corrVal" class="metric-value mono"></div></div>
+          <div class="metric"><div class="metric-label">Between slope</div><div id="betweenSlopeVal" class="metric-value mono"></div></div>
+          <div class="metric"><div class="metric-label">Within slope</div><div id="withinSlopeVal" class="metric-value mono"></div></div>
+          <div class="metric"><div class="metric-label">Pooled OLS slope</div><div id="olsSlopeVal" class="metric-value mono"></div></div>
+          <div class="metric"><div class="metric-label">Random effects slope</div><div id="reSlopeVal" class="metric-value mono"></div></div>
+          <div class="metric"><div class="metric-label">Fixed effects slope</div><div id="feSlopeVal" class="metric-value mono"></div></div>
+          <div class="metric"><div class="metric-label">Interpretive cue</div><div id="cueVal" class="metric-value"></div></div>
+          <div class="metric"><div class="metric-label">Prediction RMSE (OLS / FE / RE)</div><div id="rmseVal" class="metric-value mono"></div></div>
+          <div class="metric"><div class="metric-label">Current takeaway</div><div id="takeawayVal" class="metric-value"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>What each model is using</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Uses between?</th>
+                <th>Uses within?</th>
+                <th>Key idea</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Pooled OLS</strong></td>
+                <td>Yes</td>
+                <td>Yes</td>
+                <td>Mixes both sources of variation.</td>
+              </tr>
+              <tr>
+                <td><strong>Fixed effects</strong></td>
+                <td>No</td>
+                <td>Yes</td>
+                <td>Removes time-invariant group differences.</td>
+              </tr>
+              <tr>
+                <td><strong>Random effects</strong></td>
+                <td>Yes</td>
+                <td>Yes</td>
+                <td>Weighted blend if group effects are uncorrelated with x.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Coefficient table</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Estimator</th>
+                <th>Slope</th>
+                <th>Bias vs truth</th>
+                <th>RMSE vs structural mean</th>
+              </tr>
+            </thead>
+            <tbody id="coefTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const scenarios = {
+  re_works: {
+    name: 'Scenario 1: RE works fairly well',
+    description: 'Group effects matter, but they are only weakly related to x. Between and within slopes are fairly similar, so FE and RE should land in roughly the same place.',
+    groups: 10,
+    periods: 7,
+    beta: 1.0,
+    alphaSd: 2.3,
+    xBetweenLoading: 0.15,
+    xWithinSd: 1.1,
+    timeSlope: 0.2,
+    timeShockSd: 0.35,
+    epsSd: 1.0,
+    clusterShockSd: 0.3
+  },
+  fe_needed: {
+    name: 'Scenario 2: FE is needed',
+    description: 'The group effect is strongly correlated with x. The between relationship is distorted by stable group differences, so pooled OLS and RE drift away from the true within-group slope. FE should be closer.',
+    groups: 10,
+    periods: 7,
+    beta: 1.0,
+    alphaSd: 2.8,
+    xBetweenLoading: 1.15,
+    xWithinSd: 0.9,
+    timeSlope: 0.2,
+    timeShockSd: 0.35,
+    epsSd: 1.0,
+    clusterShockSd: 0.35
+  },
+  clustered: {
+    name: 'Scenario 3: Clustering matters for uncertainty',
+    description: 'Within-group and between-group slopes are not wildly different, but repeated observations inside a group share common shocks. The coefficient story is fairly stable, while the group clustering story matters for dependence.',
+    groups: 10,
+    periods: 7,
+    beta: 1.0,
+    alphaSd: 2.1,
+    xBetweenLoading: 0.35,
+    xWithinSd: 1.0,
+    timeSlope: 0.2,
+    timeShockSd: 0.4,
+    epsSd: 0.7,
+    clusterShockSd: 1.25
+  }
+};
+
+const plotObserved = document.getElementById('plotObserved');
+const plotDecomp = document.getElementById('plotDecomp');
+const plotPredict = document.getElementById('plotPredict');
+const plotEstimates = document.getElementById('plotEstimates');
+const plotSampling = document.getElementById('plotSampling');
+const scenarioButtons = document.querySelectorAll('.scenario-btn');
+const resimulateDataBtn = document.getElementById('resimulateData');
+const runManyBtn = document.getElementById('runMany');
+
+const scenarioName = document.getElementById('scenarioName');
+const scenarioDescription = document.getElementById('scenarioDescription');
+const dataShapeVal = document.getElementById('dataShapeVal');
+const trueSlopeVal = document.getElementById('trueSlopeVal');
+const corrVal = document.getElementById('corrVal');
+const betweenSlopeVal = document.getElementById('betweenSlopeVal');
+const withinSlopeVal = document.getElementById('withinSlopeVal');
+const olsSlopeVal = document.getElementById('olsSlopeVal');
+const reSlopeVal = document.getElementById('reSlopeVal');
+const feSlopeVal = document.getElementById('feSlopeVal');
+const cueVal = document.getElementById('cueVal');
+const rmseVal = document.getElementById('rmseVal');
+const takeawayVal = document.getElementById('takeawayVal');
+const coefTableBody = document.getElementById('coefTableBody');
+const observedNote = document.getElementById('observedNote');
+
+const COLORS = {
+  ols: '#111827',
+  fe: '#2563eb',
+  re: '#dc2626',
+  truth: '#16a34a',
+  between: '#7c3aed',
+  points: '#9ca3af'
+};
+
+let state = {
+  scenarioKey: 'fe_needed',
+  rows: [],
+  estimates: null,
+  sampling: { ols: [], fe: [], re: [] }
+};
+
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function mean(arr) {
+  return arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : NaN;
+}
+
+function variance(arr) {
+  if (arr.length < 2) return NaN;
+  const m = mean(arr);
+  return arr.reduce((s, x) => s + (x - m) ** 2, 0) / (arr.length - 1);
+}
+
+function covariance(a, b) {
+  if (a.length !== b.length || a.length < 2) return NaN;
+  const ma = mean(a), mb = mean(b);
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += (a[i] - ma) * (b[i] - mb);
+  return s / (a.length - 1);
+}
+
+function sd(arr) {
+  const v = variance(arr);
+  return Number.isFinite(v) ? Math.sqrt(v) : NaN;
+}
+
+function correlation(a, b) {
+  const c = covariance(a, b);
+  const sa = sd(a), sb = sd(b);
+  return (sa > 0 && sb > 0) ? c / (sa * sb) : 0;
+}
+
+function fitSimpleRegression(x, y) {
+  const vx = variance(x);
+  const b1 = vx > 0 ? covariance(x, y) / vx : 0;
+  const b0 = mean(y) - b1 * mean(x);
+  return { intercept: b0, slope: b1 };
+}
+
+function groupBy(rows, key) {
+  const map = new Map();
+  rows.forEach(r => {
+    if (!map.has(r[key])) map.set(r[key], []);
+    map.get(r[key]).push(r);
+  });
+  return map;
+}
+
+function simulateRows() {
+  const s = scenarios[state.scenarioKey];
+  const rows = [];
+  for (let g = 0; g < s.groups; g++) {
+    const alpha = randn() * s.alphaSd;
+    const groupBaseX = s.xBetweenLoading * alpha + randn() * 0.8;
+    for (let t = 0; t < s.periods; t++) {
+      const timeCentered = t - (s.periods - 1) / 2;
+      const timeShock = timeCentered * s.timeSlope + randn() * s.timeShockSd;
+      const clusterShock = randn() * s.clusterShockSd;
+      const x = groupBaseX + 0.22 * timeCentered + randn() * s.xWithinSd;
+      const structuralMean = s.beta * x + alpha + timeShock;
+      const y = structuralMean + clusterShock + randn() * s.epsSd;
+      rows.push({ group: g, time: t, alpha, x, y, structuralMean });
+    }
+  }
+  state.rows = rows;
+}
+
+function estimateModels(rows) {
+  const x = rows.map(r => r.x);
+  const y = rows.map(r => r.y);
+  const ols = fitSimpleRegression(x, y);
+
+  const groups = groupBy(rows, 'group');
+  const groupMeans = [];
+  const xWithin = [];
+  const yWithin = [];
+
+  groups.forEach((grow, gid) => {
+    const mx = mean(grow.map(r => r.x));
+    const my = mean(grow.map(r => r.y));
+    groupMeans.push({ group: gid, xBar: mx, yBar: my });
+    grow.forEach(r => {
+      xWithin.push(r.x - mx);
+      yWithin.push(r.y - my);
+    });
+  });
+
+  const between = fitSimpleRegression(groupMeans.map(g => g.xBar), groupMeans.map(g => g.yBar));
+  const fe = fitSimpleRegression(xWithin, yWithin);
+
+  const feResiduals = [];
+  rows.forEach(r => {
+    const gm = groupMeans.find(g => g.group === r.group);
+    const yhatWithin = fe.slope * (r.x - gm.xBar);
+    feResiduals.push((r.y - gm.yBar) - yhatWithin);
+  });
+  const n = rows.length;
+  const G = groups.size;
+  const T = rows.length / G;
+  const sigmaE2 = Math.max(1e-6, feResiduals.reduce((s, e) => s + e * e, 0) / Math.max(1, n - G - 1));
+
+  const pooledResiduals = rows.map(r => r.y - (ols.intercept + ols.slope * r.x));
+  const pooledResByGroup = new Map();
+  rows.forEach((r, i) => {
+    if (!pooledResByGroup.has(r.group)) pooledResByGroup.set(r.group, []);
+    pooledResByGroup.get(r.group).push(pooledResiduals[i]);
+  });
+  const meanResiduals = [...pooledResByGroup.values()].map(arr => mean(arr));
+  const sigmaU2 = Math.max(1e-6, variance(meanResiduals) - sigmaE2 / T);
+  const theta = 1 - Math.sqrt(sigmaE2 / (sigmaE2 + T * sigmaU2));
+
+  const xRE = [];
+  const yRE = [];
+  groups.forEach((grow, gid) => {
+    const mx = mean(grow.map(r => r.x));
+    const my = mean(grow.map(r => r.y));
+    grow.forEach(r => {
+      xRE.push(r.x - theta * mx);
+      yRE.push(r.y - theta * my);
+    });
+  });
+  const re = fitSimpleRegression(xRE, yRE);
+
+  const groupInterceptsFE = new Map();
+  groups.forEach((grow, gid) => {
+    const mx = mean(grow.map(r => r.x));
+    const my = mean(grow.map(r => r.y));
+    groupInterceptsFE.set(gid, my - fe.slope * mx);
+  });
+
+  rows.forEach(r => {
+    r.yhatOLS = ols.intercept + ols.slope * r.x;
+    r.yhatFE = groupInterceptsFE.get(r.group) + fe.slope * r.x;
+    r.yhatRE = re.intercept + re.slope * r.x;
+  });
+
+  const structural = rows.map(r => r.structuralMean);
+  const rmse = {
+    ols: Math.sqrt(mean(rows.map(r => (r.yhatOLS - r.structuralMean) ** 2))),
+    fe: Math.sqrt(mean(rows.map(r => (r.yhatFE - r.structuralMean) ** 2))),
+    re: Math.sqrt(mean(rows.map(r => (r.yhatRE - r.structuralMean) ** 2)))
+  };
+
+  return {
+    ols,
+    fe,
+    re,
+    between,
+    rmse,
+    theta,
+    sigmaE2,
+    sigmaU2,
+    corrAlphaX: correlation(rows.map(r => r.alpha), rows.map(r => r.x)),
+    groupMeans
+  };
+}
+
+function linePoints(slope, intercept, xMin, xMax) {
+  return { x: [xMin, xMax], y: [intercept + slope * xMin, intercept + slope * xMax] };
+}
+
+function drawObservedPlot() {
+  const rows = state.rows;
+  const est = state.estimates;
+  const groups = groupBy(rows, 'group');
+  const traces = [];
+  groups.forEach((grow, idx) => {
+    const ordered = [...grow].sort((a,b) => a.time - b.time);
+    traces.push({
+      x: ordered.map(r => r.x),
+      y: ordered.map(r => r.y),
+      mode: 'lines+markers',
+      type: 'scatter',
+      showlegend: false,
+      hovertemplate: 'Group ' + ordered[0].group + '<br>x=%{x:.2f}<br>y=%{y:.2f}<extra></extra>',
+      line: { color: 'rgba(156,163,175,0.55)', width: 1.5 },
+      marker: { size: 7, color: 'rgba(107,114,128,0.75)' }
+    });
+  });
+
+  traces.push({
+    x: est.groupMeans.map(g => g.xBar),
+    y: est.groupMeans.map(g => g.yBar),
+    mode: 'markers+text',
+    type: 'scatter',
+    name: 'Group means',
+    text: est.groupMeans.map(g => 'G' + g.group),
+    textposition: 'top center',
+    marker: { size: 12, color: '#7c3aed', line: { color: '#ffffff', width: 1.5 } },
+    hovertemplate: 'Group mean<br>x̄=%{x:.2f}<br>ȳ=%{y:.2f}<extra></extra>'
+  });
+
+  const xVals = rows.map(r => r.x);
+  const xMin = Math.min(...xVals) - 0.5;
+  const xMax = Math.max(...xVals) + 0.5;
+  const truthLine = linePoints(scenarios[state.scenarioKey].beta, mean(rows.map(r => r.structuralMean)) - scenarios[state.scenarioKey].beta * mean(rows.map(r => r.x)), xMin, xMax);
+  const olsLine = linePoints(est.ols.slope, est.ols.intercept, xMin, xMax);
+  const reLine = linePoints(est.re.slope, est.re.intercept, xMin, xMax);
+  const feCenterIntercept = mean(rows.map(r => r.y)) - est.fe.slope * mean(rows.map(r => r.x));
+  const feLine = linePoints(est.fe.slope, feCenterIntercept, xMin, xMax);
+
+  traces.push({ x: truthLine.x, y: truthLine.y, mode: 'lines', type: 'scatter', name: 'True slope', line: { color: COLORS.truth, width: 3 } });
+  traces.push({ x: olsLine.x, y: olsLine.y, mode: 'lines', type: 'scatter', name: 'Pooled OLS', line: { color: COLORS.ols, width: 3 } });
+  traces.push({ x: feLine.x, y: feLine.y, mode: 'lines', type: 'scatter', name: 'Fixed effects', line: { color: COLORS.fe, width: 3, dash: 'dash' } });
+  traces.push({ x: reLine.x, y: reLine.y, mode: 'lines', type: 'scatter', name: 'Random effects', line: { color: COLORS.re, width: 3, dash: 'dot' } });
+
+  Plotly.react(plotObserved, traces, {
+    margin: { t: 10, r: 20, b: 50, l: 55 },
+    xaxis: { title: 'x', zeroline: false },
+    yaxis: { title: 'y', zeroline: false },
+    legend: { orientation: 'h', x: 0, y: 1.13 },
+    hovermode: 'closest'
+  }, { responsive: true });
+
+  observedNote.textContent = 'Thin gray paths trace each group over time. Purple markers are group means. The black line mixes within and between variation. The dashed blue line reflects the within-group slope. The dotted red line shows the random-effects compromise.';
+}
+
+function drawDecompositionPlot() {
+  const rows = state.rows;
+  const est = state.estimates;
+  const gmMap = new Map(est.groupMeans.map(g => [g.group, g]));
+  const withinRows = rows.map(r => ({
+    x: r.x - gmMap.get(r.group).xBar,
+    y: r.y - gmMap.get(r.group).yBar,
+    group: r.group
+  }));
+
+  const betweenTrace = {
+    x: est.groupMeans.map(g => g.xBar),
+    y: est.groupMeans.map(g => g.yBar),
+    mode: 'markers+text',
+    type: 'scatter',
+    xaxis: 'x1',
+    yaxis: 'y1',
+    text: est.groupMeans.map(g => 'G' + g.group),
+    textposition: 'top center',
+    marker: { size: 12, color: COLORS.between },
+    name: 'Group means',
+    hovertemplate: 'Group mean<br>x̄=%{x:.2f}<br>ȳ=%{y:.2f}<extra></extra>'
+  };
+
+  const withinTrace = {
+    x: withinRows.map(r => r.x),
+    y: withinRows.map(r => r.y),
+    mode: 'markers',
+    type: 'scatter',
+    xaxis: 'x2',
+    yaxis: 'y2',
+    marker: { size: 7, color: 'rgba(37,99,235,0.75)' },
+    name: 'Centered data',
+    hovertemplate: 'Within-group centered<br>x-%{x:.2f}<br>y-%{y:.2f}<extra></extra>'
+  };
+
+  const bx = est.groupMeans.map(g => g.xBar);
+  const by = est.groupMeans.map(g => g.yBar);
+  const wx = withinRows.map(r => r.x);
+  const wy = withinRows.map(r => r.y);
+  const bMin = Math.min(...bx), bMax = Math.max(...bx);
+  const wMin = Math.min(...wx), wMax = Math.max(...wx);
+  const betweenLine = linePoints(est.between.slope, est.between.intercept, bMin - 0.4, bMax + 0.4);
+  const withinLine = linePoints(est.fe.slope, 0, wMin - 0.4, wMax + 0.4);
+
+  const traces = [
+    betweenTrace,
+    withinTrace,
+    { x: betweenLine.x, y: betweenLine.y, mode: 'lines', type: 'scatter', xaxis: 'x1', yaxis: 'y1', name: 'Between slope', line: { color: COLORS.between, width: 3 } },
+    { x: withinLine.x, y: withinLine.y, mode: 'lines', type: 'scatter', xaxis: 'x2', yaxis: 'y2', name: 'Within slope / FE', line: { color: COLORS.fe, width: 3, dash: 'dash' } }
+  ];
+
+  Plotly.react(plotDecomp, traces, {
+    margin: { t: 45, r: 20, b: 50, l: 55 },
+    grid: { rows: 1, columns: 2, pattern: 'independent' },
+    xaxis: { title: 'Group mean x̄' },
+    yaxis: { title: 'Group mean ȳ' },
+    xaxis2: { title: 'x - x̄ᵢ', zeroline: true, zerolinecolor: '#cbd5e1' },
+    yaxis2: { title: 'y - ȳᵢ', zeroline: true, zerolinecolor: '#cbd5e1' },
+    annotations: [
+      { text: 'Between-group variation', x: 0.22, y: 1.12, xref: 'paper', yref: 'paper', showarrow: false, font: { size: 14 } },
+      { text: 'Within-group variation', x: 0.79, y: 1.12, xref: 'paper', yref: 'paper', showarrow: false, font: { size: 14 } }
+    ],
+    legend: { orientation: 'h', x: 0, y: 1.22 }
+  }, { responsive: true });
+}
+
+function drawPredictionPlot() {
+  const rows = state.rows;
+  const traces = [
+    {
+      x: rows.map(r => r.structuralMean),
+      y: rows.map(r => r.yhatOLS),
+      mode: 'markers', type: 'scatter', name: 'Pooled OLS',
+      marker: { color: 'rgba(17,24,39,0.65)', size: 7 },
+      hovertemplate: 'True mean=%{x:.2f}<br>OLS predicted=%{y:.2f}<extra></extra>'
+    },
+    {
+      x: rows.map(r => r.structuralMean),
+      y: rows.map(r => r.yhatFE),
+      mode: 'markers', type: 'scatter', name: 'Fixed effects',
+      marker: { color: 'rgba(37,99,235,0.6)', size: 7 },
+      hovertemplate: 'True mean=%{x:.2f}<br>FE predicted=%{y:.2f}<extra></extra>'
+    },
+    {
+      x: rows.map(r => r.structuralMean),
+      y: rows.map(r => r.yhatRE),
+      mode: 'markers', type: 'scatter', name: 'Random effects',
+      marker: { color: 'rgba(220,38,38,0.55)', size: 7 },
+      hovertemplate: 'True mean=%{x:.2f}<br>RE predicted=%{y:.2f}<extra></extra>'
+    }
+  ];
+
+  const allVals = rows.flatMap(r => [r.structuralMean, r.yhatOLS, r.yhatFE, r.yhatRE]);
+  const minVal = Math.min(...allVals) - 0.5;
+  const maxVal = Math.max(...allVals) + 0.5;
+  traces.unshift({
+    x: [minVal, maxVal],
+    y: [minVal, maxVal],
+    mode: 'lines', type: 'scatter', name: '45° reference',
+    line: { color: COLORS.truth, width: 3 }
+  });
+
+  Plotly.react(plotPredict, traces, {
+    margin: { t: 10, r: 20, b: 55, l: 60 },
+    xaxis: { title: 'True structural mean', range: [minVal, maxVal] },
+    yaxis: { title: 'Predicted mean', range: [minVal, maxVal] },
+    legend: { orientation: 'h', x: 0, y: 1.13 }
+  }, { responsive: true });
+}
+
+function drawEstimatePlot() {
+  const s = scenarios[state.scenarioKey];
+  const est = state.estimates;
+  const labels = ['True', 'Between', 'Pooled OLS', 'Fixed effects', 'Random effects'];
+  const values = [s.beta, est.between.slope, est.ols.slope, est.fe.slope, est.re.slope];
+  const colors = [COLORS.truth, COLORS.between, COLORS.ols, COLORS.fe, COLORS.re];
+  Plotly.react(plotEstimates, [{
+    x: values,
+    y: labels,
+    mode: 'markers',
+    type: 'scatter',
+    marker: { size: 14, color: colors },
+    hovertemplate: '%{y}: %{x:.3f}<extra></extra>'
+  }], {
+    margin: { t: 10, r: 20, b: 50, l: 120 },
+    xaxis: { title: 'Slope value', zeroline: true, zerolinecolor: '#cbd5e1' },
+    yaxis: { automargin: true },
+    shapes: [{
+      type: 'line', x0: s.beta, x1: s.beta, y0: -0.5, y1: labels.length - 0.5,
+      line: { color: COLORS.truth, width: 2, dash: 'dot' }
+    }],
+    showlegend: false
+  }, { responsive: true });
+}
+
+function drawSamplingPlot() {
+  if (!state.sampling.ols.length) {
+    Plotly.react(plotSampling, [], { margin: { t: 10 } }, { responsive: true });
+    return;
+  }
+  const s = scenarios[state.scenarioKey];
+  const traces = [
+    { x: state.sampling.ols, type: 'histogram', name: 'Pooled OLS', opacity: 0.55, marker: { color: COLORS.ols }, histnorm: 'probability density' },
+    { x: state.sampling.fe, type: 'histogram', name: 'Fixed effects', opacity: 0.55, marker: { color: COLORS.fe }, histnorm: 'probability density' },
+    { x: state.sampling.re, type: 'histogram', name: 'Random effects', opacity: 0.55, marker: { color: COLORS.re }, histnorm: 'probability density' }
+  ];
+
+  Plotly.react(plotSampling, traces, {
+    barmode: 'overlay',
+    margin: { t: 10, r: 20, b: 50, l: 50 },
+    xaxis: { title: 'Estimated slope' },
+    yaxis: { title: 'Density' },
+    legend: { orientation: 'h', x: 0, y: 1.13 },
+    shapes: [{ type: 'line', x0: s.beta, x1: s.beta, y0: 0, y1: 1, yref: 'paper', line: { color: COLORS.truth, width: 3 } }]
+  }, { responsive: true });
+}
+
+function updateSummary() {
+  const s = scenarios[state.scenarioKey];
+  const est = state.estimates;
+  scenarioName.textContent = s.name;
+  scenarioDescription.textContent = s.description;
+  dataShapeVal.textContent = `${s.groups} groups × ${s.periods} periods`;
+  trueSlopeVal.textContent = s.beta.toFixed(3);
+  corrVal.textContent = est.corrAlphaX.toFixed(3);
+  betweenSlopeVal.textContent = est.between.slope.toFixed(3);
+  withinSlopeVal.textContent = est.fe.slope.toFixed(3);
+  olsSlopeVal.textContent = est.ols.slope.toFixed(3);
+  reSlopeVal.textContent = est.re.slope.toFixed(3);
+  feSlopeVal.textContent = est.fe.slope.toFixed(3);
+  rmseVal.textContent = `${est.rmse.ols.toFixed(3)} / ${est.rmse.fe.toFixed(3)} / ${est.rmse.re.toFixed(3)}`;
+
+  let cue = '';
+  let takeaway = '';
+  if (state.scenarioKey === 're_works') {
+    cue = 'Between and within slopes are fairly close.';
+    takeaway = 'When stable group differences are only weakly related to x, FE and RE often tell similar stories.';
+  } else if (state.scenarioKey === 'fe_needed') {
+    cue = 'Between and within slopes pull apart.';
+    takeaway = 'Stable group differences are contaminating the between relationship, so FE is the cleaner estimate of the within-group slope.';
+  } else {
+    cue = 'The coefficient story is steadier than the dependence story.';
+    takeaway = 'This case is useful for discussing why repeated observations inside groups are not independent, even when slopes look broadly similar.';
+  }
+  cueVal.textContent = cue;
+  takeawayVal.textContent = takeaway;
+
+  const rows = [
+    ['True slope', s.beta, 0, '—'],
+    ['Between', est.between.slope, est.between.slope - s.beta, Math.sqrt(mean(state.rows.map(r => ((mean(state.rows.filter(z => z.group === r.group).map(z => z.y))) - r.structuralMean) ** 2))).toFixed(3)],
+    ['Pooled OLS', est.ols.slope, est.ols.slope - s.beta, est.rmse.ols.toFixed(3)],
+    ['Fixed effects', est.fe.slope, est.fe.slope - s.beta, est.rmse.fe.toFixed(3)],
+    ['Random effects', est.re.slope, est.re.slope - s.beta, est.rmse.re.toFixed(3)]
+  ];
+  coefTableBody.innerHTML = rows.map(r => `<tr><td><strong>${r[0]}</strong></td><td class="mono">${Number.isFinite(r[1]) ? r[1].toFixed ? r[1].toFixed(3) : r[1] : r[1]}</td><td class="mono">${r[0] === 'True slope' ? '0.000' : r[2].toFixed(3)}</td><td class="mono">${r[3]}</td></tr>`).join('');
+}
+
+function redraw() {
+  drawObservedPlot();
+  drawDecompositionPlot();
+  drawPredictionPlot();
+  drawEstimatePlot();
+  drawSamplingPlot();
+  updateSummary();
+  scenarioButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.scenario === state.scenarioKey));
+}
+
+function regenerate() {
+  simulateRows();
+  state.estimates = estimateModels(state.rows);
+  redraw();
+}
+
+function runManySims() {
+  state.sampling = { ols: [], fe: [], re: [] };
+  const originalRows = state.rows;
+  const originalEst = state.estimates;
+  for (let i = 0; i < 200; i++) {
+    simulateRows();
+    const est = estimateModels(state.rows);
+    state.sampling.ols.push(est.ols.slope);
+    state.sampling.fe.push(est.fe.slope);
+    state.sampling.re.push(est.re.slope);
+  }
+  state.rows = originalRows;
+  state.estimates = originalEst;
+  redraw();
+}
+
+scenarioButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.scenarioKey = btn.dataset.scenario;
+    state.sampling = { ols: [], fe: [], re: [] };
+    regenerate();
+  });
+});
+
+resimulateDataBtn.addEventListener('click', regenerate);
+runManyBtn.addEventListener('click', runManySims);
+
+regenerate();
+</script>
+</body>
+</html>
