@@ -1,20 +1,137 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stats Sims</title>
+
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --border: #d9dde3;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #2563eb;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      transition: 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+    }
+
+    .card-title {
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .card-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+  </style>
 </head>
 <body>
 
-<h1>Stats Sims</h1>
-<p>Interactive statistics tools</p>
+<div class="container">
+  <h1>Stats Sims</h1>
+  <div class="subtitle">
+    Interactive simulations for learning quantitative analysis
+  </div>
 
-<ul>
-  <li><a href="apps/effectsize.html/">Correlation Explorer</a></li>
-  <li><a href="apps/ci/">Confidence Intervals</a></li>
-  <li><a href="apps/sampling/">Sampling Distribution</a></li>
-  <li><a href="apps/dag/">DAG Explorer</a></li>
-  <li><a href="apps/permutation/">Permutation Test</a></li>
-</ul>
+  <div class="grid">
+
+    <a class="card" href="sims/corr2.html">
+      <div class="card-title">Correlation Explorer</div>
+      <div class="card-desc">Understand direction, strength, noise, and outliers</div>
+    </a>
+
+    <a class="card" href="sims/ci6.html">
+      <div class="card-title">Confidence Interval Explorer</div>
+      <div class="card-desc">Visualize interval coverage and width</div>
+    </a>
+
+    <a class="card" href="sims/sampdist6.html">
+      <div class="card-title">Sampling Distribution</div>
+      <div class="card-desc">See how sample means form a distribution</div>
+    </a>
+
+    <a class="card" href="sims/cisig4.html">
+      <div class="card-title">Significance via CI</div>
+      <div class="card-desc">Link confidence intervals to hypothesis testing</div>
+    </a>
+
+    <a class="card" href="sims/dag9.html">
+      <div class="card-title">DAG Explorer</div>
+      <div class="card-desc">Understand confounding, mediation, and bias</div>
+    </a>
+
+    <a class="card" href="sims/UnlikelyOutcome9.html">
+      <div class="card-title">Unlikely Outcomes</div>
+      <div class="card-desc">Explore rare events and probability intuition</div>
+    </a>
+
+    <a class="card" href="sims/effect7.html">
+      <div class="card-title">Effect Size Explorer</div>
+      <div class="card-desc">Interpret magnitude beyond significance</div>
+    </a>
+
+    <a class="card" href="sims/ols4.html">
+      <div class="card-title">Regression Explorer</div>
+      <div class="card-desc">Understand slope, fit, and prediction</div>
+    </a>
+
+  </div>
+
+  <footer>
+    Built for applied statistics learning • Stats Sims
+  </footer>
+</div>
 
 </body>
 </html>
