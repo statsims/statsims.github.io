@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statistics Lab - Correlation Explorer</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --border: #d9dde3;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --soft: #f3f4f6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+      align-items: end;
+    }
+
+    .control-box {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      min-height: 76px;
+    }
+
+    .control-title {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 10px;
+      margin-bottom: 6px;
+      font-size: 0.95rem;
+    }
+
+    button {
+      padding: 9px 12px;
+      border: 1px solid #bfc6d1;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    button:hover {
+      background: #f8fafc;
+    }
+
+    input[type="range"] { width: 100%; }
+
+    #plot {
+      width: 100%;
+      height: 650px;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--border);
+      background: var(--soft);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .metric-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .small {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    @media (max-width: 900px) {
+      .dashboard { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>Correlation Explorer</h1>
+      <p>
+        Explore how correlation changes with direction, noise, outliers, and nonlinearity.
+        This lab focuses on <strong>linear association</strong>, so it is especially useful for seeing why a scatterplot matters in addition to the value of <span class="mono">r</span>.
+      </p>
+
+      <div class="controls">
+        <div class="control-box">
+          <span class="control-title">Data</span>
+          <button id="newData">New Data</button>
+          <button id="resetOptions">Reset Options</button>
+        </div>
+
+        <div class="control-box">
+          <span class="control-title">Direction</span>
+          <label><input type="radio" name="direction" value="positive" checked /> Positive</label>
+          <label><input type="radio" name="direction" value="negative" /> Negative</label>
+        </div>
+
+        <div class="control-box">
+          <span class="control-title">Strength / noise</span>
+          <label for="noiseSlider">Noise</label>
+          <input type="range" id="noiseSlider" min="0.4" max="20" step="0.1" value="2.5" />
+          <div class="small">Current noise: <span id="noiseValue">2.5</span></div>
+        </div>
+
+        <div class="control-box">
+          <span class="control-title">Display</span>
+          <label><input type="checkbox" id="showFitLine" checked /> Show fitted model</label>
+          <label><input type="checkbox" id="showLineOfEquity" /> Show y = x line</label>
+          <label><input type="checkbox" id="addOutlier" /> Add outlier</label>
+          <label><input type="checkbox" id="curvePattern" /> Use curved pattern</label>
+        </div>
+      </div>
+
+      <div id="plot"></div>
+    </div>
+
+    <div class="dashboard">
+      <div class="panel">
+        <h2>Summary</h2>
+        <div class="metric-grid">
+          <div class="metric">
+            <div class="metric-label">Pearson correlation</div>
+            <div class="metric-value mono" id="corrValue">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Coefficient of determination</div>
+            <div class="metric-value mono" id="r2Value">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Direction selected</div>
+            <div class="metric-value" id="directionValue">Positive</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Pattern type</div>
+            <div class="metric-value" id="patternValue">Linear</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Interpretation</div>
+            <div class="metric-value" id="interpretationValue">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Caution</div>
+            <div class="metric-value" id="cautionValue">--</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>What this lab is showing</h2>
+        <div class="small">
+          <p><strong>Noise:</strong> More vertical scatter usually weakens the correlation.</p>
+          <p><strong>Outlier:</strong> One unusual point can change <span class="mono">r</span> a lot.</p>
+          <p><strong>Curved pattern:</strong> A strong nonlinear pattern can still have a modest Pearson correlation because Pearson's <span class="mono">r</span> measures linear association.</p>
+          <p><strong>Fitted model:</strong> The regression line can help visually summarize the linear trend, but the plot still matters more than the single number.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const plotDiv = document.getElementById("plot");
+    const newDataButton = document.getElementById("newData");
+    const resetOptionsButton = document.getElementById("resetOptions");
+    const noiseSlider = document.getElementById("noiseSlider");
+    const noiseValue = document.getElementById("noiseValue");
+    const showFitLineCheckbox = document.getElementById("showFitLine");
+    const showLineOfEquityCheckbox = document.getElementById("showLineOfEquity");
+    const addOutlierCheckbox = document.getElementById("addOutlier");
+    const curvePatternCheckbox = document.getElementById("curvePattern");
+    const directionRadios = document.querySelectorAll('input[name="direction"]');
+
+    const corrValue = document.getElementById("corrValue");
+    const r2Value = document.getElementById("r2Value");
+    const directionValue = document.getElementById("directionValue");
+    const patternValue = document.getElementById("patternValue");
+    const interpretationValue = document.getElementById("interpretationValue");
+    const cautionValue = document.getElementById("cautionValue");
+
+    const COLORS = {
+      data: "#dc2626",
+      fit: "#111827",
+      equity: "#6b7280",
+      outlier: "#2563eb"
+    };
+
+    const POINT_COUNT = 24;
+    let basePoints = [];
+    let points = [];
+
+    function getDirection() {
+      return [...directionRadios].find(r => r.checked).value;
+    }
+
+    function randomBetween(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function generateBaseData() {
+      const direction = getDirection();
+      const noise = Number(noiseSlider.value);
+      const curved = curvePatternCheckbox.checked;
+      const data = [];
+
+      const minX = 1;
+      const maxX = 24;
+      const step = (maxX - minX) / (POINT_COUNT - 1);
+
+      const linearSlope = direction === "positive" ? randomBetween(0.6, 1.4) : randomBetween(-1.4, -0.6);
+      const linearIntercept = direction === "positive" ? randomBetween(3, 8) : randomBetween(26, 32);
+
+      for (let i = 0; i < POINT_COUNT; i++) {
+        const x = minX + i * step;
+        let y;
+
+        if (curved) {
+          const centeredX = x - 12.5;
+          const base = 0.08 * centeredX * centeredX;
+          y = direction === "positive"
+            ? 4 + base + 0.3 * x
+            : 32 - base - 0.3 * x;
+        } else {
+          y = linearIntercept + linearSlope * x;
+        }
+
+        y += (Math.random() - 0.5) * 2 * noise;
+        data.push({ x, y: Math.max(0.25, y), isOutlier: false, isBase: true });
+      }
+
+      return data;
+    }
+
+    function buildDisplayedData() {
+      const data = basePoints.map(p => ({ ...p }));
+
+      if (addOutlierCheckbox.checked) {
+        const direction = getDirection();
+        const outlierX = randomBetween(20, 26);
+        const outlierY = direction === "positive" ? randomBetween(0.5, 6) : randomBetween(34, 42);
+        data.push({ x: outlierX, y: outlierY, isOutlier: true, isBase: false });
+      }
+
+      return data;
+    }
+
+    function computeCorrelation(data) {
+      const n = data.length;
+      const meanX = data.reduce((sum, p) => sum + p.x, 0) / n;
+      const meanY = data.reduce((sum, p) => sum + p.y, 0) / n;
+
+      let numerator = 0;
+      let sxx = 0;
+      let syy = 0;
+
+      for (const p of data) {
+        const dx = p.x - meanX;
+        const dy = p.y - meanY;
+        numerator += dx * dy;
+        sxx += dx * dx;
+        syy += dy * dy;
+      }
+
+      if (sxx === 0 || syy === 0) return 0;
+      return numerator / Math.sqrt(sxx * syy);
+    }
+
+    function computeOLS(data) {
+      const n = data.length;
+      const meanX = data.reduce((sum, p) => sum + p.x, 0) / n;
+      const meanY = data.reduce((sum, p) => sum + p.y, 0) / n;
+
+      let numerator = 0;
+      let denominator = 0;
+      for (const p of data) {
+        numerator += (p.x - meanX) * (p.y - meanY);
+        denominator += (p.x - meanX) ** 2;
+      }
+
+      const slope = denominator === 0 ? 0 : numerator / denominator;
+      const intercept = meanY - slope * meanX;
+      return { slope, intercept };
+    }
+
+    function interpretCorrelation(r) {
+      const absR = Math.abs(r);
+      if (absR < 0.1) return "Near zero linear association";
+      if (absR < 0.3) return "Weak linear association";
+      if (absR < 0.5) return "Modest linear association";
+      if (absR < 0.7) return "Moderate linear association";
+      if (absR < 0.9) return "Strong linear association";
+      return "Very strong linear association";
+    }
+
+    function getCaution(r) {
+      if (curvePatternCheckbox.checked) return "Pearson r may understate a clear curved pattern.";
+      if (addOutlierCheckbox.checked) return "The outlier may be changing the correlation substantially.";
+      if (Math.abs(r) < 0.2 && Number(noiseSlider.value) > 5) return "Heavy noise is weakening the linear pattern.";
+      return "Always inspect the scatterplot, not just the correlation.";
+    }
+
+    function drawPlot() {
+      const r = computeCorrelation(points);
+      const r2 = r * r;
+      const ols = computeOLS(points);
+
+      const xValues = points.map(p => p.x);
+      const yValues = points.map(p => p.y);
+      const maxX = Math.max(...xValues);
+      const maxY = Math.max(...yValues);
+      const xRange = [0, Math.max(26, maxX + 2)];
+      const yRange = [0, Math.max(40, maxY + 2)];
+
+      const baseOnly = points.filter(p => !p.isOutlier);
+      const pointTrace = {
+        x: baseOnly.map(p => p.x),
+        y: baseOnly.map(p => p.y),
+        mode: "markers",
+        type: "scatter",
+        name: "Data",
+        marker: {
+          color: COLORS.data,
+          size: 10,
+          symbol: "circle"
+        },
+        hovertemplate: "x=%{x:.2f}<br>y=%{y:.2f}<extra></extra>"
+      };
+
+      const traces = [pointTrace];
+
+      const outliers = points.filter(p => p.isOutlier);
+      if (outliers.length) {
+        traces.push({
+          x: outliers.map(p => p.x),
+          y: outliers.map(p => p.y),
+          mode: "markers",
+          type: "scatter",
+          name: "Outlier",
+          marker: {
+            color: COLORS.outlier,
+            size: 12,
+            symbol: "diamond"
+          },
+          hovertemplate: "Outlier<br>x=%{x:.2f}<br>y=%{y:.2f}<extra></extra>"
+        });
+      }
+
+      if (showFitLineCheckbox.checked) {
+        traces.push({
+          x: [0, xRange[1]],
+          y: [ols.intercept, ols.slope * xRange[1] + ols.intercept],
+          mode: "lines",
+          type: "scatter",
+          name: "Fitted model",
+          line: { color: COLORS.fit, width: 3 }
+        });
+      }
+
+      if (showLineOfEquityCheckbox.checked) {
+        const equityMax = Math.min(xRange[1], yRange[1]);
+        traces.push({
+          x: [0, equityMax],
+          y: [0, equityMax],
+          mode: "lines",
+          type: "scatter",
+          name: "y = x",
+          line: { color: COLORS.equity, width: 2, dash: "dot" }
+        });
+      }
+
+      Plotly.react(
+        plotDiv,
+        traces,
+        {
+          margin: { t: 28, r: 20, b: 60, l: 65 },
+          xaxis: { title: "X", range: xRange },
+          yaxis: { title: "Y", range: yRange },
+          showlegend: true,
+          legend: {
+            orientation: "h",
+            x: 0,
+            y: 1.12,
+            xanchor: "left",
+            yanchor: "bottom",
+            traceorder: "normal"
+          },
+          uirevision: "keep"
+        },
+        { responsive: true }
+      );
+
+      corrValue.textContent = r.toFixed(3);
+      r2Value.textContent = r2.toFixed(3);
+      directionValue.textContent = getDirection() === "positive" ? "Positive" : "Negative";
+      patternValue.textContent = curvePatternCheckbox.checked ? "Curved" : "Linear";
+      interpretationValue.textContent = interpretCorrelation(r);
+      cautionValue.textContent = getCaution(r);
+    }
+
+    function regenerate() {
+      basePoints = generateBaseData();
+      points = buildDisplayedData();
+      drawPlot();
+    }
+
+    function refreshDisplayedDataOnly() {
+      points = buildDisplayedData();
+      drawPlot();
+    }
+
+    function resetOptions() {
+      document.querySelector('input[name="direction"][value="positive"]').checked = true;
+      noiseSlider.value = 2.5;
+      noiseValue.textContent = "2.5";
+      showFitLineCheckbox.checked = true;
+      showLineOfEquityCheckbox.checked = false;
+      addOutlierCheckbox.checked = false;
+      curvePatternCheckbox.checked = false;
+      regenerate();
+    }
+
+    newDataButton.addEventListener("click", regenerate);
+    resetOptionsButton.addEventListener("click", resetOptions);
+
+    noiseSlider.addEventListener("input", () => {
+      noiseValue.textContent = Number(noiseSlider.value).toFixed(1);
+      regenerate();
+    });
+
+    directionRadios.forEach(radio => radio.addEventListener("change", regenerate));
+    showFitLineCheckbox.addEventListener("change", drawPlot);
+    showLineOfEquityCheckbox.addEventListener("change", drawPlot);
+    addOutlierCheckbox.addEventListener("change", refreshDisplayedDataOnly);
+    curvePatternCheckbox.addEventListener("change", regenerate);
+
+    regenerate();
+  </script>
+</body>
+</html>

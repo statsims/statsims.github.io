@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Significance Through Confidence Intervals</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --border:#d9dde3;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --soft:#f3f4f6;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--bg);color:var(--text)}
+    .container{max-width:1380px;margin:auto}
+    .app-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+    .left-column,.right-column{display:grid;gap:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+    .controls{display:grid;gap:10px}
+    .control-box{background:var(--soft);padding:10px;border-radius:10px;border:1px solid var(--border)}
+    .control-title{font-size:.85rem;color:var(--muted);margin-bottom:6px;display:block}
+    button{padding:9px 12px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;margin-right:6px;margin-bottom:6px}
+    button:hover{background:#f8fafc}
+    input,select{width:100%}
+    .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .metric{border:1px solid var(--border);background:var(--soft);border-radius:10px;padding:10px}
+    .metric-label{font-size:.8rem;color:var(--muted)}
+    .metric-value{font-weight:600;line-height:1.35}
+    .small{font-size:.9rem;color:var(--muted);line-height:1.45}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .display-list{display:grid;gap:8px}
+    .display-row{display:grid;grid-template-columns:18px 1fr;align-items:start;column-gap:10px}
+    .display-row input[type="checkbox"]{width:auto;margin:0}
+    #plotObserved{height:360px}
+    #plotCI{height:380px}
+    .help-card{margin-top:18px;width:calc((100% - 16px) * 2 / 3);max-width:calc((100% - 16px) * 2 / 3)}
+    @media (max-width:980px){.app-grid{grid-template-columns:1fr}.metric-grid{grid-template-columns:1fr}.help-card{width:100%;max-width:100%}}
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+    <div class="left-column">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1 1 500px;min-width:280px;">
+            <h2>Significance Through Confidence Intervals</h2>
+            <p>
+              This app links statistical significance to confidence intervals. The main idea is simple:
+              if the null value falls outside the interval, the result is inconsistent with that null at the matching level.
+            </p>
+          </div>
+          <button id="toggleHelp">Help with Interpretation</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Observed Groups</h3>
+        <div id="plotObserved"></div>
+      </div>
+
+      <div class="card">
+        <h3>Confidence Interval for the Difference in Means</h3>
+        <div class="small" style="margin-bottom:8px;"><span class="mono">μ<sub>B</sub> − μ<sub>A</sub> = 0</span> is the usual null for two-group mean comparisons.</div>
+        <div id="plotCI"></div>
+      </div>
+    </div>
+
+    <div class="right-column">
+      <div class="card">
+        <h3>Controls</h3>
+        <div class="controls">
+          <div class="control-box">
+            <span class="control-title">Group size</span>
+            <input type="range" id="groupSize" min="5" max="100" value="25" />
+            <div id="groupSizeVal" class="small">25 per group</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Noise / spread</span>
+            <input type="range" id="noise" min="0.5" max="15" step="0.1" value="5" />
+            <div id="noiseVal" class="small">5.0</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Observed separation</span>
+            <input type="range" id="effectSize" min="0" max="12" step="0.1" value="2.5" />
+            <div id="effectSizeVal" class="small">2.5</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Direction</span>
+            <select id="direction">
+              <option value="positive" selected>Group B higher than Group A</option>
+              <option value="negative">Group A higher than Group B</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Confidence level</span>
+            <select id="confidenceLevel">
+              <option value="0.90">90%</option>
+              <option value="0.95" selected>95%</option>
+              <option value="0.99">99%</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Null value (hypothesized population difference)</span>
+            <input type="range" id="nullValue" min="-10" max="10" step="0.1" value="0" />
+            <div id="nullValueVal" class="small">0.0</div>
+            <div class="small">0 means no difference between population means. Other values represent hypothesized differences to compare against the interval.</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Method</span>
+            <select id="method">
+              <option value="welch" selected>Welch interval</option>
+              <option value="pooled">Pooled-variance interval</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Data style</span>
+            <select id="dataStyle">
+              <option value="discrete" selected>Discrete integers</option>
+              <option value="continuous">Continuous values</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Null presets</span>
+            <button id="setNullZero">0 (no difference)</button>
+            <button id="setNullObserved">Observed diff</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Actions</span>
+            <button id="newData">New observed data</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Display</span>
+            <div class="display-list">
+              <div class="display-row"><input type="checkbox" id="showMeanLines" checked /><span>Show group mean markers</span></div>
+              <div class="display-row"><input type="checkbox" id="showDistributionBackdrop" checked /><span>Show soft distribution backdrop</span></div>
+              <div class="display-row"><input type="checkbox" id="showNullBand" checked /><span>Show null value reference band</span></div>
+              <div class="display-row"><input type="checkbox" id="showDecisionText" checked /><span>Show interval-based decision text</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Summary</h3>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Group A mean</div><div id="groupAMeanVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Group B mean</div><div id="groupBMeanVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Observed difference</div><div id="diffVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Standard error</div><div id="seVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Critical value</div><div id="critVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Confidence interval</div><div id="ciVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Null value</div><div id="nullSummaryVal" class="metric-value mono">0.0</div></div>
+          <div class="metric"><div class="metric-label">Interval excludes null?</div><div id="excludeNullVal" class="metric-value">--</div></div>
+          <div class="metric"><div class="metric-label">Interpretive cue</div><div id="decisionVal" class="metric-value">--</div></div>
+          <div class="metric"><div class="metric-label">Matching significance idea</div><div id="matchingVal" class="metric-value">--</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card help-card" id="helpCard" style="display:none;">
+    <h3>Help with Interpretation</h3>
+    <div class="small">
+      <p><strong>Main idea:</strong> A confidence interval gives a range of parameter values that remain plausible under the chosen confidence level and method.</p>
+      <p><strong>Significance link:</strong> If the null value lies outside the interval, the observed result is inconsistent with that null at the matching level. If the null value lies inside the interval, the data are more compatible with that null.</p>
+      <p><strong>What to look for:</strong> Move the null-value slider. Watch what happens when the null enters or leaves the confidence interval. That transition is the visual link to significance.</p>
+      <p><strong>Key comparison:</strong> Increase the sample size and the interval usually narrows. Increase the confidence level and the interval usually widens.</p>
+      <p><strong>Important caution:</strong> “Outside the interval” is not a complete substantive interpretation. It only addresses compatibility with the null value, not the practical importance of the effect.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const observedPlot = document.getElementById('plotObserved');
+const ciPlot = document.getElementById('plotCI');
+
+const groupSizeSlider = document.getElementById('groupSize');
+const noiseSlider = document.getElementById('noise');
+const effectSizeSlider = document.getElementById('effectSize');
+const directionSelect = document.getElementById('direction');
+const confidenceLevelSelect = document.getElementById('confidenceLevel');
+const nullValueSlider = document.getElementById('nullValue');
+const methodSelect = document.getElementById('method');
+const dataStyleSelect = document.getElementById('dataStyle');
+const showMeanLines = document.getElementById('showMeanLines');
+const showDistributionBackdrop = document.getElementById('showDistributionBackdrop');
+const showNullBand = document.getElementById('showNullBand');
+const showDecisionText = document.getElementById('showDecisionText');
+
+const groupSizeVal = document.getElementById('groupSizeVal');
+const noiseVal = document.getElementById('noiseVal');
+const effectSizeVal = document.getElementById('effectSizeVal');
+const nullValueVal = document.getElementById('nullValueVal');
+
+const groupAMeanVal = document.getElementById('groupAMeanVal');
+const groupBMeanVal = document.getElementById('groupBMeanVal');
+const diffVal = document.getElementById('diffVal');
+const seVal = document.getElementById('seVal');
+const critVal = document.getElementById('critVal');
+const ciVal = document.getElementById('ciVal');
+const nullSummaryVal = document.getElementById('nullSummaryVal');
+const excludeNullVal = document.getElementById('excludeNullVal');
+const decisionVal = document.getElementById('decisionVal');
+const matchingVal = document.getElementById('matchingVal');
+
+let observedA = [];
+let observedB = [];
+let ciResult = null;
+
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function mean(arr) {
+  return arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : NaN;
+}
+
+function variance(arr) {
+  if (arr.length < 2) return NaN;
+  const m = mean(arr);
+  return arr.reduce((s, x) => s + (x - m) ** 2, 0) / (arr.length - 1);
+}
+
+function sd(arr) {
+  const v = variance(arr);
+  return Number.isFinite(v) ? Math.sqrt(v) : NaN;
+}
+
+function getApproxTCritical(conf, df) {
+  if (conf >= 0.99) {
+    if (df <= 5) return 4.032;
+    if (df <= 10) return 3.169;
+    if (df <= 20) return 2.845;
+    if (df <= 30) return 2.750;
+    return 2.576;
+  }
+  if (conf >= 0.95) {
+    if (df <= 5) return 2.571;
+    if (df <= 10) return 2.228;
+    if (df <= 20) return 2.086;
+    if (df <= 30) return 2.042;
+    return 1.960;
+  }
+  if (df <= 5) return 2.015;
+  if (df <= 10) return 1.812;
+  if (df <= 20) return 1.725;
+  if (df <= 30) return 1.697;
+  return 1.645;
+}
+
+function buildStackedDotPositions(values) {
+  const bins = {};
+  const binWidth = dataStyleSelect.value === 'discrete' ? 1 : 1.5;
+  values.forEach((v, i) => {
+    const key = Math.round(v / binWidth) * binWidth;
+    if (!bins[key]) bins[key] = [];
+    bins[key].push(i);
+  });
+  const ys = new Array(values.length).fill(0);
+  Object.values(bins).forEach(indices => {
+    indices.forEach((idx, j) => {
+      ys[idx] = 0.05 + j * 0.08;
+    });
+  });
+  return { ys, maxY: Math.max(...ys, 0.2) + 0.12 };
+}
+
+function normalDensity(x, mu, sigma) {
+  const s = Math.max(sigma, 0.25);
+  return Math.exp(-0.5 * ((x - mu) / s) ** 2) / (s * Math.sqrt(2 * Math.PI));
+}
+
+function makeBackdropTrace(mu, sigma, minX, maxX, fillColor, lineColor, peakHeight) {
+  const xs = [];
+  const ys = [];
+  const steps = 160;
+  for (let i = 0; i <= steps; i++) {
+    const x = minX + (maxX - minX) * (i / steps);
+    xs.push(x);
+    ys.push(normalDensity(x, mu, sigma));
+  }
+  const maxD = Math.max(...ys, 1e-9);
+  const scaled = ys.map(y => (y / maxD) * peakHeight);
+  return {
+    x: xs,
+    y: scaled,
+    mode: 'lines',
+    type: 'scatter',
+    fill: 'tozeroy',
+    line: { color: lineColor, width: 2 },
+    fillcolor: fillColor,
+    hoverinfo: 'skip',
+    showlegend: false
+  };
+}
+
+function generateObservedData() {
+  const n = +groupSizeSlider.value;
+  const noise = +noiseSlider.value;
+  const effect = +effectSizeSlider.value;
+  const direction = directionSelect.value;
+  const baseMean = 50;
+  const shift = direction === 'positive' ? effect / 2 : -effect / 2;
+  const style = dataStyleSelect.value;
+
+  observedA = [];
+  observedB = [];
+  for (let i = 0; i < n; i++) {
+    let valA = baseMean - shift + randn() * noise;
+    let valB = baseMean + shift + randn() * noise;
+    if (style === 'discrete') {
+      valA = Math.round(valA);
+      valB = Math.round(valB);
+    }
+    observedA.push(valA);
+    observedB.push(valB);
+  }
+}
+
+function computeCI() {
+  const conf = +confidenceLevelSelect.value;
+  const method = methodSelect.value;
+  const meanA = mean(observedA);
+  const meanB = mean(observedB);
+  const varA = variance(observedA);
+  const varB = variance(observedB);
+  const nA = observedA.length;
+  const nB = observedB.length;
+  const diff = meanB - meanA;
+
+  let se, df, crit;
+  if (method === 'pooled') {
+    const sp2 = (((nA - 1) * varA) + ((nB - 1) * varB)) / (nA + nB - 2);
+    se = Math.sqrt(sp2 * (1 / nA + 1 / nB));
+    df = nA + nB - 2;
+    crit = getApproxTCritical(conf, df);
+  } else {
+    se = Math.sqrt(varA / nA + varB / nB);
+    const num = (varA / nA + varB / nB) ** 2;
+    const den = ((varA / nA) ** 2) / (nA - 1) + ((varB / nB) ** 2) / (nB - 1);
+    df = num / den;
+    crit = getApproxTCritical(conf, df);
+  }
+
+  const lower = diff - crit * se;
+  const upper = diff + crit * se;
+  ciResult = { meanA, meanB, diff, se, df, crit, lower, upper };
+}
+
+function drawObservedPlot() {
+  const values = [...observedA, ...observedB];
+  const stacked = buildStackedDotPositions(values);
+  const colors = [...observedA.map(() => 'rgba(37,99,235,0.10)'), ...observedB.map(() => '#dc2626')];
+  const outlines = [...observedA.map(() => '#2563eb'), ...observedB.map(() => '#dc2626')];
+  const allMin = Math.min(...values) - 2;
+  const allMax = Math.max(...values) + 2;
+
+  const traces = [];
+
+  if (showDistributionBackdrop.checked && ciResult) {
+    traces.push(
+      makeBackdropTrace(ciResult.meanA, sd(observedA), allMin, allMax, 'rgba(37,99,235,0.12)', 'rgba(37,99,235,0.55)', stacked.maxY * 0.92),
+      makeBackdropTrace(ciResult.meanB, sd(observedB), allMin, allMax, 'rgba(220,38,38,0.12)', 'rgba(220,38,38,0.55)', stacked.maxY * 0.92)
+    );
+  }
+
+  traces.push({
+    x: values,
+    y: stacked.ys,
+    mode: 'markers',
+    type: 'scatter',
+    marker: {
+      color: colors,
+      size: 10,
+      line: { color: outlines, width: 2 }
+    },
+    hovertemplate: 'Value=%{x:.2f}<extra></extra>'
+  });
+
+  const shapes = [];
+  const annotations = [{
+    text: 'Blue outlined points = Group A, red points = Group B',
+    x: 0.5,
+    y: 1.12,
+    xref: 'paper',
+    yref: 'paper',
+    showarrow: false,
+    font: { size: 13 }
+  }];
+
+  if (showMeanLines.checked && ciResult) {
+    const meanLineTop = 0.92;
+    shapes.push(
+      { type: 'line', x0: ciResult.meanA, x1: ciResult.meanA, y0: 0, y1: meanLineTop, xref: 'x', yref: 'paper', line: { color: '#2563eb', width: 2, dash: 'dot' } },
+      { type: 'line', x0: ciResult.meanB, x1: ciResult.meanB, y0: 0, y1: meanLineTop, xref: 'x', yref: 'paper', line: { color: '#dc2626', width: 2, dash: 'dot' } }
+    );
+    traces.push(
+      {
+        x: [ciResult.meanA],
+        y: [stacked.maxY - 0.02],
+        mode: 'markers',
+        type: 'scatter',
+        marker: { symbol: 'triangle-up', size: 12, color: '#2563eb' },
+        hovertemplate: 'Group A mean=%{x:.2f}<extra></extra>',
+        showlegend: false
+      },
+      {
+        x: [ciResult.meanB],
+        y: [stacked.maxY - 0.02],
+        mode: 'markers',
+        type: 'scatter',
+        marker: { symbol: 'triangle-up', size: 12, color: '#dc2626' },
+        hovertemplate: 'Group B mean=%{x:.2f}<extra></extra>',
+        showlegend: false
+      }
+    );
+    annotations.push(
+      {
+        text: `A mean = ${ciResult.meanA.toFixed(2)}`,
+        x: ciResult.meanA,
+        y: 0.98,
+        xref: 'x',
+        yref: 'paper',
+        showarrow: false,
+        font: { size: 11, color: '#2563eb' }
+      },
+      {
+        text: `B mean = ${ciResult.meanB.toFixed(2)}`,
+        x: ciResult.meanB,
+        y: 0.98,
+        xref: 'x',
+        yref: 'paper',
+        showarrow: false,
+        font: { size: 11, color: '#dc2626' }
+      }
+    );
+  }
+
+  Plotly.react(observedPlot, traces, {
+    margin: { t: 52, r: 20, b: 50, l: 50 },
+    xaxis: { title: 'Values', range: [allMin, allMax] },
+    yaxis: { title: '', showticklabels: false, range: [0, stacked.maxY + 0.12] },
+    showlegend: false,
+    shapes,
+    annotations
+  }, { responsive: true });
+}
+
+function drawCIPlot() {
+  if (!ciResult) {
+    Plotly.react(ciPlot, [], { margin: { t: 10 } }, { responsive: true });
+    return;
+  }
+
+  const nullValue = +nullValueSlider.value;
+  const centerMin = Math.min(ciResult.lower, nullValue) - 2;
+  const centerMax = Math.max(ciResult.upper, nullValue) + 2;
+  const excludesNull = ciResult.lower > nullValue || ciResult.upper < nullValue;
+  const color = excludesNull ? '#16a34a' : '#dc2626';
+  const bandHalf = 0.15;
+
+  const shapes = [];
+  if (showNullBand.checked) {
+    shapes.push({
+      type: 'rect', x0: nullValue - bandHalf, x1: nullValue + bandHalf, y0: 0, y1: 1,
+      xref: 'x', yref: 'paper', fillcolor: 'rgba(107,114,128,0.15)', line: { width: 0 }
+    });
+  }
+  shapes.push({
+    type: 'line', x0: nullValue, x1: nullValue, y0: 0, y1: 1,
+    xref: 'x', yref: 'paper', line: { color: '#111827', width: 3, dash: 'dash' }
+  });
+
+  const traces = [{
+    x: [ciResult.diff],
+    y: [1],
+    mode: 'markers',
+    type: 'scatter',
+    marker: { color, size: 10 },
+    error_x: {
+      type: 'data',
+      symmetric: false,
+      array: [ciResult.upper - ciResult.diff],
+      arrayminus: [ciResult.diff - ciResult.lower],
+      thickness: 2,
+      width: 0,
+      color
+    },
+    hovertemplate: 'Difference=%{x:.3f}<extra></extra>'
+  }];
+
+  const annotations = [{
+    x: nullValue,
+    y: 1.03,
+    xref: 'x',
+    yref: 'paper',
+    text: 'Null value',
+    showarrow: false,
+    font: { size: 12, color: '#111827' }
+  }];
+
+  if (showDecisionText.checked) {
+    annotations.push({
+      x: 0.5,
+      y: 1.15,
+      xref: 'paper',
+      yref: 'paper',
+      text: excludesNull ? 'Interval excludes the null value' : 'Interval includes the null value',
+      showarrow: false,
+      font: { size: 14, color }
+    });
+  }
+
+  Plotly.react(ciPlot, traces, {
+    margin: { t: 44, r: 20, b: 50, l: 50 },
+    xaxis: { title: 'Difference in means', range: [centerMin, centerMax] },
+    yaxis: { title: '', showticklabels: false, range: [0.5, 1.5] },
+    showlegend: false,
+    shapes,
+    annotations
+  }, { responsive: true });
+}
+
+function updateSummary() {
+  const nullValue = +nullValueSlider.value;
+  const excludesNull = ciResult.lower > nullValue || ciResult.upper < nullValue;
+  const levelText = `${Math.round(+confidenceLevelSelect.value * 100)}%`;
+
+  groupAMeanVal.textContent = ciResult.meanA.toFixed(3);
+  groupBMeanVal.textContent = ciResult.meanB.toFixed(3);
+  diffVal.textContent = ciResult.diff.toFixed(3);
+  seVal.textContent = ciResult.se.toFixed(3);
+  critVal.textContent = ciResult.crit.toFixed(3);
+  ciVal.textContent = `[${ciResult.lower.toFixed(3)}, ${ciResult.upper.toFixed(3)}]`;
+  nullSummaryVal.textContent = nullValue.toFixed(1);
+  excludeNullVal.textContent = excludesNull ? 'Yes' : 'No';
+  decisionVal.textContent = excludesNull
+    ? `The interval stays away from ${nullValue.toFixed(1)}`
+    : `The interval still includes ${nullValue.toFixed(1)}`;
+  matchingVal.textContent = excludesNull
+    ? `Inconsistent with that null at the matching ${levelText} level`
+    : `More compatible with that null at the matching ${levelText} level`;
+}
+
+function redrawAll() {
+  computeCI();
+  drawObservedPlot();
+  drawCIPlot();
+  updateSummary();
+}
+
+function regenerateData() {
+  generateObservedData();
+  redrawAll();
+}
+
+groupSizeSlider.oninput = () => { groupSizeVal.textContent = `${groupSizeSlider.value} per group`; regenerateData(); };
+noiseSlider.oninput = () => { noiseVal.textContent = Number(noiseSlider.value).toFixed(1); regenerateData(); };
+effectSizeSlider.oninput = () => { effectSizeVal.textContent = Number(effectSizeSlider.value).toFixed(1); regenerateData(); };
+nullValueSlider.oninput = () => { nullValueVal.textContent = Number(nullValueSlider.value).toFixed(1); redrawAll(); };
+directionSelect.onchange = regenerateData;
+confidenceLevelSelect.onchange = redrawAll;
+methodSelect.onchange = redrawAll;
+dataStyleSelect.onchange = regenerateData;
+showMeanLines.onchange = drawObservedPlot;
+showDistributionBackdrop.onchange = drawObservedPlot;
+showNullBand.onchange = drawCIPlot;
+showDecisionText.onchange = drawCIPlot;
+
+document.getElementById('newData').onclick = regenerateData;
+document.getElementById('setNullZero').onclick = () => {
+  nullValueSlider.value = 0;
+  nullValueVal.textContent = Number(nullValueSlider.value).toFixed(1);
+  redrawAll();
+};
+document.getElementById('setNullObserved').onclick = () => {
+  if (!ciResult) return;
+  nullValueSlider.value = ciResult.diff.toFixed(1);
+  nullValueVal.textContent = Number(nullValueSlider.value).toFixed(1);
+  redrawAll();
+};
+document.getElementById('toggleHelp').onclick = () => {
+  const helpCard = document.getElementById('helpCard');
+  helpCard.style.display = helpCard.style.display === 'none' ? 'block' : 'none';
+};
+
+groupSizeVal.textContent = `${groupSizeSlider.value} per group`;
+noiseVal.textContent = Number(noiseSlider.value).toFixed(1);
+effectSizeVal.textContent = Number(effectSizeSlider.value).toFixed(1);
+nullValueVal.textContent = Number(nullValueSlider.value).toFixed(1);
+regenerateData();
+</script>
+</body>
+</html>

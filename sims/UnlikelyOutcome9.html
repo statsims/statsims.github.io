@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Permutation Test Explorer</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --border:#d9dde3;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --soft:#f3f4f6;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--bg);color:var(--text)}
+    .container{max-width:1380px;margin:auto}
+    .app-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+    .left-column,.right-column{display:grid;gap:16px}
+    .left-stack{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+    .controls{display:grid;gap:10px}
+    .control-box{background:var(--soft);padding:10px;border-radius:10px;border:1px solid var(--border)}
+    .control-title{font-size:.85rem;color:var(--muted);margin-bottom:6px;display:block}
+    button{padding:9px 12px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;margin-right:6px;margin-bottom:6px}
+    button:hover{background:#f8fafc}
+    input,select{width:100%}
+    .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .metric{border:1px solid var(--border);background:var(--soft);border-radius:10px;padding:10px}
+    .metric-label{font-size:.8rem;color:var(--muted)}
+    .metric-value{font-weight:600;line-height:1.35}
+    .small{font-size:.9rem;color:var(--muted);line-height:1.45}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .note{font-size:.85rem;color:var(--muted);margin-top:8px}
+    #plotObserved{height:340px}
+    #plotShuffle{height:340px}
+    #plotNull{height:420px}
+    .help-card{margin-top:18px;width:calc((100% - 16px) * 2 / 3);max-width:calc((100% - 16px) * 2 / 3)}
+    .display-list{display:grid;gap:8px}
+    .display-row{display:grid;grid-template-columns:18px 1fr;align-items:start;column-gap:10px}
+    .display-row input[type="checkbox"]{width:auto;margin:0}
+    @media (max-width:980px){.app-grid{grid-template-columns:1fr}.left-stack{grid-template-columns:1fr}.metric-grid{grid-template-columns:1fr}.help-card{width:100%;max-width:100%}}
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+    <div class="left-column">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1 1 500px;min-width:280px;">
+            <h2>Permutation Test Explorer</h2>
+            <p>
+              This lab uses a <strong>shuffle test</strong> to show how unusual an observed difference is under a null world where group labels do not matter.
+              Keep the values fixed, relabel the groups, and compare the observed difference with the distribution of shuffled differences.
+            </p>
+          </div>
+          <button id="toggleHelp">Help with Interpretation</button>
+        </div>
+      </div>
+
+      <div class="left-stack">
+        <div class="card">
+          <h3>Observed Grouping</h3>
+          <div id="plotObserved"></div>
+          <div class="note">These are the original observed groups and the observed difference in means.</div>
+        </div>
+
+        <div class="card">
+          <h3>Step-by-Step Null World</h3>
+          <div id="plotShuffle"></div>
+          <div class="note" id="stepNote">Use the step buttons to move from the observed groups to the pooled values and then to one shuffled deal.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Null Distribution from Shuffling Labels</h3>
+        <div id="plotNull"></div>
+        <div class="note">Red bars use the same bins as the full shuffle distribution; they mark bins containing outcomes at least this extreme. Dashed percentile lines adapt to the selected tail rule.</div>
+      </div>
+    </div>
+
+    <div class="right-column">
+      <div class="card">
+        <h3>Controls</h3>
+        <div class="controls">
+          <div class="control-box">
+            <span class="control-title">Group size</span>
+            <input type="range" id="groupSize" min="4" max="30" value="25" />
+            <div id="groupSizeVal" class="small">25 per group</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Noise / spread</span>
+            <input type="range" id="noise" min="0.5" max="12" step="0.1" value="4" />
+            <div id="noiseVal" class="small">4.0</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Observed separation</span>
+            <input type="range" id="effectSize" min="0" max="12" step="0.1" value="2.5" />
+            <div id="effectSizeVal" class="small">2.5</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Direction</span>
+            <select id="direction">
+              <option value="positive" selected>Group B higher than Group A</option>
+              <option value="negative">Group A higher than Group B</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Tail rule</span>
+            <select id="tailRule">
+              <option value="two-sided" selected>Two-sided</option>
+              <option value="greater">Observed difference or greater</option>
+              <option value="less">Observed difference or less</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Step through the shuffle logic</span>
+            <button id="showObservedStep">Show observed</button>
+            <button id="showPooledStep">Show pooled</button>
+            <button id="showShuffleStep">Show one shuffle</button>
+            <button id="addShuffleToNull">Add this shuffle to null</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Actions</span>
+            <button id="newData">New observed data</button>
+            <button id="shuffle100">Shuffle 100</button>
+            <button id="shuffle1000">Shuffle 1000</button>
+            <button id="resetNull">Reset null distribution</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Display</span>
+            <div class="display-list">
+              <div class="display-row"><input type="checkbox" id="showMeanLines" checked /><span>Show group mean markers</span></div>
+              <div class="display-row"><input type="checkbox" id="showTailShade" checked /><span>Shade outcomes at least this extreme</span></div>
+              <div class="display-row"><input type="checkbox" id="showPercentileGuides" checked /><span>Show percentile guides</span></div>
+              <div class="display-row"><input type="checkbox" id="highlightPoint" checked /><span>Highlight one point whose value stays fixed while its label changes</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Summary</h3>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Observed difference in means</div><div id="observedDiffVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Latest shuffled difference</div><div id="latestShuffleVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Number of shuffles</div><div id="shuffleCountVal" class="metric-value mono">0</div></div>
+          <div class="metric"><div class="metric-label">At least this extreme</div><div id="extremeCountVal" class="metric-value mono">0</div></div>
+          <div class="metric"><div class="metric-label">Observed position in null distribution</div><div id="percentileVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">More extreme than</div><div id="extremenessVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Tail rule</div><div id="tailRuleVal" class="metric-value">Two-sided</div></div>
+          <div class="metric"><div class="metric-label">Reference percentiles</div><div id="percentileGuideVal" class="metric-value mono">2.5th / 97.5th</div></div>
+          <div class="metric"><div class="metric-label">Group A mean</div><div id="groupAMeanVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Group B mean</div><div id="groupBMeanVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Interpretive cue</div><div id="rarityVal" class="metric-value">--</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card help-card" id="helpCard" style="display:none;">
+    <h3>Help with Interpretation</h3>
+    <div class="small">
+      <p><strong>How to use this app:</strong> Start with the observed groups and look at the observed difference in means. Then use the step buttons to move through the shuffle logic. After that, add many shuffles to the null distribution.</p>
+      <p><strong>Main purpose:</strong> This app is designed to show how unusual the observed result would be if the null idea were true that group membership does not matter.</p>
+      <p><strong>Three stages:</strong> First, inspect the observed grouping. Second, pool the values together to represent the null world where labels do not matter. Third, deal one shuffled grouping and compare its difference with the observed result.</p>
+      <p><strong>Fixed-point idea:</strong> The points do not move in the shuffle panel. Their values stay fixed. Only the labels change. That is the key idea behind a permutation test.</p>
+      <p><strong>Percentile framing:</strong> This app shows where the observed result sits in the shuffle distribution. You can ask: what percentile is this result, and how many shuffled outcomes are as extreme or more extreme?</p>
+      <p><strong>Reference percentiles:</strong> For a two-sided rule, the app marks the 2.5th and 97.5th percentiles. For one-sided rules, it marks the 5th or 95th percentile. These are reference points from the shuffle distribution, not formal critical values.</p>
+      <p><strong>Card-shuffle metaphor:</strong> Imagine writing all observed outcomes on cards. Under the null, the cards could have been dealt to either group. Relabel the cards, redeal, and compare the new difference with the observed one.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const observedPlot = document.getElementById('plotObserved');
+const shufflePlot = document.getElementById('plotShuffle');
+const nullPlot = document.getElementById('plotNull');
+const stepNote = document.getElementById('stepNote');
+
+const groupSizeSlider = document.getElementById('groupSize');
+const noiseSlider = document.getElementById('noise');
+const effectSizeSlider = document.getElementById('effectSize');
+const directionSelect = document.getElementById('direction');
+const tailRuleSelect = document.getElementById('tailRule');
+const showMeanLines = document.getElementById('showMeanLines');
+const showTailShade = document.getElementById('showTailShade');
+const showPercentileGuides = document.getElementById('showPercentileGuides');
+const highlightPoint = document.getElementById('highlightPoint');
+
+const groupSizeVal = document.getElementById('groupSizeVal');
+const noiseVal = document.getElementById('noiseVal');
+const effectSizeVal = document.getElementById('effectSizeVal');
+const observedDiffVal = document.getElementById('observedDiffVal');
+const latestShuffleVal = document.getElementById('latestShuffleVal');
+const shuffleCountVal = document.getElementById('shuffleCountVal');
+const extremeCountVal = document.getElementById('extremeCountVal');
+const percentileVal = document.getElementById('percentileVal');
+const extremenessVal = document.getElementById('extremenessVal');
+const tailRuleVal = document.getElementById('tailRuleVal');
+const percentileGuideVal = document.getElementById('percentileGuideVal');
+const groupAMeanVal = document.getElementById('groupAMeanVal');
+const groupBMeanVal = document.getElementById('groupBMeanVal');
+const rarityVal = document.getElementById('rarityVal');
+
+let observedA = [];
+let observedB = [];
+let observedDiff = null;
+let shuffledDiffs = [];
+let latestShuffle = null;
+let stagedShuffle = null;
+let currentStep = 'observed';
+let pointRegistry = [];
+let highlightedId = null;
+
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function mean(arr) {
+  return arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : NaN;
+}
+
+function quantile(sorted, q) {
+  if (!sorted.length) return NaN;
+  const pos = (sorted.length - 1) * q;
+  const base = Math.floor(pos);
+  const rest = pos - base;
+  if (sorted[base + 1] !== undefined) return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+  return sorted[base];
+}
+
+function buildStackedDotPositions(values) {
+  const bins = {};
+  const binWidth = 1;
+  values.forEach((v, i) => {
+    const key = Math.round(v / binWidth) * binWidth;
+    if (!bins[key]) bins[key] = [];
+    bins[key].push(i);
+  });
+  const ys = new Array(values.length).fill(0);
+  Object.values(bins).forEach(indices => {
+    indices.forEach((idx, j) => {
+      ys[idx] = 0.05 + j * 0.08;
+    });
+  });
+  return { ys, maxY: Math.max(...ys, 0.2) + 0.12 };
+}
+
+function generateObservedData() {
+  const n = +groupSizeSlider.value;
+  const noise = +noiseSlider.value;
+  const effect = +effectSizeSlider.value;
+  const direction = directionSelect.value;
+
+  observedA = [];
+  observedB = [];
+  pointRegistry = [];
+  const baseMean = 50;
+  const shift = direction === 'positive' ? effect / 2 : -effect / 2;
+
+  for (let i = 0; i < n; i++) {
+    const valueA = Math.round(baseMean - shift + randn() * noise);
+    const valueB = Math.round(baseMean + shift + randn() * noise);
+    const idA = `A${i}`;
+    const idB = `B${i}`;
+    observedA.push(valueA);
+    observedB.push(valueB);
+    pointRegistry.push({ id: idA, value: valueA, originalGroup: 'A' });
+    pointRegistry.push({ id: idB, value: valueB, originalGroup: 'B' });
+  }
+
+  highlightedId = pointRegistry.length ? pointRegistry[0].id : null;
+  observedDiff = mean(observedB) - mean(observedA);
+  shuffledDiffs = [];
+  latestShuffle = null;
+  stagedShuffle = null;
+  currentStep = 'observed';
+}
+
+function generateOneShuffle() {
+  const combined = pointRegistry.map(d => ({ ...d }));
+  for (let i = combined.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [combined[i], combined[j]] = [combined[j], combined[i]];
+  }
+  const nA = observedA.length;
+  const shuffledA = combined.slice(0, nA);
+  const shuffledB = combined.slice(nA);
+  const diff = mean(shuffledB.map(d => d.value)) - mean(shuffledA.map(d => d.value));
+  return {
+    A: shuffledA,
+    B: shuffledB,
+    diff,
+    pooled: [...combined]
+  };
+}
+
+function applyShuffleResult(result, addToNull = true) {
+  latestShuffle = result;
+  if (addToNull) shuffledDiffs.push(result.diff);
+}
+
+function runShuffles(k) {
+  for (let i = 0; i < k; i++) applyShuffleResult(generateOneShuffle(), true);
+}
+
+function isExtreme(diff) {
+  const rule = tailRuleSelect.value;
+  if (rule === 'two-sided') return Math.abs(diff) >= Math.abs(observedDiff);
+  if (rule === 'greater') return diff >= observedDiff;
+  return diff <= observedDiff;
+}
+
+function getPercentileGuideText() {
+  const rule = tailRuleSelect.value;
+  if (rule === 'two-sided') return '2.5th / 97.5th';
+  if (rule === 'greater') return '95th';
+  return '5th';
+}
+
+function getPercentileGuideValues(sorted) {
+  const rule = tailRuleSelect.value;
+  if (rule === 'two-sided') return [
+    { value: quantile(sorted, 0.025), label: '2.5th' },
+    { value: quantile(sorted, 0.975), label: '97.5th' }
+  ];
+  if (rule === 'greater') return [{ value: quantile(sorted, 0.95), label: '95th' }];
+  return [{ value: quantile(sorted, 0.05), label: '5th' }];
+}
+
+function baseLayoutData() {
+  const values = pointRegistry.map(d => d.value);
+  const stacked = buildStackedDotPositions(values);
+  return {
+    x: values,
+    y: stacked.ys,
+    minX: Math.min(...values) - 2,
+    maxX: Math.max(...values) + 2,
+    maxY: stacked.maxY
+  };
+}
+
+function groupAssignmentMap(mode, result = null) {
+  const map = {};
+  if (mode === 'observed') {
+    pointRegistry.forEach(d => { map[d.id] = d.originalGroup; });
+    return map;
+  }
+  if (mode === 'pooled') {
+    pointRegistry.forEach(d => { map[d.id] = 'pooled'; });
+    return map;
+  }
+  if (result) {
+    result.A.forEach(d => { map[d.id] = 'A'; });
+    result.B.forEach(d => { map[d.id] = 'B'; });
+  }
+  return map;
+}
+
+function getMeansForMode(mode, result = null) {
+  if (mode === 'observed') {
+    return { meanA: mean(observedA), meanB: mean(observedB) };
+  }
+  if (result) {
+    return {
+      meanA: mean(result.A.map(d => d.value)),
+      meanB: mean(result.B.map(d => d.value))
+    };
+  }
+  return { meanA: NaN, meanB: NaN };
+}
+
+function drawFixedPositionPlot(targetPlot, titleText, mode, result = null) {
+  const base = baseLayoutData();
+  const assignment = groupAssignmentMap(mode, result);
+  const { meanA, meanB } = getMeansForMode(mode, result);
+
+  const fills = pointRegistry.map(d => {
+    const g = assignment[d.id];
+    if (g === 'A') return 'rgba(37,99,235,0.10)';
+    if (g === 'B') return '#dc2626';
+    return 'rgba(156,163,175,0.12)';
+  });
+
+  const outlines = pointRegistry.map(d => {
+    const g = assignment[d.id];
+    if (g === 'A') return '#2563eb';
+    if (g === 'B') return '#dc2626';
+    return '#9ca3af';
+  });
+
+  const sizes = pointRegistry.map(d => highlightPoint.checked && d.id === highlightedId ? 14 : 10);
+  const lineWidths = pointRegistry.map(d => highlightPoint.checked && d.id === highlightedId ? 3 : 2);
+  const symbols = pointRegistry.map(d => highlightPoint.checked && d.id === highlightedId ? 'diamond' : 'circle');
+  const labels = pointRegistry.map(d => assignment[d.id] === 'pooled' ? 'Pooled' : `Group ${assignment[d.id]}`);
+
+  const traces = [{
+    x: base.x,
+    y: base.y,
+    mode: 'markers',
+    type: 'scatter',
+    marker: {
+      color: fills,
+      size: sizes,
+      symbol: symbols,
+      line: { color: outlines, width: lineWidths }
+    },
+    customdata: pointRegistry.map((d, i) => [d.id, d.value, labels[i]]),
+    hovertemplate: 'Point %{customdata[0]}<br>Value=%{customdata[1]:.2f}<br>%{customdata[2]}<extra></extra>'
+  }];
+
+  const shapes = [];
+  const annotations = [{
+    text: titleText,
+    x: 0.5,
+    y: 1.14,
+    xref: 'paper',
+    yref: 'paper',
+    showarrow: false,
+    font: { size: 14 }
+  }];
+
+  if (showMeanLines.checked && Number.isFinite(meanA) && Number.isFinite(meanB)) {
+    const meanLineTop = 0.92;
+    shapes.push(
+      { type: 'line', x0: meanA, x1: meanA, y0: 0, y1: meanLineTop, xref: 'x', yref: 'paper', line: { color: '#2563eb', width: 2, dash: 'dot' } },
+      { type: 'line', x0: meanB, x1: meanB, y0: 0, y1: meanLineTop, xref: 'x', yref: 'paper', line: { color: '#dc2626', width: 2, dash: 'dot' } }
+    );
+
+    traces.push(
+      {
+        x: [meanA],
+        y: [base.maxY - 0.02],
+        mode: 'markers',
+        type: 'scatter',
+        marker: { symbol: 'triangle-up', size: 12, color: '#2563eb' },
+        hovertemplate: 'Group A mean=%{x:.2f}<extra></extra>',
+        showlegend: false
+      },
+      {
+        x: [meanB],
+        y: [base.maxY - 0.02],
+        mode: 'markers',
+        type: 'scatter',
+        marker: { symbol: 'triangle-up', size: 12, color: '#dc2626' },
+        hovertemplate: 'Group B mean=%{x:.2f}<extra></extra>',
+        showlegend: false
+      }
+    );
+
+    annotations.push(
+      {
+        text: `A mean = ${meanA.toFixed(2)}`,
+        x: meanA,
+        y: 0.98,
+        xref: 'x',
+        yref: 'paper',
+        showarrow: false,
+        font: { size: 11, color: '#2563eb' }
+      },
+      {
+        text: `B mean = ${meanB.toFixed(2)}`,
+        x: meanB,
+        y: 0.98,
+        xref: 'x',
+        yref: 'paper',
+        showarrow: false,
+        font: { size: 11, color: '#dc2626' }
+      }
+    );
+  }
+
+  if (highlightPoint.checked && highlightedId) {
+    const g = assignment[highlightedId];
+    const labelText = g === 'pooled'
+      ? 'Highlighted point: same value, labels removed'
+      : `Highlighted point: same value, now ${g === 'A' ? 'blue' : 'red'}`;
+    annotations.push({
+      text: labelText,
+      x: 0.5,
+      y: 1.05,
+      xref: 'paper',
+      yref: 'paper',
+      showarrow: false,
+      font: { size: 11, color: '#6b7280' }
+    });
+  }
+
+  Plotly.react(targetPlot, traces, {
+    margin: { t: 58, r: 20, b: 50, l: 50 },
+    xaxis: { title: 'Values', range: [base.minX, base.maxX] },
+    yaxis: { title: '', showticklabels: false, range: [0, base.maxY + 0.12] },
+    showlegend: false,
+    shapes,
+    annotations
+  }, { responsive: true });
+}
+
+function drawObservedPlot() {
+  drawFixedPositionPlot(observedPlot, 'Observed groups', 'observed');
+}
+
+function drawObservedStep() {
+  drawFixedPositionPlot(shufflePlot, 'Step 1: start from the observed groups', 'observed');
+  stepNote.textContent = 'Start with the observed groups and their observed difference in means.';
+}
+
+function drawPooledStep() {
+  drawFixedPositionPlot(shufflePlot, 'Step 2: pool the values', 'pooled');
+  stepNote.textContent = 'Under the null, the values stay fixed, but we no longer treat the original labels as fixed.';
+}
+
+function drawShuffleStep() {
+  if (!stagedShuffle) stagedShuffle = generateOneShuffle();
+  drawFixedPositionPlot(shufflePlot, 'Step 3: one shuffled deal under the null', 'shuffle', stagedShuffle);
+  stepNote.textContent = 'Now the same points have new labels. The values stay in place, but blue and red labels change.';
+}
+
+function drawNullPlot() {
+  if (!shuffledDiffs.length) {
+    Plotly.react(nullPlot, [], { margin: { t: 10 } }, { responsive: true });
+    return;
+  }
+
+  const extremes = shuffledDiffs.filter(isExtreme);
+  const minX = Math.min(...shuffledDiffs, observedDiff);
+  const maxX = Math.max(...shuffledDiffs, observedDiff);
+  const rangePadding = Math.max((maxX - minX) * 0.15, 1);
+  const binCount = 40;
+  const binWidth = Math.max((maxX - minX) / binCount, 0.25);
+  const xbins = { start: minX, end: maxX, size: binWidth };
+
+  const traces = [{
+    x: shuffledDiffs,
+    type: 'histogram',
+    marker: { color: '#9ca3af' },
+    name: 'Shuffled differences',
+    xbins,
+    hovertemplate: 'Difference=%{x:.3f}<br>Frequency=%{y}<extra></extra>'
+  }];
+
+  if (showTailShade.checked && extremes.length) {
+    traces.push({
+      x: extremes,
+      type: 'histogram',
+      marker: { color: '#dc2626' },
+      opacity: 0.9,
+      name: 'At least this extreme',
+      xbins,
+      hovertemplate: 'Extreme difference=%{x:.3f}<br>Frequency=%{y}<extra></extra>'
+    });
+  }
+
+  const shapes = [{
+    type: 'line',
+    x0: observedDiff,
+    x1: observedDiff,
+    y0: 0,
+    y1: 1,
+    xref: 'x',
+    yref: 'paper',
+    line: { color: '#111827', width: 3 }
+  }];
+
+  const annotations = [{
+    x: observedDiff,
+    y: 1.02,
+    xref: 'x',
+    yref: 'paper',
+    text: 'Observed',
+    showarrow: false,
+    font: { size: 12, color: '#111827' }
+  }];
+
+  if (showPercentileGuides.checked) {
+    const sorted = [...shuffledDiffs].sort((a, b) => a - b);
+    getPercentileGuideValues(sorted).forEach(g => {
+      shapes.push({
+        type: 'line',
+        x0: g.value,
+        x1: g.value,
+        y0: 0,
+        y1: 1,
+        xref: 'x',
+        yref: 'paper',
+        line: { color: '#2563eb', width: 2, dash: 'dot' }
+      });
+      annotations.push({
+        x: g.value,
+        y: 0.96,
+        xref: 'x',
+        yref: 'paper',
+        text: g.label,
+        showarrow: false,
+        font: { size: 11, color: '#2563eb' }
+      });
+    });
+  }
+
+  Plotly.react(nullPlot, traces, {
+    barmode: 'overlay',
+    bargap: 0,
+    margin: { t: 10, r: 20, b: 50, l: 50 },
+    xaxis: { title: 'Difference in means after shuffling', range: [minX - rangePadding, maxX + rangePadding] },
+    yaxis: { title: 'Frequency' },
+    showlegend: true,
+    legend: { orientation: 'h', x: 0, y: 1.08, xanchor: 'left', yanchor: 'bottom' },
+    shapes,
+    annotations
+  }, { responsive: true });
+}
+
+function updateSummary() {
+  const meanA = mean(observedA);
+  const meanB = mean(observedB);
+  const extremeCount = shuffledDiffs.filter(isExtreme).length;
+
+  let percentile = null;
+  let extremeness = null;
+  if (shuffledDiffs.length) {
+    const sorted = [...shuffledDiffs].sort((a, b) => a - b);
+    const countLess = sorted.filter(x => x < observedDiff).length;
+    percentile = countLess / sorted.length;
+    extremeness = Math.max(percentile, 1 - percentile);
+  }
+
+  observedDiffVal.textContent = observedDiff.toFixed(3);
+  latestShuffleVal.textContent = latestShuffle ? latestShuffle.diff.toFixed(3) : '--';
+  shuffleCountVal.textContent = String(shuffledDiffs.length);
+  extremeCountVal.textContent = String(extremeCount);
+  percentileVal.textContent = percentile !== null ? `${(percentile * 100).toFixed(1)}th percentile` : '--';
+  extremenessVal.textContent = extremeness !== null ? `${(extremeness * 100).toFixed(1)}% of shuffled outcomes` : '--';
+  tailRuleVal.textContent = tailRuleSelect.options[tailRuleSelect.selectedIndex].text;
+  percentileGuideVal.textContent = getPercentileGuideText();
+  groupAMeanVal.textContent = meanA.toFixed(3);
+  groupBMeanVal.textContent = meanB.toFixed(3);
+
+  if (extremeness === null) rarityVal.textContent = 'Run shuffles to evaluate rarity';
+  else if (extremeness >= 0.975) rarityVal.textContent = 'Very unusual in the shuffle world';
+  else if (extremeness >= 0.95) rarityVal.textContent = 'Fairly unusual in the shuffle world';
+  else if (extremeness >= 0.80) rarityVal.textContent = 'Somewhat uncommon in the shuffle world';
+  else rarityVal.textContent = 'Not especially unusual in the shuffle world';
+}
+
+function redrawAll() {
+  drawObservedPlot();
+  if (currentStep === 'observed') drawObservedStep();
+  if (currentStep === 'pooled') drawPooledStep();
+  if (currentStep === 'shuffle') drawShuffleStep();
+  drawNullPlot();
+  updateSummary();
+}
+
+function regenerateData() {
+  generateObservedData();
+  redrawAll();
+}
+
+function resetNull() {
+  shuffledDiffs = [];
+  latestShuffle = null;
+  stagedShuffle = null;
+  redrawAll();
+}
+
+groupSizeSlider.oninput = () => { groupSizeVal.textContent = `${groupSizeSlider.value} per group`; regenerateData(); };
+noiseSlider.oninput = () => { noiseVal.textContent = Number(noiseSlider.value).toFixed(1); regenerateData(); };
+effectSizeSlider.oninput = () => { effectSizeVal.textContent = Number(effectSizeSlider.value).toFixed(1); regenerateData(); };
+directionSelect.onchange = regenerateData;
+tailRuleSelect.onchange = redrawAll;
+showMeanLines.onchange = redrawAll;
+showTailShade.onchange = drawNullPlot;
+showPercentileGuides.onchange = drawNullPlot;
+highlightPoint.onchange = redrawAll;
+
+document.getElementById('showObservedStep').onclick = () => { currentStep = 'observed'; drawObservedStep(); };
+document.getElementById('showPooledStep').onclick = () => { currentStep = 'pooled'; drawPooledStep(); };
+document.getElementById('showShuffleStep').onclick = () => { currentStep = 'shuffle'; stagedShuffle = generateOneShuffle(); drawShuffleStep(); };
+document.getElementById('addShuffleToNull').onclick = () => {
+  if (!stagedShuffle) stagedShuffle = generateOneShuffle();
+  applyShuffleResult(stagedShuffle, true);
+  latestShuffle = stagedShuffle;
+  stagedShuffle = generateOneShuffle();
+  currentStep = 'shuffle';
+  drawShuffleStep();
+  drawNullPlot();
+  updateSummary();
+};
+
+document.getElementById('newData').onclick = regenerateData;
+document.getElementById('shuffle100').onclick = () => { runShuffles(100); redrawAll(); };
+document.getElementById('shuffle1000').onclick = () => { runShuffles(1000); redrawAll(); };
+document.getElementById('resetNull').onclick = resetNull;
+document.getElementById('toggleHelp').onclick = () => {
+  const helpCard = document.getElementById('helpCard');
+  helpCard.style.display = helpCard.style.display === 'none' ? 'block' : 'none';
+};
+
+groupSizeVal.textContent = `${groupSizeSlider.value} per group`;
+noiseVal.textContent = Number(noiseSlider.value).toFixed(1);
+effectSizeVal.textContent = Number(effectSizeSlider.value).toFixed(1);
+regenerateData();
+</script>
+</body>
+</html>

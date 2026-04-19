@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sampling Distribution Explorer v2</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --border: #d9dde3;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --soft: #f3f4f6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1360px;
+      margin: auto;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2.1fr) minmax(300px, 0.95fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .left-column,
+    .right-column {
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 0;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .control-box {
+      background: var(--soft);
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .control-title {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    button {
+      padding: 9px 12px;
+      border: 1px solid #bfc6d1;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+
+    button:hover { background: #f8fafc; }
+
+    input[type="range"], select { width: 100%; }
+
+    #plotPop, #plotSample, #plotDist { height: 340px; }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--border);
+      background: var(--soft);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .metric-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .small {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    @media (max-width: 980px) {
+      .app-grid { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+    <div class="left-column">
+      <div class="card">
+        <h2>Sampling Distribution Explorer</h2>
+        <p>
+          Draw repeated samples from a fixed population and watch the sampling distribution of the mean form.
+          This version shows the population mean, the current sample mean, the mean of the sample means, standard error,
+          and an optional normal overlay to illustrate the central limit theorem.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Population</h3>
+        <div id="plotPop"></div>
+      </div>
+
+      <div class="card">
+        <h3>Sampling Distribution of the Mean</h3>
+        <div id="plotDist"></div>
+      </div>
+    </div>
+
+    <div class="right-column">
+      <div class="card">
+        <h3>Controls</h3>
+        <div class="controls">
+          <div class="control-box">
+            <span class="control-title">Sample size (n)</span>
+            <input type="range" id="sampleSize" min="2" max="100" value="10" />
+            <div id="nVal" class="small">10</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Population spread</span>
+            <input type="range" id="spread" min="1" max="20" value="8" />
+            <div id="spreadVal" class="small">8</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Population shape</span>
+            <select id="distType">
+              <option value="normal">Normal</option>
+              <option value="skewed">Right skewed</option>
+              <option value="uniform">Uniform</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Sampling actions</span>
+            <button id="drawSample">Draw 1 sample</button>
+            <button id="draw50">Draw 50</button>
+            <button id="draw100">Draw 100</button>
+            <button id="draw1000">Draw 1000</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Reset controls</span>
+            <button id="newPopulation">New Population</button>
+            <button id="resetSamples">Reset Samples</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Display</span>
+            <label><input type="checkbox" id="showNormalOverlay" checked /> Normal overlay</label>
+            <label><input type="checkbox" id="showMeanLines" checked /> Mean lines</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Key quantities</h3>
+        <div class="metric-grid">
+          <div class="metric">
+            <div class="metric-label">Population mean (μ)</div>
+            <div class="metric-value mono" id="popMeanVal">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Population SD (σ)</div>
+            <div class="metric-value mono" id="popSdVal">--</div>
+          </div>
+          
+          </div>
+          <div class="metric">
+            <div class="metric-label">Number of sample means</div>
+            <div class="metric-value mono" id="numMeansVal">0</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Mean of sample means</div>
+            <div class="metric-value mono" id="meanOfMeansVal">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Observed SD of sample means</div>
+            <div class="metric-value mono" id="sdMeansVal">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Theoretical SE ≈ σ/√n</div>
+            <div class="metric-value mono" id="seVal">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Status</div>
+            <div class="metric-value" id="statusVal">Ready</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>How to read this</h3>
+        <div class="small">
+          <p><strong>Population plot:</strong> This is the full population you are sampling from. The vertical dashed line marks μ.</p>
+          
+          <p><strong>Sampling distribution:</strong> Each value in this histogram is a sample mean from one repeated sample of size n.</p>
+          <p><strong>As n increases:</strong> the spread of the sampling distribution usually shrinks, because the standard error gets smaller.</p>
+          <p><strong>With skewed populations:</strong> the sampling distribution can still become more normal as repeated sample means accumulate, especially for larger n.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const popPlot = document.getElementById("plotPop");
+const distPlot = document.getElementById("plotDist");
+
+const nSlider = document.getElementById("sampleSize");
+const spreadSlider = document.getElementById("spread");
+const distType = document.getElementById("distType");
+const showNormalOverlay = document.getElementById("showNormalOverlay");
+const showMeanLines = document.getElementById("showMeanLines");
+
+const nVal = document.getElementById("nVal");
+const spreadVal = document.getElementById("spreadVal");
+
+const popMeanVal = document.getElementById("popMeanVal");
+const popSdVal = document.getElementById("popSdVal");
+const numMeansVal = document.getElementById("numMeansVal");
+const meanOfMeansVal = document.getElementById("meanOfMeansVal");
+const sdMeansVal = document.getElementById("sdMeansVal");
+const seVal = document.getElementById("seVal");
+const statusVal = document.getElementById("statusVal");
+
+let population = [];
+let currentSample = [];
+let sampleMeans = [];
+
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+
+function mean(arr) {
+  if (!arr.length) return NaN;
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+function sd(arr) {
+  if (arr.length < 2) return NaN;
+  const m = mean(arr);
+  const variance = arr.reduce((sum, x) => sum + (x - m) ** 2, 0) / (arr.length - 1);
+  return Math.sqrt(variance);
+}
+
+function normalPdf(x, mu, sigma) {
+  if (sigma <= 0) return 0;
+  const z = (x - mu) / sigma;
+  return (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * z * z);
+}
+
+function generatePopulation() {
+  const spread = Number(spreadSlider.value);
+  const type = distType.value;
+  population = [];
+
+  for (let i = 0; i < 800; i++) {
+    let x;
+    if (type === "normal") {
+      x = 50 + randn() * spread;
+    } else if (type === "skewed") {
+      x = 40 + Math.exp(randn()) * spread / 2.5;
+    } else {
+      x = 50 + (Math.random() - 0.5) * spread * 4;
+    }
+    population.push(x);
+  }
+}
+
+function drawPopulation() {
+  const mu = mean(population);
+  const popMin = Math.min(...population);
+  const popMax = Math.max(...population);
+
+  const traces = [{
+    x: population,
+    type: "histogram",
+    name: "Population",
+    marker: { color: "#6b7280" },
+    opacity: 0.9
+  }];
+
+  const layout = {
+    margin: { t: 10, r: 20, b: 50, l: 50 },
+    xaxis: { title: "Value", range: [popMin - 2, popMax + 2] },
+    yaxis: { title: "Count" },
+    showlegend: false,
+    shapes: []
+  };
+
+  if (showMeanLines.checked) {
+    layout.shapes.push({
+      type: "line",
+      x0: mu,
+      x1: mu,
+      y0: 0,
+      y1: 1,
+      xref: "x",
+      yref: "paper",
+      line: { color: "#111827", width: 3, dash: "dash" }
+    });
+  }
+
+  Plotly.react(popPlot, traces, layout, { responsive: true });
+}
+
+function drawSamplingDistribution() {
+  if (!sampleMeans.length) {
+    Plotly.react(distPlot, [], { margin: { t: 10 } }, { responsive: true });
+    return;
+  }
+
+  const mu = mean(population);
+  const muMeans = mean(sampleMeans);
+  const sdMeans = sd(sampleMeans);
+  const theoreticalSE = sd(population) / Math.sqrt(Number(nSlider.value));
+  const minVal = Math.min(...sampleMeans);
+  const maxVal = Math.max(...sampleMeans);
+  const xMin = Math.min(minVal, mu - 4 * theoreticalSE);
+  const xMax = Math.max(maxVal, mu + 4 * theoreticalSE);
+
+  const traces = [{
+    x: sampleMeans,
+    type: "histogram",
+    name: "Sample means",
+    marker: { color: "#111827" },
+    opacity: 0.9,
+    histnorm: "probability density"
+  }];
+
+  if (showNormalOverlay.checked && Number.isFinite(theoreticalSE) && theoreticalSE > 0) {
+    const xs = [];
+    const ys = [];
+    const steps = 200;
+    for (let i = 0; i < steps; i++) {
+      const x = xMin + (i / (steps - 1)) * (xMax - xMin);
+      xs.push(x);
+      ys.push(normalPdf(x, mu, theoreticalSE));
+    }
+    traces.push({
+      x: xs,
+      y: ys,
+      mode: "lines",
+      type: "scatter",
+      name: "Normal overlay",
+      line: { color: "#2563eb", width: 3 }
+    });
+  }
+
+  const layout = {
+    margin: { t: 10, r: 20, b: 50, l: 50 },
+    xaxis: { title: "Sample mean", range: [xMin - 1, xMax + 1] },
+    yaxis: { title: "Density" },
+    legend: {
+      orientation: "h",
+      x: 0,
+      y: 1.1,
+      xanchor: "left",
+      yanchor: "bottom"
+    },
+    shapes: []
+  };
+
+  if (showMeanLines.checked) {
+    layout.shapes.push({
+      type: "line",
+      x0: mu,
+      x1: mu,
+      y0: 0,
+      y1: 1,
+      xref: "x",
+      yref: "paper",
+      line: { color: "#6b7280", width: 2, dash: "dash" }
+    });
+    layout.shapes.push({
+      type: "line",
+      x0: muMeans,
+      x1: muMeans,
+      y0: 0,
+      y1: 1,
+      xref: "x",
+      yref: "paper",
+      line: { color: "#dc2626", width: 2 }
+    });
+  }
+
+  Plotly.react(distPlot, traces, layout, { responsive: true });
+}
+
+function drawAll() {
+  drawPopulation();
+  drawSamplingDistribution();
+  updateSummary();
+}
+
+function drawOneSample() {
+  const n = Number(nSlider.value);
+  currentSample = [];
+
+  for (let i = 0; i < n; i++) {
+    const idx = Math.floor(Math.random() * population.length);
+    currentSample.push(population[idx]);
+  }
+
+  sampleMeans.push(mean(currentSample));
+  statusVal.textContent = `Drew 1 sample of size ${n}`;
+  drawAll();
+}
+
+function drawManySamples(k) {
+  const n = Number(nSlider.value);
+  for (let j = 0; j < k; j++) {
+    const sample = [];
+    for (let i = 0; i < n; i++) {
+      const idx = Math.floor(Math.random() * population.length);
+      sample.push(population[idx]);
+    }
+    currentSample = sample;
+    sampleMeans.push(mean(sample));
+  }
+  statusVal.textContent = `Drew ${k} samples of size ${n}; current sample plot shows the last sample drawn`;
+  drawAll();
+}
+
+function updateSummary() {
+  const popMu = mean(population);
+  const popSigma = sd(population);
+    const muMeans = sampleMeans.length ? mean(sampleMeans) : NaN;
+  const sdOfMeans = sampleMeans.length > 1 ? sd(sampleMeans) : NaN;
+  const theoreticalSE = popSigma / Math.sqrt(Number(nSlider.value));
+
+  popMeanVal.textContent = Number.isFinite(popMu) ? popMu.toFixed(3) : "--";
+  popSdVal.textContent = Number.isFinite(popSigma) ? popSigma.toFixed(3) : "--";
+    numMeansVal.textContent = String(sampleMeans.length);
+  meanOfMeansVal.textContent = Number.isFinite(muMeans) ? muMeans.toFixed(3) : "--";
+  sdMeansVal.textContent = Number.isFinite(sdOfMeans) ? sdOfMeans.toFixed(3) : "--";
+  seVal.textContent = Number.isFinite(theoreticalSE) ? theoreticalSE.toFixed(3) : "--";
+}
+
+function resetSamplesOnly() {
+  currentSample = [];
+  sampleMeans = [];
+  statusVal.textContent = "Samples reset; population kept fixed";
+  drawAll();
+}
+
+function resetForNewSampleSize() {
+  currentSample = [];
+  sampleMeans = [];
+  drawAll();
+}
+
+function newPopulationOnly() {
+  generatePopulation();
+  currentSample = [];
+  sampleMeans = [];
+  statusVal.textContent = "New population generated";
+  drawAll();
+}
+
+nSlider.addEventListener("input", () => {
+  nVal.textContent = nSlider.value;
+  resetForNewSampleSize();
+  statusVal.textContent = `Sample size changed to ${nSlider.value}; old sample means were cleared so the sampling distribution uses one fixed n`;
+});
+
+spreadSlider.addEventListener("input", () => {
+  spreadVal.textContent = spreadSlider.value;
+});
+
+spreadSlider.addEventListener("change", newPopulationOnly);
+distType.addEventListener("change", newPopulationOnly);
+showNormalOverlay.addEventListener("change", drawSamplingDistribution);
+showMeanLines.addEventListener("change", drawAll);
+
+document.getElementById("drawSample").addEventListener("click", () => drawOneSample());
+document.getElementById("draw50").addEventListener("click", () => drawManySamples(50));
+document.getElementById("draw100").addEventListener("click", () => drawManySamples(100));
+document.getElementById("draw1000").addEventListener("click", () => drawManySamples(1000));
+document.getElementById("newPopulation").addEventListener("click", newPopulationOnly);
+document.getElementById("resetSamples").addEventListener("click", resetSamplesOnly);
+
+nVal.textContent = nSlider.value;
+spreadVal.textContent = spreadSlider.value;
+newPopulationOnly();
+</script>
+</body>
+</html>

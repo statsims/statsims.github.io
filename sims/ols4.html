@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fit a Model by Choosing Two Points</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --border:#d9dde3;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --soft:#f3f4f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .container {
+      max-width: 1380px;
+      margin: auto;
+    }
+    .app-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .left-column, .right-column {
+      display: grid;
+      gap: 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .controls {
+      display: grid;
+      gap: 10px;
+    }
+    .control-box {
+      background: var(--soft);
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .control-title {
+      font-size: .85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+    button {
+      padding: 9px 12px;
+      border: 1px solid #bfc6d1;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    button:hover {
+      background: #f8fafc;
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .metric {
+      border: 1px solid var(--border);
+      background: var(--soft);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .metric-label {
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    .metric-value {
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    .small {
+      font-size: .9rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .display-list {
+      display: grid;
+      gap: 8px;
+    }
+    .display-row {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      align-items: start;
+      column-gap: 10px;
+    }
+    .display-row input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+    #plot {
+      height: 660px;
+    }
+    .help-card {
+      margin-top: 18px;
+      width: calc((100% - 16px) * 2 / 3);
+      max-width: calc((100% - 16px) * 2 / 3);
+    }
+    @media (max-width: 980px) {
+      .app-grid {
+        grid-template-columns: 1fr;
+      }
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+      .help-card {
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+    <div class="left-column">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1 1 500px;min-width:280px;">
+            <h2>Fit a Model by Choosing Two Points</h2>
+            <p>
+              This app lets you define a line by clicking two observed points. The app then compares your
+              model with the ordinary least squares model, the orthogonal-fit model, and the mean-of-<span class="mono">y</span> model.
+            </p>
+          </div>
+          <button id="toggleHelp">Help with Interpretation</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Observed Data and Competing Models</h3>
+        <div id="plot"></div>
+        <div class="small" style="margin-top:8px;">
+          Click two data points to define your own line. Residuals for your chosen model are shown as vertical distances.
+        </div>
+      </div>
+    </div>
+
+    <div class="right-column">
+      <div class="card">
+        <h3>Controls</h3>
+        <div class="controls">
+          <div class="control-box">
+            <span class="control-title">Actions</span>
+            <button id="newData">New data</button>
+            <button id="resetSelection">Reset selection</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Display</span>
+            <div class="display-list">
+              <div class="display-row"><input type="checkbox" id="showMeanLine" /><span>Show mean-of-y model</span></div>
+              <div class="display-row"><input type="checkbox" id="showBestFit" /><span>Show OLS model</span></div>
+              <div class="display-row"><input type="checkbox" id="showOrthogonalFit" /><span>Show orthogonal-fit model</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Summary</h3>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Selected points</div><div id="selectionText" class="metric-value small">Click two points to define a model.</div></div>
+          <div class="metric"><div class="metric-label">Mean of y</div><div id="meanYValue" class="metric-value mono">--</div></div>
+
+          <div class="metric"><div class="metric-label">Your model</div><div id="userEquation" class="metric-value small">Not set yet</div></div>
+          <div class="metric"><div class="metric-label">Your vertical SSE</div><div id="userSSE" class="metric-value mono">Not set yet</div></div>
+
+          <div class="metric"><div class="metric-label">OLS model</div><div id="olsEquation" class="metric-value small">Hidden until toggled</div></div>
+          <div class="metric"><div class="metric-label">OLS vertical SSE</div><div id="olsSSE" class="metric-value mono">Hidden until toggled</div></div>
+
+          <div class="metric"><div class="metric-label">Orthogonal-fit model</div><div id="orthEquation" class="metric-value small">Hidden until toggled</div></div>
+          <div class="metric"><div class="metric-label">Orthogonal SSE</div><div id="orthSSE" class="metric-value mono">Hidden until toggled</div></div>
+
+          <div class="metric"><div class="metric-label">Mean-of-y model / TSS</div><div id="tssValue" class="metric-value small">Hidden until toggled</div></div>
+          <div class="metric"><div class="metric-label">Comparison</div><div id="sseDifference" class="metric-value small">Waiting for user model</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card help-card" id="helpCard" style="display:none;">
+    <h3>Help with Interpretation</h3>
+    <div class="small">
+      <p><strong>Main idea:</strong> Different fitted lines imply different residual patterns and different sums of squared error. This app lets you compare those directly.</p>
+      <p><strong>What to do:</strong> First look at the cloud of points. Then click two observed points to define your own model. Compare its fit with the OLS model and the orthogonal-fit model.</p>
+      <p><strong>What to look for:</strong> The OLS model minimizes squared <em>vertical</em> distances. The orthogonal-fit model instead uses perpendicular distances to the line. The mean-of-<span class="mono">y</span> model shows total vertical variation in <span class="mono">y</span>.</p>
+      <p><strong>Attenuation idea:</strong> When <span class="mono">x</span> contains measurement error, the OLS slope is often pulled toward zero. Comparing the OLS model with the orthogonal-fit model helps make that visible.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const plotDiv = document.getElementById("plot");
+const newDataButton = document.getElementById("newData");
+const resetSelectionButton = document.getElementById("resetSelection");
+const showBestFitCheckbox = document.getElementById("showBestFit");
+const showOrthogonalFitCheckbox = document.getElementById("showOrthogonalFit");
+const showMeanLineCheckbox = document.getElementById("showMeanLine");
+
+const selectionText = document.getElementById("selectionText");
+const userEquation = document.getElementById("userEquation");
+const userSSE = document.getElementById("userSSE");
+const olsEquation = document.getElementById("olsEquation");
+const olsSSE = document.getElementById("olsSSE");
+const tssValue = document.getElementById("tssValue");
+const orthEquation = document.getElementById("orthEquation");
+const orthSSE = document.getElementById("orthSSE");
+const meanYValue = document.getElementById("meanYValue");
+const sseDifference = document.getElementById("sseDifference");
+
+const DEFAULT_POINT_COUNT = 25;
+const DEFAULT_Y_NOISE = 8;
+const DEFAULT_X_NOISE = 4;
+
+let points = [];
+let selectedIndices = [];
+let olsLine = null;
+let orthLine = null;
+
+function randomBetween(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function generateCorrelatedData(n, noiseLevel, xNoiseLevel) {
+  const slopeSign = Math.random() < 0.5 ? -1 : 1;
+  const trueSlope = slopeSign * randomBetween(0.8, 2.2);
+  const trueIntercept = randomBetween(-2, 4);
+  const data = [];
+
+  for (let i = 0; i < n; i++) {
+    const xTrue = i + 1;
+    const xObserved = xTrue + (Math.random() - 0.5) * 2 * xNoiseLevel;
+    const noiseY = (Math.random() - 0.5) * 2 * noiseLevel;
+    const y = trueSlope * xTrue + trueIntercept + noiseY;
+    data.push({ x: xObserved, y, xTrue });
+  }
+
+  return data;
+}
+
+function computeMeanY(data) {
+  return data.reduce((sum, p) => sum + p.y, 0) / data.length;
+}
+
+function computeOLS(data) {
+  const n = data.length;
+  const meanX = data.reduce((sum, p) => sum + p.x, 0) / n;
+  const meanY = computeMeanY(data);
+
+  let numerator = 0;
+  let denominator = 0;
+
+  for (const p of data) {
+    numerator += (p.x - meanX) * (p.y - meanY);
+    denominator += (p.x - meanX) ** 2;
+  }
+
+  const slope = numerator / denominator;
+  const intercept = meanY - slope * meanX;
+  return { slope, intercept };
+}
+
+function computeSSE(data, slope, intercept) {
+  let sse = 0;
+  for (const p of data) {
+    const yHat = slope * p.x + intercept;
+    const residual = p.y - yHat;
+    sse += residual ** 2;
+  }
+  return sse;
+}
+
+function computeOrthogonalSSE(data, slope, intercept) {
+  let sse = 0;
+  for (const p of data) {
+    const numerator = p.y - slope * p.x - intercept;
+    const d = numerator / Math.sqrt(1 + slope ** 2);
+    sse += d ** 2;
+  }
+  return sse;
+}
+
+function computeOrthogonalFit(data) {
+  const n = data.length;
+  const meanX = data.reduce((sum, p) => sum + p.x, 0) / n;
+  const meanY = data.reduce((sum, p) => sum + p.y, 0) / n;
+
+  let sxx = 0;
+  let syy = 0;
+  let sxy = 0;
+  for (const p of data) {
+    const dx = p.x - meanX;
+    const dy = p.y - meanY;
+    sxx += dx * dx;
+    syy += dy * dy;
+    sxy += dx * dy;
+  }
+
+  if (Math.abs(sxy) < 1e-10) {
+    return { slope: 0, intercept: meanY };
+  }
+
+  const term = (syy - sxx + Math.sqrt((syy - sxx) ** 2 + 4 * sxy ** 2)) / (2 * sxy);
+  const slope = term;
+  const intercept = meanY - slope * meanX;
+  return { slope, intercept };
+}
+
+function computeTSS(data) {
+  const meanY = computeMeanY(data);
+  let tss = 0;
+  for (const p of data) {
+    tss += (p.y - meanY) ** 2;
+  }
+  return tss;
+}
+
+function residualTraces(data, slope, intercept) {
+  return data.map((p) => {
+    const yHat = slope * p.x + intercept;
+    return {
+      x: [p.x, p.x],
+      y: [p.y, yHat],
+      mode: "lines",
+      type: "scatter",
+      line: { width: 1, color: "#9ca3af" },
+      hoverinfo: "skip",
+      showlegend: false
+    };
+  });
+}
+
+function meanLineTraces(data) {
+  const meanY = computeMeanY(data);
+  return data.map((p) => ({
+    x: [p.x, p.x],
+    y: [p.y, meanY],
+    mode: "lines",
+    type: "scatter",
+    line: { width: 1, dash: "dot", color: "#9ca3af" },
+    hoverinfo: "skip",
+    showlegend: false
+  }));
+}
+
+function getLineEndpoints(data, slope, intercept) {
+  const xValues = data.map(p => p.x);
+  const minX = Math.min(...xValues);
+  const maxX = Math.max(...xValues);
+  return {
+    x: [minX, maxX],
+    y: [slope * minX + intercept, slope * maxX + intercept]
+  };
+}
+
+function formatEquation(slope, intercept) {
+  const sign = intercept >= 0 ? "+" : "-";
+  return `y = ${slope.toFixed(3)}x ${sign} ${Math.abs(intercept).toFixed(3)}`;
+}
+
+function refreshSummary(userLine = null) {
+  const meanY = computeMeanY(points);
+  const fullTSS = computeTSS(points);
+  const bestFitSSE = computeSSE(points, olsLine.slope, olsLine.intercept);
+  const orthFitSSE = computeOrthogonalSSE(points, orthLine.slope, orthLine.intercept);
+
+  selectionText.textContent =
+    selectedIndices.length === 0
+      ? "Click two points to define a model."
+      : selectedIndices.length === 1
+      ? `1 point selected: (${points[selectedIndices[0]].x.toFixed(2)}, ${points[selectedIndices[0]].y.toFixed(2)})`
+      : `2 points selected: (${points[selectedIndices[0]].x.toFixed(2)}, ${points[selectedIndices[0]].y.toFixed(2)}) and (${points[selectedIndices[1]].x.toFixed(2)}, ${points[selectedIndices[1]].y.toFixed(2)})`;
+
+  meanYValue.textContent = meanY.toFixed(3);
+
+  if (showBestFitCheckbox.checked) {
+    olsEquation.textContent = formatEquation(olsLine.slope, olsLine.intercept);
+    olsSSE.textContent = bestFitSSE.toFixed(3);
+  } else {
+    olsEquation.textContent = "Hidden until toggled";
+    olsSSE.textContent = "Hidden until toggled";
+  }
+
+  if (showOrthogonalFitCheckbox.checked) {
+    orthEquation.textContent = formatEquation(orthLine.slope, orthLine.intercept);
+    orthSSE.textContent = orthFitSSE.toFixed(3);
+  } else {
+    orthEquation.textContent = "Hidden until toggled";
+    orthSSE.textContent = "Hidden until toggled";
+  }
+
+  if (showMeanLineCheckbox.checked) {
+    tssValue.textContent = `${fullTSS.toFixed(3)} (around ȳ = ${meanY.toFixed(3)})`;
+  } else {
+    tssValue.textContent = "Hidden until toggled";
+  }
+
+  if (!userLine) {
+    userEquation.textContent = "Not set yet";
+    userSSE.textContent = "Not set yet";
+    sseDifference.textContent = "Waiting for user model";
+    return;
+  }
+
+  const userLineSSE = computeSSE(points, userLine.slope, userLine.intercept);
+  userEquation.textContent = formatEquation(userLine.slope, userLine.intercept);
+  userSSE.textContent = userLineSSE.toFixed(3);
+
+  if (showBestFitCheckbox.checked && showOrthogonalFitCheckbox.checked) {
+    sseDifference.textContent = `vs OLS: ${(userLineSSE - bestFitSSE).toFixed(3)} | vs orthogonal: ${(userLineSSE - orthFitSSE).toFixed(3)}`;
+  } else if (showBestFitCheckbox.checked) {
+    sseDifference.textContent = `vs OLS: ${(userLineSSE - bestFitSSE).toFixed(3)}`;
+  } else if (showOrthogonalFitCheckbox.checked) {
+    sseDifference.textContent = `vs orthogonal: ${(userLineSSE - orthFitSSE).toFixed(3)}`;
+  } else {
+    sseDifference.textContent = "Toggle OLS or orthogonal fit to compare";
+  }
+}
+
+function drawPlot() {
+  olsLine = computeOLS(points);
+  orthLine = computeOrthogonalFit(points);
+  const meanY = computeMeanY(points);
+  const minX = Math.min(...points.map(p => p.x));
+  const maxX = Math.max(...points.map(p => p.x));
+  const yValues = points.map(p => p.y);
+  const minY = Math.min(...yValues);
+  const maxY = Math.max(...yValues);
+
+  const paddingX = (maxX - minX) * 0.1;
+  const paddingY = (maxY - minY) * 0.1;
+  const xRange = [minX - paddingX, maxX + paddingX];
+  const yRange = [minY - paddingY, maxY + paddingY];
+
+  const traces = [{
+    x: points.map(p => p.x),
+    y: points.map(p => p.y),
+    mode: "markers",
+    type: "scatter",
+    name: "Data",
+    marker: {
+      color: points.map(() => "#dc2626"),
+      size: points.map((_, i) => selectedIndices.includes(i) ? 14 : 10),
+      line: {
+        color: points.map(() => "#dc2626"),
+        width: points.map((_, i) => selectedIndices.includes(i) ? 3 : 1)
+      },
+      symbol: points.map((_, i) => selectedIndices.includes(i) ? "diamond" : "circle")
+    },
+    customdata: points.map((_, i) => i),
+    hovertemplate: "Point %{customdata}<br>x=%{x:.2f}<br>y=%{y:.2f}<extra></extra>"
+  }];
+
+  if (showMeanLineCheckbox.checked) {
+    traces.push({
+      x: [minX, maxX],
+      y: [meanY, meanY],
+      mode: "lines",
+      type: "scatter",
+      name: "Mean of y",
+      line: { dash: "dot", width: 2, color: "#6b7280" }
+    });
+    traces.push(...meanLineTraces(points));
+  }
+
+  if (showBestFitCheckbox.checked) {
+    const olsEndpoints = getLineEndpoints(points, olsLine.slope, olsLine.intercept);
+    traces.push({
+      x: olsEndpoints.x,
+      y: olsEndpoints.y,
+      mode: "lines",
+      type: "scatter",
+      name: "OLS model",
+      line: { dash: "dash", width: 3, color: "#2563eb" }
+    });
+  }
+
+  if (showOrthogonalFitCheckbox.checked) {
+    const orthEndpoints = getLineEndpoints(points, orthLine.slope, orthLine.intercept);
+    traces.push({
+      x: orthEndpoints.x,
+      y: orthEndpoints.y,
+      mode: "lines",
+      type: "scatter",
+      name: "Orthogonal-fit model",
+      line: { width: 3, color: "#16a34a" }
+    });
+  }
+
+  let userLine = null;
+  if (selectedIndices.length === 2) {
+    const p1 = points[selectedIndices[0]];
+    const p2 = points[selectedIndices[1]];
+
+    if (Math.abs(p1.x - p2.x) > 1e-10) {
+      const slope = (p2.y - p1.y) / (p2.x - p1.x);
+      const intercept = p1.y - slope * p1.x;
+      userLine = { slope, intercept };
+
+      const userEndpoints = getLineEndpoints(points, slope, intercept);
+      traces.push({
+        x: userEndpoints.x,
+        y: userEndpoints.y,
+        mode: "lines",
+        type: "scatter",
+        name: "Your model",
+        line: { width: 4, color: "#111827" }
+      });
+
+      traces.push(...residualTraces(points, slope, intercept));
+    }
+  }
+
+  Plotly.react(
+    plotDiv,
+    traces,
+    {
+      margin: { t: 20, r: 20, b: 60, l: 60 },
+      xaxis: {
+        title: "X",
+        range: xRange,
+        fixedrange: true
+      },
+      yaxis: {
+        title: "Y",
+        range: yRange,
+        fixedrange: true
+      },
+      showlegend: true,
+      legend: { orientation: "h", x: 0, y: 1.08, xanchor: "left", yanchor: "bottom" },
+      clickmode: "event+select",
+      uirevision: "keep"
+    },
+    { responsive: true }
+  ).then(() => {
+    plotDiv.removeAllListeners("plotly_click");
+    plotDiv.on("plotly_click", handlePlotClick);
+  });
+
+  refreshSummary(userLine);
+}
+
+function regenerateData() {
+  points = generateCorrelatedData(DEFAULT_POINT_COUNT, DEFAULT_Y_NOISE, DEFAULT_X_NOISE);
+  selectedIndices = [];
+  drawPlot();
+}
+
+function handlePlotClick(event) {
+  if (!event || !event.points || !event.points.length) return;
+  const pt = event.points[0];
+  if (typeof pt.curveNumber !== "number" || pt.curveNumber !== 0) return;
+  const clickedIndex = pt.pointIndex;
+  if (typeof clickedIndex !== "number") return;
+
+  if (selectedIndices.includes(clickedIndex)) {
+    selectedIndices = selectedIndices.filter(i => i !== clickedIndex);
+  } else if (selectedIndices.length < 2) {
+    selectedIndices.push(clickedIndex);
+  } else {
+    selectedIndices = [selectedIndices[1], clickedIndex];
+  }
+
+  drawPlot();
+}
+
+newDataButton.addEventListener("click", regenerateData);
+
+resetSelectionButton.addEventListener("click", () => {
+  selectedIndices = [];
+  drawPlot();
+});
+
+showBestFitCheckbox.addEventListener("change", drawPlot);
+showOrthogonalFitCheckbox.addEventListener("change", drawPlot);
+showMeanLineCheckbox.addEventListener("change", drawPlot);
+
+document.getElementById("toggleHelp").addEventListener("click", () => {
+  const helpCard = document.getElementById("helpCard");
+  helpCard.style.display = helpCard.style.display === "none" ? "block" : "none";
+});
+
+regenerateData();
+</script>
+</body>
+</html>

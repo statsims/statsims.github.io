@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confidence Interval Explorer</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #fff;
+      --border: #d9dde3;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --soft: #f3f4f6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1360px;
+      margin: auto;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .left-column,
+    .right-column {
+      display: grid;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .controls {
+      display: grid;
+      gap: 10px;
+    }
+
+    .control-box {
+      background: var(--soft);
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .control-title {
+      font-size: .85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    button {
+      padding: 9px 12px;
+      border: 1px solid #bfc6d1;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+
+    button:hover { background: #f8fafc; }
+
+    input,
+    select { width: 100%; }
+
+    #plotPop { height: 320px; }
+    #plotCI { height: 760px; }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--border);
+      background: var(--soft);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .metric-label {
+      font-size: .8rem;
+      color: var(--muted);
+    }
+
+    .metric-value {
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .small {
+      font-size: .9rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .checkbox-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .checkbox-list label {
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      align-items: center;
+      column-gap: 10px;
+      margin: 0;
+    }
+
+    .checkbox-list input[type="checkbox"],
+    .checkbox-list input[type="radio"] {
+      width: auto;
+      margin: 0;
+    }
+
+    .help-card {
+      margin-top: 18px;
+      width: calc((100% - 16px) * 2 / 3);
+      max-width: calc((100% - 16px) * 2 / 3);
+    }
+
+    @media (max-width: 980px) {
+      .app-grid { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: 1fr; }
+      .help-card {
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+    <div class="left-column">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+          <div style="flex:1 1 500px; min-width:280px;">
+            <h2>Confidence Interval Explorer</h2>
+            <p>
+              Each horizontal segment is one confidence interval for the mean. Compare the observed coverage
+              with the nominal confidence level and watch how interval width changes with
+              <span class="mono">n</span>, confidence level, and interval method.
+            </p>
+          </div>
+          <button id="toggleHelp">Help with Interpretation</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Population</h3>
+        <div id="plotPop"></div>
+      </div>
+
+      <div class="card">
+        <h3>Confidence Intervals</h3>
+        <div id="plotCI"></div>
+      </div>
+    </div>
+
+    <div class="right-column">
+      <div class="card">
+        <h3>Controls</h3>
+        <div class="controls">
+          <div class="control-box">
+            <span class="control-title">Sample size (n)</span>
+            <input type="range" id="sampleSize" min="2" max="100" value="20" />
+            <div id="nVal" class="small">20</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Population spread</span>
+            <input type="range" id="spread" min="1" max="20" value="8" />
+            <div id="spreadVal" class="small">8</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Population shape</span>
+            <select id="distType">
+              <option value="normal">Normal</option>
+              <option value="skewed">Right skewed</option>
+              <option value="uniform">Uniform</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Confidence level</span>
+            <select id="confidenceLevel">
+              <option value="0.90">90%</option>
+              <option value="0.95" selected>95%</option>
+              <option value="0.99">99%</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Frequency</span>
+            <select id="intervalCount">
+              <option value="25" selected>25</option>
+              <option value="100">100</option>
+              <option value="500">500</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Interval method</span>
+            <div class="checkbox-list">
+              <label><input type="radio" name="methodMode" value="estimated-z" checked /><span>Estimate σ, use z critical</span></label>
+              <label><input type="radio" name="methodMode" value="estimated-t" /><span>Estimate σ, use t critical</span></label>
+              <label><input type="radio" name="methodMode" value="known-z" /><span>Use population σ, use z critical</span></label>
+            </div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Reset</span>
+            <button id="reset">Redraw intervals</button>
+            <button id="newPopulation">New Population</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Display</span>
+            <div class="checkbox-list">
+              <label><input type="checkbox" id="showMissesOnly" /><span>Show misses only</span></label>
+              <label><input type="checkbox" id="sortByMean" /><span>Sort by mean</span></label>
+              <label><input type="checkbox" id="showMuBand" checked /><span>Show μ band</span></label>
+              <label><input type="checkbox" id="emphasizeMisses" checked /><span>Emphasize misses</span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Summary</h3>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Nominal level</div><div id="nominalVal" class="metric-value mono">95.0%</div></div>
+          <div class="metric"><div class="metric-label">Observed coverage</div><div id="coverageVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Captured</div><div id="captureVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Missed</div><div id="missVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Frequency</div><div id="countVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Average interval width</div><div id="avgWidthVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Latest interval</div><div id="latestVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Method</div><div id="methodVal" class="metric-value">Estimate σ, use z critical</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card help-card" id="helpCard" style="display:none;">
+    <h3>Help with Interpretation</h3>
+    <div class="small">
+      <p><strong>How to use this app:</strong> Start with a fixed population and confidence level, then click <strong>Redraw intervals</strong> several times. Watch how the intervals change from sample to sample even though the population mean stays fixed.</p>
+      <p><strong>Main purpose:</strong> This app shows that a confidence interval is not a statement about certainty for one specific interval. It is about the long-run performance of a procedure across repeated samples.</p>
+      <p><strong>What to look for:</strong> Green intervals capture the true mean. Red intervals miss it. The observed coverage should drift toward the nominal level as the number of intervals increases.</p>
+      <p><strong>Key comparison:</strong> Increase <span class="mono">n</span> and redraw. The intervals should usually become narrower. Increase the confidence level and redraw. The intervals should usually become wider.</p>
+      <p><strong>Interesting case:</strong> Use a skewed population with a small sample size. Coverage can depart from the nominal level more than students expect. This is a useful reminder that interval performance depends on assumptions and sample size.</p>
+      <p><strong>Common aha moments:</strong> Even a 95% procedure still produces some misses. Wider intervals are not automatically better; they trade precision for coverage. Changing what you display does not change the underlying procedure.</p>
+      <p><strong>Visual cues:</strong> The black vertical line marks the true population mean. The optional gray band is only a guide for the eye. It is not part of the interval calculation.</p>
+      <p id="warningBox"><strong>Warning:</strong> Coverage can be off when the population is strongly skewed and n is small.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const popPlot = document.getElementById("plotPop");
+const ciPlot = document.getElementById("plotCI");
+
+const nSlider = document.getElementById("sampleSize");
+const spreadSlider = document.getElementById("spread");
+const distType = document.getElementById("distType");
+const confSelect = document.getElementById("confidenceLevel");
+const intervalCountSelect = document.getElementById("intervalCount");
+const methodModeRadios = document.querySelectorAll('input[name="methodMode"]');
+const showMissesOnly = document.getElementById("showMissesOnly");
+const sortByMean = document.getElementById("sortByMean");
+const showMuBand = document.getElementById("showMuBand");
+const emphasizeMisses = document.getElementById("emphasizeMisses");
+
+const nVal = document.getElementById("nVal");
+const spreadVal = document.getElementById("spreadVal");
+const nominalVal = document.getElementById("nominalVal");
+const coverageVal = document.getElementById("coverageVal");
+const captureVal = document.getElementById("captureVal");
+const missVal = document.getElementById("missVal");
+const countVal = document.getElementById("countVal");
+const avgWidthVal = document.getElementById("avgWidthVal");
+const latestVal = document.getElementById("latestVal");
+const methodVal = document.getElementById("methodVal");
+const warningBox = document.getElementById("warningBox");
+
+let population = [];
+let intervals = [];
+let fixedCiRange = null;
+
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function mean(a) {
+  return a.length ? a.reduce((s, x) => s + x, 0) / a.length : NaN;
+}
+
+function sd(a) {
+  if (a.length < 2) return NaN;
+  const m = mean(a);
+  return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1));
+}
+
+function getMethodMode() {
+  return [...methodModeRadios].find(r => r.checked).value;
+}
+
+function getZ(conf) {
+  if (conf >= 0.99) return 2.576;
+  if (conf >= 0.95) return 1.96;
+  return 1.645;
+}
+
+function getCriticalValue(conf, df) {
+  const mode = getMethodMode();
+  if (mode.endsWith("-z")) return getZ(conf);
+
+  if (conf >= 0.99) {
+    if (df <= 5) return 4.032;
+    if (df <= 10) return 3.169;
+    if (df <= 20) return 2.845;
+    if (df <= 30) return 2.750;
+    return 2.576;
+  }
+
+  if (conf >= 0.95) {
+    if (df <= 5) return 2.571;
+    if (df <= 10) return 2.228;
+    if (df <= 20) return 2.086;
+    if (df <= 30) return 2.042;
+    return 1.960;
+  }
+
+  if (df <= 5) return 2.015;
+  if (df <= 10) return 1.812;
+  if (df <= 20) return 1.725;
+  if (df <= 30) return 1.697;
+  return 1.645;
+}
+
+function genPop() {
+  const s = +spreadSlider.value;
+  population = [];
+  for (let i = 0; i < 800; i++) {
+    let x;
+    if (distType.value === "normal") x = 50 + randn() * s;
+    else if (distType.value === "skewed") x = 40 + Math.exp(randn()) * s / 2.5;
+    else x = 50 + (Math.random() - 0.5) * s * 4;
+    population.push(x);
+  }
+}
+
+function computeMuBandWidth() {
+  const popSigma = sd(population);
+  return Math.max(popSigma * 0.03, 0.35);
+}
+
+function computeCiXRange(mu) {
+  const popSigma = sd(population);
+  const centerPadding = Math.max(popSigma * 3.5, 8);
+  return [mu - centerPadding, mu + centerPadding];
+}
+
+function drawPop() {
+  const mu = mean(population);
+  const minX = Math.min(...population);
+  const maxX = Math.max(...population);
+  const bandHalf = computeMuBandWidth();
+  const shapes = [];
+
+  if (showMuBand.checked) {
+    shapes.push({
+      type: "rect",
+      x0: mu - bandHalf,
+      x1: mu + bandHalf,
+      y0: 0,
+      y1: 1,
+      xref: "x",
+      yref: "paper",
+      fillcolor: "rgba(107,114,128,0.15)",
+      line: { width: 0 }
+    });
+  }
+
+  shapes.push({
+    type: "line",
+    x0: mu,
+    x1: mu,
+    y0: 0,
+    y1: 1,
+    xref: "x",
+    yref: "paper",
+    line: { color: "#111827", width: 3, dash: "dash" }
+  });
+
+  Plotly.react(
+    popPlot,
+    [{
+      x: population,
+      type: "histogram",
+      marker: { color: "#6b7280" },
+      opacity: 0.9,
+      hovertemplate: "Value=%{x:.2f}<extra></extra>"
+    }],
+    {
+      margin: { t: 10, r: 20, b: 50, l: 50 },
+      xaxis: { title: "Value", range: [minX - 2, maxX + 2] },
+      yaxis: { title: "Frequency" },
+      showlegend: false,
+      shapes
+    },
+    { responsive: true }
+  );
+}
+
+function buildInterval() {
+  const n = +nSlider.value;
+  const conf = +confSelect.value;
+  const crit = getCriticalValue(conf, n - 1);
+  const mode = getMethodMode();
+
+  const sample = Array.from(
+    { length: n },
+    () => population[Math.floor(Math.random() * population.length)]
+  );
+
+  const xbar = mean(sample);
+  const sampleSd = sd(sample);
+  const popSigma = sd(population);
+  const usedSigma = mode === "known-z" ? popSigma : sampleSd;
+  const se = usedSigma / Math.sqrt(n);
+  const lower = xbar - crit * se;
+  const upper = xbar + crit * se;
+  const mu = mean(population);
+
+  intervals.push({
+    mean: xbar,
+    lower,
+    upper,
+    captures: lower <= mu && mu <= upper,
+    width: upper - lower,
+    usedSigma,
+    se,
+    crit
+  });
+}
+
+function buildMany() {
+  intervals = [];
+  const k = +intervalCountSelect.value;
+  for (let i = 0; i < k; i++) buildInterval();
+}
+
+function drawCI() {
+  const mu = mean(population);
+  let data = [...intervals];
+
+  if (showMissesOnly.checked) data = data.filter(d => !d.captures);
+  if (sortByMean.checked) data.sort((a, b) => a.mean - b.mean);
+
+  if (!data.length) {
+    Plotly.react(ciPlot, [], { margin: { t: 10 } }, { responsive: true });
+    return;
+  }
+
+  const bandHalf = computeMuBandWidth();
+  const shapes = [];
+
+  if (showMuBand.checked) {
+    shapes.push({
+      type: "rect",
+      x0: mu - bandHalf,
+      x1: mu + bandHalf,
+      y0: 0,
+      y1: 1,
+      xref: "x",
+      yref: "paper",
+      fillcolor: "rgba(107,114,128,0.15)",
+      line: { width: 0 }
+    });
+  }
+
+  shapes.push({
+    type: "line",
+    x0: mu,
+    x1: mu,
+    y0: 0,
+    y1: 1,
+    xref: "x",
+    yref: "paper",
+    line: { color: "#111827", width: 3 }
+  });
+
+  const colors = data.map(d => d.captures ? "#16a34a" : "#dc2626");
+  const sizes = data.map(d => d.captures ? 7.5 : 9);
+
+  Plotly.react(
+    ciPlot,
+    [{
+      x: data.map(d => d.mean),
+      y: data.map((_, i) => i + 1),
+      mode: "markers",
+      type: "scatter",
+      error_x: {
+        type: "data",
+        array: data.map(d => d.upper - d.mean),
+        arrayminus: data.map(d => d.mean - d.lower),
+        thickness: 1.5,
+        width: 0,
+        color: emphasizeMisses.checked ? "#9ca3af" : "#6b7280"
+      },
+      marker: {
+        color: colors,
+        size: sizes,
+        line: { width: 0 }
+      },
+      hovertemplate: "Mean=%{x:.3f}<extra></extra>"
+    }],
+    {
+      margin: { t: 10, r: 20, b: 50, l: 30 },
+      xaxis: {
+        title: "Confidence interval for the mean",
+        range: fixedCiRange
+      },
+      yaxis: {
+        title: "",
+        autorange: "reversed",
+        showticklabels: false,
+        ticks: ""
+      },
+      showlegend: false,
+      shapes
+    },
+    { responsive: true }
+  );
+}
+
+function updateSummary() {
+  const total = intervals.length;
+  const captures = intervals.filter(d => d.captures).length;
+  const misses = total - captures;
+  const coverage = total ? captures / total : NaN;
+  const avgWidth = total ? mean(intervals.map(d => d.width)) : NaN;
+  const latest = total ? intervals[intervals.length - 1] : null;
+  const conf = +confSelect.value;
+  const mode = getMethodMode();
+
+  nominalVal.textContent = `${(conf * 100).toFixed(1)}%`;
+  coverageVal.textContent = total ? `${(coverage * 100).toFixed(1)}%` : "--";
+  captureVal.textContent = String(captures);
+  missVal.textContent = String(misses);
+  countVal.textContent = String(total);
+  avgWidthVal.textContent = Number.isFinite(avgWidth) ? avgWidth.toFixed(3) : "--";
+  latestVal.textContent = latest ? `[${latest.lower.toFixed(3)}, ${latest.upper.toFixed(3)}]` : "--";
+
+  methodVal.textContent =
+    mode === "known-z"
+      ? "Population σ, z critical"
+      : mode === "estimated-t"
+      ? "Sample SD, t critical"
+      : "Sample SD, z critical";
+
+  const smallN = +nSlider.value < 30;
+  const skewed = distType.value === "skewed";
+  warningBox.innerHTML =
+    (skewed && smallN)
+      ? "<strong>Warning:</strong> With a strongly skewed population and small n, observed coverage may differ noticeably from the nominal level."
+      : "<strong>Warning:</strong> Observed coverage varies from run to run, especially when the number of intervals is small.";
+}
+
+function redraw() {
+  const mu = mean(population);
+  fixedCiRange = computeCiXRange(mu);
+  buildMany();
+  drawCI();
+  updateSummary();
+}
+
+function newPop() {
+  genPop();
+  drawPop();
+  redraw();
+}
+
+nSlider.oninput = () => {
+  nVal.textContent = nSlider.value;
+  redraw();
+};
+
+spreadSlider.oninput = () => {
+  spreadVal.textContent = spreadSlider.value;
+};
+
+spreadSlider.onchange = newPop;
+distType.onchange = newPop;
+confSelect.onchange = redraw;
+intervalCountSelect.onchange = redraw;
+methodModeRadios.forEach(r => r.onchange = redraw);
+showMissesOnly.onchange = drawCI;
+sortByMean.onchange = drawCI;
+showMuBand.onchange = () => {
+  drawPop();
+  drawCI();
+};
+emphasizeMisses.onchange = drawCI;
+
+document.getElementById("reset").onclick = redraw;
+document.getElementById("newPopulation").onclick = newPop;
+document.getElementById("toggleHelp").onclick = () => {
+  const helpCard = document.getElementById("helpCard");
+  helpCard.style.display = helpCard.style.display === "none" ? "block" : "none";
+};
+
+nVal.textContent = nSlider.value;
+spreadVal.textContent = spreadSlider.value;
+
+genPop();
+drawPop();
+redraw();
+</script>
+</body>
+</html>

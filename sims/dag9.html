@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DAG Path, Adjustment, and Simulation Explorer</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --border:#d9dde3;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --soft:#f3f4f6;
+      --blue:#2563eb;
+      --red:#dc2626;
+      --green:#16a34a;
+      --amber:#d97706;
+      --gray:#9ca3af;
+      --purple:#7c3aed;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--bg);color:var(--text)}
+    .container{max-width:1680px;margin:auto}
+    .app-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start;width:100%}
+    .app-grid>div{min-width:0}
+    .left-column{display:grid;gap:16px;min-width:0;width:100%}
+    .right-column{display:grid;gap:16px;align-content:start;min-width:0;width:340px}
+    .six-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch;width:100%;min-width:0}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;min-width:0}
+    .six-grid>.card{width:100%;max-width:none;justify-self:stretch;align-self:stretch}
+
+    .controls{display:grid;gap:10px}
+    .control-box{background:var(--soft);padding:10px;border-radius:10px;border:1px solid var(--border)}
+    .control-title{font-size:.85rem;color:var(--muted);margin-bottom:6px;display:block}
+    button{padding:9px 12px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;margin-right:6px;margin-bottom:6px}
+    button:hover{background:#f8fafc}
+    select,input{width:100%}
+    .display-list{display:grid;gap:8px}
+    .display-row{display:grid;grid-template-columns:18px 1fr;align-items:start;column-gap:10px}
+    .display-row input[type="checkbox"]{width:auto;margin:0}
+    .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .metric{border:1px solid var(--border);background:var(--soft);border-radius:10px;padding:10px}
+    .metric-label{font-size:.8rem;color:var(--muted)}
+    .metric-value{font-weight:600;line-height:1.35}
+    .small{font-size:.92rem;color:var(--muted);line-height:1.45}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .dag-wrap{display:flex;justify-content:center;align-items:center;background:#fbfcfe;border:1px solid var(--border);border-radius:12px;padding:12px}
+    .dag-wrap,.table-wrap,#regressionPlot,#samplingPlot,.legend,.path-list{width:100%;min-width:0}
+    svg{max-width:100%;height:auto;display:block}
+    .node circle{stroke:#334155;stroke-width:2;fill:#fff}
+    .node text{font-size:15px;font-weight:700;fill:#111827;dominant-baseline:middle;text-anchor:middle;pointer-events:none}
+    .node.conditioned circle{fill:#dbeafe;stroke:var(--blue)}
+    .node.treatment circle{fill:#fee2e2;stroke:var(--red)}
+    .node.outcome circle{fill:#dcfce7;stroke:var(--green)}
+    .node.clickable{cursor:pointer}
+    .edge{stroke:#94a3b8;stroke-width:2.5;fill:none;marker-end:url(#arrowhead)}
+    .edge.open{stroke:var(--amber);stroke-width:4}
+    .legend{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px;margin-top:10px}
+    .legend-item{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--muted)}
+    .swatch{width:16px;height:16px;border-radius:999px;border:2px solid #334155;background:white}
+    .swatch.openline{height:0;border:none;border-top:4px solid var(--amber);border-radius:0;width:18px}
+    .swatch.closedline{height:0;border:none;border-top:3px dashed #cbd5e1;border-radius:0;width:18px}
+    .path-list{display:grid;gap:10px}
+    .path-item{border:1px solid var(--border);border-radius:10px;padding:10px;background:#fff}
+    .path-title{font-weight:700}
+    .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78rem;margin-left:6px;border:1px solid transparent}
+    .tag.open{background:#fff7ed;color:#9a3412;border-color:#fdba74}
+    .tag.closed{background:#f8fafc;color:#475569;border-color:#cbd5e1}
+    .tag.good{background:#ecfdf5;color:#166534;border-color:#86efac}
+    .tag.bad{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
+    #regressionPlot{height:360px}
+    #samplingPlot{height:300px}
+    .card.fill-card{height:100%;display:flex;flex-direction:column}
+    .card.fill-card .card-body{flex:1;display:flex;flex-direction:column}
+    .paths-card #pathList{flex:1}
+    .table-wrap{flex:1;overflow:auto}
+    .table{width:100%;border-collapse:collapse;font-size:.94rem}
+    .table th,.table td{border-bottom:1px solid var(--border);padding:8px 6px;text-align:left;vertical-align:top}
+    .help-card{margin-top:18px;width:calc((100% - 16px) * 2 / 3);max-width:calc((100% - 16px) * 2 / 3)}
+    @media (max-width:1100px){.app-grid{grid-template-columns:minmax(0,1fr) 320px}.six-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:980px){.app-grid{grid-template-columns:1fr}.right-column{width:100%}.six-grid{grid-template-columns:1fr}.metric-grid{grid-template-columns:1fr}.legend{grid-template-columns:1fr 1fr}.help-card{width:100%;max-width:100%}}
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+    <div class="left-column">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1 1 560px;min-width:280px;">
+            <h2>DAG Path, Adjustment, and Simulation Explorer</h2>
+            <p>
+              This app links causal diagrams to simulated data and regression estimates. Click variables to condition on them, then compare unadjusted and adjusted slopes with the true structural effect built into the data-generating process.
+            </p>
+          </div>
+          <button id="toggleHelp">Help with Interpretation</button>
+        </div>
+      </div>
+
+      <div class="six-grid">
+        <div class="card fill-card">
+          <div class="card-body">
+            <h3 id="scenarioTitle">Scenario</h3>
+            <div class="small" id="scenarioDescription"></div>
+            <div class="dag-wrap" style="margin-top:12px;">
+              <svg id="dagSvg" viewBox="0 0 900 420" aria-label="DAG explorer"></svg>
+            </div>
+            <div class="legend">
+              <div class="legend-item"><span class="swatch" style="background:#fee2e2;border-color:var(--red)"></span><span>Treatment</span></div>
+              <div class="legend-item"><span class="swatch" style="background:#dcfce7;border-color:var(--green)"></span><span>Outcome</span></div>
+              <div class="legend-item"><span class="swatch" style="background:#dbeafe;border-color:var(--blue)"></span><span>Conditioned on</span></div>
+              <div class="legend-item"><span class="swatch openline"></span><span>Open backdoor edge</span></div>
+            </div>
+            <div class="small" id="realWorldExample" style="margin-top:12px;"></div>
+          </div>
+        </div>
+
+        <div class="card fill-card">
+          <div class="card-body">
+            <h3>Simulation and regression output</h3>
+            <div class="small" id="simDescription">Each point is one case. The red line shows the unadjusted regression of outcome on treatment. The blue line shows the adjusted regression based on the variables you currently conditioned on.</div>
+            <div id="regressionPlot"></div>
+            <div class="small" id="whatHappenedText">What just happened: waiting for a conditioning choice.</div>
+          </div>
+        </div>
+
+        <div class="card fill-card paths-card">
+          <div class="card-body">
+            <h3>Paths from treatment to outcome</h3>
+            <div id="pathList" class="path-list"></div>
+          </div>
+        </div>
+
+        <div class="card fill-card">
+          <div class="card-body">
+            <h3>Regression comparison</h3>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Model</th>
+                    <th>Controls used</th>
+                    <th>Treatment slope</th>
+                    <th>Bias</th>
+                  </tr>
+                </thead>
+                <tbody id="regressionTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      
+        <div class="card fill-card">
+          <div class="card-body">
+            <h3>Estimand explorer</h3>
+            <div class="small" id="estimandText">The selected target effect determines which controls make sense. Total effects and direct effects are not the same target.</div>
+            <div class="table-wrap">
+              <table class="table">
+                <tbody>
+                  <tr><th>Target effect</th><td id="targetEffectVal">Total effect</td></tr>
+                  <tr><th>Suggested controls</th><td id="targetControlsVal">--</td></tr>
+                  <tr><th>Current controls</th><td id="targetCurrentVal">--</td></tr>
+                  <tr><th>Interpretation</th><td id="targetInterpretationVal">--</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card fill-card">
+          <div class="card-body">
+            <h3>Sampling distribution of slopes</h3>
+            <div class="small">Run repeated simulations to see how bias shifts the center of the slope distribution.</div>
+            <div id="samplingPlot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-column">
+      <div class="card">
+        <h3>Controls</h3>
+        <div class="controls">
+          <div class="control-box">
+            <span class="control-title">Preset DAG</span>
+            <select id="scenarioSelect">
+              <option value="confounding">Confounding</option>
+              <option value="mediation">Mediation</option>
+              <option value="collider">Collider</option>
+              <option value="combined" selected>Combined example</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Target effect</span>
+            <select id="estimandSelect">
+              <option value="total" selected>Total effect</option>
+              <option value="direct">Direct effect</option>
+              <option value="badcontrol">Bias-inducing control demo</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Simulation settings</span>
+            <label class="small">Sample size</label>
+            <select id="sampleSizeSelect">
+              <option value="200">200</option>
+              <option value="500" selected>500</option>
+              <option value="1000">1000</option>
+            </select>
+            <div style="height:8px"></div>
+            <label class="small">Outcome noise</label>
+            <select id="noiseSelect">
+              <option value="0.5">Low</option>
+              <option value="1" selected>Medium</option>
+              <option value="2">High</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Actions</span>
+            <button id="clearConditioning">Clear conditioning</button>
+            <button id="conditionRecommended">Apply suggested controls</button>
+            <button id="resimulateData">Resimulate data</button>
+            <button id="runMany">Run 200 simulations</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Display</span>
+            <div class="display-list">
+              <div class="display-row"><input type="checkbox" id="showRoleHints" checked /><span>Show variable role hints</span></div>
+              <div class="display-row"><input type="checkbox" id="highlightBackdoors" checked /><span>Highlight open backdoor paths</span></div>
+              <div class="display-row"><input type="checkbox" id="showAdjustmentReasoning" checked /><span>Show adjustment reasoning text</span></div>
+              <div class="display-row"><input type="checkbox" id="showRegressionLines" checked /><span>Show unadjusted and adjusted lines</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Summary</h3>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Treatment</div><div id="treatmentVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Outcome</div><div id="outcomeVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Conditioned variables</div><div id="conditionedVal" class="metric-value">None</div></div>
+          <div class="metric"><div class="metric-label">Open backdoor paths</div><div id="openBackdoorsVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Suggested adjustment set</div><div id="recommendedVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Current status</div><div id="statusVal" class="metric-value">--</div></div>
+          <div class="metric"><div class="metric-label">Bias warning</div><div id="warningVal" class="metric-value">--</div></div>
+          <div class="metric"><div class="metric-label">Interpretive cue</div><div id="cueVal" class="metric-value">--</div></div>
+          <div class="metric"><div class="metric-label">True structural effect</div><div id="trueEffectVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Unadjusted slope</div><div id="unadjSlopeVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Adjusted slope</div><div id="adjSlopeVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Adjusted bias</div><div id="adjBiasVal" class="metric-value mono">--</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card help-card" id="helpCard" style="display:none;">
+    <h3>Help with Interpretation</h3>
+    <div class="small">
+      <p><strong>Main idea:</strong> A DAG implies which paths create bias and which controls make sense. The simulations then show how those structural choices affect the treatment slope in regression.</p>
+      <p><strong>What to do:</strong> Click variables to condition on them. Compare the unadjusted slope, the adjusted slope, and the true structural effect built into the data-generating process.</p>
+      <p><strong>Why the true effect matters:</strong> Statistical estimates can move around for many reasons. Bias becomes easiest to understand when you can compare an estimate with the true effect used to generate the simulated data.</p>
+      <p><strong>Target effect matters too:</strong> A total effect and a direct effect are not the same thing. Conditioning on a mediator might be correct for one question and incorrect for another.</p>
+      <p><strong>Sampling distribution view:</strong> Repeated simulations show that bias shifts the center of the slope distribution, not just one estimate on one dataset.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const svg = document.getElementById('dagSvg');
+const scenarioSelect = document.getElementById('scenarioSelect');
+const estimandSelect = document.getElementById('estimandSelect');
+const sampleSizeSelect = document.getElementById('sampleSizeSelect');
+const noiseSelect = document.getElementById('noiseSelect');
+const clearConditioningBtn = document.getElementById('clearConditioning');
+const conditionRecommendedBtn = document.getElementById('conditionRecommended');
+const resimulateDataBtn = document.getElementById('resimulateData');
+const runManyBtn = document.getElementById('runMany');
+const showRoleHints = document.getElementById('showRoleHints');
+const highlightBackdoors = document.getElementById('highlightBackdoors');
+const showAdjustmentReasoning = document.getElementById('showAdjustmentReasoning');
+const showRegressionLines = document.getElementById('showRegressionLines');
+
+const scenarioTitle = document.getElementById('scenarioTitle');
+const scenarioDescription = document.getElementById('scenarioDescription');
+const pathList = document.getElementById('pathList');
+const regressionPlot = document.getElementById('regressionPlot');
+const realWorldExample = document.getElementById('realWorldExample');
+const regressionTableBody = document.getElementById('regressionTableBody');
+const samplingPlot = document.getElementById('samplingPlot');
+const whatHappenedText = document.getElementById('whatHappenedText');
+const targetEffectVal = document.getElementById('targetEffectVal');
+const targetControlsVal = document.getElementById('targetControlsVal');
+const targetCurrentVal = document.getElementById('targetCurrentVal');
+const targetInterpretationVal = document.getElementById('targetInterpretationVal');
+
+const treatmentVal = document.getElementById('treatmentVal');
+const outcomeVal = document.getElementById('outcomeVal');
+const conditionedVal = document.getElementById('conditionedVal');
+const openBackdoorsVal = document.getElementById('openBackdoorsVal');
+const recommendedVal = document.getElementById('recommendedVal');
+const statusVal = document.getElementById('statusVal');
+const warningVal = document.getElementById('warningVal');
+const cueVal = document.getElementById('cueVal');
+const trueEffectVal = document.getElementById('trueEffectVal');
+const unadjSlopeVal = document.getElementById('unadjSlopeVal');
+const adjSlopeVal = document.getElementById('adjSlopeVal');
+const adjBiasVal = document.getElementById('adjBiasVal');
+
+const scenarios = {
+  confounding: {
+    title: 'Confounding: adjust for the common cause',
+    description: 'Z causes both treatment X and outcome Y, creating a backdoor path. The simulation is set up so adjusting for Z moves the slope toward the total causal effect of X on Y.',
+    treatment: 'X', outcome: 'Y',
+    nodes: { Z:{x:180,y:120,label:'Z',role:'confounder'}, X:{x:360,y:240,label:'X',role:'treatment'}, Y:{x:620,y:240,label:'Y',role:'outcome'} },
+    edges:[['Z','X'],['Z','Y'],['X','Y']],
+    roleHints:{Z:'Confounder: common cause of X and Y',X:'Treatment',Y:'Outcome'},
+    trueEffects:{ total:0.8, direct:0.8 },
+    suggested:{ total:['Z'], direct:['Z'], badcontrol:[] },
+    example:'Real-world example: estimating the effect of attending a pre-college seminar (X) on first-year GPA (Y), where prior academic preparation or family resources (Z) influence both participation and GPA.'
+  },
+  mediation: {
+    title: 'Mediation: post-treatment control changes the estimand',
+    description: 'M lies on the pathway from X to Y. The simulation is set up so adjusting for M moves the estimate from a total-effect style quantity toward a direct-effect style quantity.',
+    treatment:'X', outcome:'Y',
+    nodes:{ X:{x:180,y:210,label:'X',role:'treatment'}, M:{x:410,y:210,label:'M',role:'mediator'}, Y:{x:650,y:210,label:'Y',role:'outcome'}, Z:{x:180,y:80,label:'Z',role:'pre'} },
+    edges:[['X','M'],['M','Y'],['X','Y'],['Z','X']],
+    roleHints:{M:'Mediator: post-treatment pathway from X to Y',Z:'Pre-treatment cause of X',X:'Treatment',Y:'Outcome'},
+    trueEffects:{ total:1.3, direct:0.3 },
+    suggested:{ total:['Z'], direct:['M'], badcontrol:[] },
+    example:'Real-world example: estimating the effect of a first-year seminar (X) on graduation (Y), where student engagement or study habits developed after the seminar (M) carry part of the seminar’s effect.'
+  },
+  collider: {
+    title: 'Collider: adjusting can create bias',
+    description: 'C is caused by both X and Y. The simulation is set up so conditioning on C opens a noncausal path and alters the treatment slope.',
+    treatment:'X', outcome:'Y',
+    nodes:{ X:{x:220,y:210,label:'X',role:'treatment'}, C:{x:430,y:110,label:'C',role:'collider'}, Y:{x:640,y:210,label:'Y',role:'outcome'} },
+    edges:[['X','Y'],['X','C'],['Y','C']],
+    roleHints:{C:'Collider: arrows meet here',X:'Treatment',Y:'Outcome'},
+    trueEffects:{ total:0.9, direct:0.9 },
+    suggested:{ total:[], direct:[], badcontrol:['C'] },
+    example:'Real-world example: estimating the effect of academic preparation (X) on college performance (Y), while conditioning on admission to a selective program (C), which depends on both preparation and later performance signals or institutional screening.'
+  },
+  combined: {
+    title: 'Combined example: confounder, mediator, and collider together',
+    description: 'This is the most instructive case. The simulation includes a confounder Z, a mediator M, a collider C, and an external cause U.',
+    treatment:'X', outcome:'Y',
+    nodes:{ Z:{x:160,y:100,label:'Z',role:'confounder'}, X:{x:310,y:220,label:'X',role:'treatment'}, M:{x:500,y:220,label:'M',role:'mediator'}, Y:{x:700,y:220,label:'Y',role:'outcome'}, U:{x:700,y:100,label:'U',role:'other'}, C:{x:500,y:90,label:'C',role:'collider'} },
+    edges:[['Z','X'],['Z','Y'],['X','M'],['M','Y'],['X','Y'],['X','C'],['U','C'],['U','Y']],
+    roleHints:{Z:'Confounder: common cause of X and Y',M:'Mediator: carries part of the effect',C:'Collider: conditioning can open a path',U:'External cause of Y and C',X:'Treatment',Y:'Outcome'},
+    trueEffects:{ total:1.3, direct:0.35 },
+    suggested:{ total:['Z'], direct:['Z','M'], badcontrol:['C'] },
+    example:'Real-world example: estimating the effect of participation in a student support program (X) on graduation (Y), where pre-college advantage (Z) affects both participation and graduation, early engagement (M) mediates part of the effect, and selection into a special opportunity group (C) depends on both participation and outside supports (U).'
+  }
+};
+
+let state = {
+  scenarioKey: 'combined',
+  estimand: 'total',
+  conditioned: new Set(),
+  simData: null,
+  regression: null,
+  samplingResults: null
+};
+
+function getScenario(){ return scenarios[state.scenarioKey]; }
+function randn(){ let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+function mean(arr){ return arr.length ? arr.reduce((s,x)=>s+x,0)/arr.length : NaN; }
+function getParents(node, scenario){ return scenario.edges.filter(([a,b])=>b===node).map(([a])=>a); }
+function getChildren(node, scenario){ return scenario.edges.filter(([a,b])=>a===node).map(([,b])=>b); }
+function undirectedNeighbors(node, scenario){ const out=new Set(); scenario.edges.forEach(([a,b])=>{ if(a===node) out.add(b); if(b===node) out.add(a); }); return [...out]; }
+function descendantsOf(node, scenario){ const seen=new Set(); const stack=[...getChildren(node, scenario)]; while(stack.length){ const cur=stack.pop(); if(seen.has(cur)) continue; seen.add(cur); stack.push(...getChildren(cur, scenario)); } return seen; }
+function allSimplePaths(start, end, scenario){ const results=[]; function dfs(cur,target,visited,path){ if(cur===target){ results.push([...path]); return; } for(const next of undirectedNeighbors(cur, scenario)){ if(visited.has(next)) continue; visited.add(next); path.push(next); dfs(next,target,visited,path); path.pop(); visited.delete(next); } } dfs(start,end,new Set([start]),[start]); return results; }
+function edgeDirection(a,b,scenario){ for(const [u,v] of scenario.edges){ if(u===a && v===b) return 'forward'; if(u===b && v===a) return 'backward'; } return null; }
+function isCollider(prev, mid, next, scenario){ return edgeDirection(prev, mid, scenario)==='forward' && edgeDirection(next, mid, scenario)==='forward'; }
+function pathStartsWithBackdoor(path, scenario){ return path.length>=2 && edgeDirection(path[0], path[1], scenario)==='backward'; }
+function pathOpen(path, scenario, conditionedSet){ if(path.length<=1) return false; for(let i=1;i<path.length-1;i++){ const prev=path[i-1], mid=path[i], next=path[i+1]; const collider=isCollider(prev,mid,next,scenario); if(collider){ const desc=descendantsOf(mid,scenario); const activated=conditionedSet.has(mid) || [...desc].some(d=>conditionedSet.has(d)); if(!activated) return false; } else { if(conditionedSet.has(mid)) return false; } } return true; }
+function classifyPath(path, scenario, conditionedSet){ const open=pathOpen(path, scenario, conditionedSet); const backdoor=pathStartsWithBackdoor(path, scenario); let explanation=''; const internals=path.slice(1,-1); if(!internals.length){ explanation='Direct causal path.'; } else { const pieces=[]; for(let i=1;i<path.length-1;i++){ const prev=path[i-1], mid=path[i], next=path[i+1]; if(isCollider(prev,mid,next,scenario)){ pieces.push(conditionedSet.has(mid) ? `${mid} is a collider and is conditioned on, so it opens this part of the path.` : `${mid} is a collider and is not conditioned on, so it blocks this part of the path.`); } else { pieces.push(conditionedSet.has(mid) ? `${mid} is a non-collider and is conditioned on, so it blocks this part of the path.` : `${mid} is a non-collider and is not conditioned on, so it leaves this part of the path open.`); } } explanation=pieces.join(' '); } return { open, backdoor, explanation }; }
+function recommendedStatus(scenario, conditionedSet){ const rec=new Set(getSuggestedControls()); return { missing:[...rec].filter(x=>!conditionedSet.has(x)), extras:[...conditionedSet].filter(x=>!rec.has(x)) }; }
+function getSuggestedControls(){ const scenario=getScenario(); return scenario.suggested[state.estimand] || []; }
+
+function renderSvg(){
+  const scenario=getScenario();
+  const conditioned=state.conditioned;
+  const paths=allSimplePaths(scenario.treatment, scenario.outcome, scenario);
+  const pathDetails=paths.map(path=>({ path, ...classifyPath(path, scenario, conditioned) }));
+  const openBackdoorNodeEdges=new Set();
+  if(highlightBackdoors.checked){
+    pathDetails.filter(p=>p.backdoor && p.open).forEach(({path})=>{
+      for(let i=0;i<path.length-1;i++){ openBackdoorNodeEdges.add(`${path[i]}->${path[i+1]}`); openBackdoorNodeEdges.add(`${path[i+1]}->${path[i]}`); }
+    });
+  }
+  const defs=`<defs><marker id="arrowhead" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#94a3b8"></polygon></marker></defs>`;
+  const edgeMarkup=scenario.edges.map(([a,b])=>{ const na=scenario.nodes[a], nb=scenario.nodes[b]; const cls=openBackdoorNodeEdges.has(`${a}->${b}`)?'edge open':'edge'; return `<line class="${cls}" x1="${na.x}" y1="${na.y}" x2="${nb.x}" y2="${nb.y}"></line>`; }).join('');
+  const nodeMarkup=Object.entries(scenario.nodes).map(([id,node])=>{ const classes=['node','clickable']; if(id===scenario.treatment) classes.push('treatment'); else if(id===scenario.outcome) classes.push('outcome'); if(state.conditioned.has(id)) classes.push('conditioned'); const roleHint=showRoleHints.checked && scenario.roleHints[id] ? `<title>${scenario.roleHints[id]}</title>` : ''; return `<g class="${classes.join(' ')}" data-node="${id}" transform="translate(${node.x},${node.y})">${roleHint}<circle r="32"></circle><text y="1">${node.label}</text></g>`; }).join('');
+  svg.innerHTML = defs + edgeMarkup + nodeMarkup;
+  svg.querySelectorAll('[data-node]').forEach(el=>{ el.addEventListener('click', ()=>{ const id=el.getAttribute('data-node'); const scenario=getScenario(); if(id===scenario.treatment || id===scenario.outcome) return; if(state.conditioned.has(id)) state.conditioned.delete(id); else state.conditioned.add(id); recomputeRegressionOnly(); redraw(); }); });
+}
+
+function renderPaths(){
+  const scenario=getScenario();
+  const details=allSimplePaths(scenario.treatment, scenario.outcome, scenario).map(path=>({ path, ...classifyPath(path, scenario, state.conditioned) }));
+  pathList.innerHTML = details.map(d=>{
+    const kind=d.backdoor?'Backdoor path':'Directed / non-backdoor path';
+    const statusTag=`<span class="tag ${d.open?'open':'closed'}">${d.open?'Open':'Closed'}</span>`;
+    const biasTag=d.backdoor?`<span class="tag ${d.open?'bad':'good'}">${d.open?'Bias path active':'Bias path blocked'}</span>`:'';
+    return `<div class="path-item"><div class="path-title">${kind}${statusTag}${biasTag}</div><div class="mono" style="margin:6px 0;">${d.path.join(' → ')}</div><div class="small">${showAdjustmentReasoning.checked ? d.explanation : ''}</div></div>`;
+  }).join('');
+}
+
+function solveLinearSystem(A, b){
+  const n=A.length;
+  const M=A.map((row,i)=>[...row, b[i]]);
+  for(let col=0; col<n; col++){
+    let pivot=col;
+    for(let r=col+1; r<n; r++) if(Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot=r;
+    if(Math.abs(M[pivot][col]) < 1e-10) continue;
+    [M[col], M[pivot]] = [M[pivot], M[col]];
+    const div=M[col][col];
+    for(let c=col; c<=n; c++) M[col][c] /= div;
+    for(let r=0; r<n; r++){
+      if(r===col) continue;
+      const factor=M[r][col];
+      for(let c=col; c<=n; c++) M[r][c] -= factor*M[col][c];
+    }
+  }
+  return M.map(row=>row[n]);
+}
+
+function regressionWithControls(data, treatment, outcome, controls){
+  const features = data.map(row => [1, row[treatment], ...controls.map(c => row[c])]);
+  const y = data.map(row => row[outcome]);
+  const p = features[0].length;
+  const XtX = Array.from({length:p}, ()=>Array(p).fill(0));
+  const Xty = Array(p).fill(0);
+  for(let i=0;i<features.length;i++){
+    for(let j=0;j<p;j++){
+      Xty[j] += features[i][j] * y[i];
+      for(let k=0;k<p;k++) XtX[j][k] += features[i][j] * features[i][k];
+    }
+  }
+  const beta = solveLinearSystem(XtX, Xty);
+  return { intercept: beta[0], slope: beta[1], controls };
+}
+
+function simulateRows(){
+  const scenario=getScenario();
+  const n=+sampleSizeSelect.value;
+  const noise=+noiseSelect.value;
+  const rows=[];
+  for(let i=0;i<n;i++){
+    let row={};
+    if(state.scenarioKey==='confounding'){
+      row.Z = randn();
+      row.X = 0.9*row.Z + 0.8*randn();
+      row.Y = 0.8*row.X + 0.9*row.Z + noise*randn();
+    } else if(state.scenarioKey==='mediation'){
+      row.Z = randn();
+      row.X = 0.9*row.Z + 0.9*randn();
+      row.M = 1.0*row.X + 0.7*randn();
+      row.Y = 0.3*row.X + 1.0*row.M + noise*randn();
+    } else if(state.scenarioKey==='collider'){
+      row.X = randn();
+      row.Y = 0.9*row.X + noise*randn();
+      row.C = 1.0*row.X + 1.0*row.Y + 0.8*randn();
+    } else {
+      row.Z = randn();
+      row.U = randn();
+      row.X = 0.9*row.Z + 0.9*randn();
+      row.M = 0.9*row.X + 0.7*randn();
+      row.C = 0.8*row.X + 0.9*row.U + 0.7*randn();
+      row.Y = 0.35*row.X + 0.95*row.M + 0.75*row.Z + 0.85*row.U + noise*randn();
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+function simulateData(){
+  state.simData = simulateRows();
+  state.samplingResults = null;
+  recomputeRegressionOnly();
+}
+
+function recomputeRegressionOnly(){
+  const scenario=getScenario();
+  if(!state.simData) return;
+  const controls = [...state.conditioned].filter(v => v !== scenario.treatment && v !== scenario.outcome);
+  const unadj = regressionWithControls(state.simData, scenario.treatment, scenario.outcome, []);
+  const adj = regressionWithControls(state.simData, scenario.treatment, scenario.outcome, controls);
+  state.regression = { unadj, adj, controls };
+}
+
+function runManySimulations(){
+  const scenario=getScenario();
+  const controls = [...state.conditioned].filter(v => v !== scenario.treatment && v !== scenario.outcome);
+  const unadj=[];
+  const adj=[];
+  for(let i=0;i<200;i++){
+    const rows=simulateRows();
+    unadj.push(regressionWithControls(rows, scenario.treatment, scenario.outcome, []).slope);
+    adj.push(regressionWithControls(rows, scenario.treatment, scenario.outcome, controls).slope);
+  }
+  state.samplingResults = { unadj, adj };
+}
+
+function drawRegressionPlot(){
+  const scenario=getScenario();
+  const rows=state.simData || [];
+  if(!rows.length){ Plotly.react(regressionPlot, [], {margin:{t:10}}, {responsive:true}); return; }
+  const x = rows.map(r => r[scenario.treatment]);
+  const y = rows.map(r => r[scenario.outcome]);
+  const minX = Math.min(...x), maxX = Math.max(...x);
+  const traces=[{
+    x, y, mode:'markers', type:'scatter', name:'Simulated data',
+    marker:{color:'rgba(107,114,128,0.45)', size:7},
+    hovertemplate:`${scenario.treatment}=%{x:.2f}<br>${scenario.outcome}=%{y:.2f}<extra></extra>`
+  }];
+  if(showRegressionLines.checked && state.regression){
+    const u=state.regression.unadj, a=state.regression.adj;
+    traces.push({ x:[minX,maxX], y:[u.intercept + u.slope*minX, u.intercept + u.slope*maxX], mode:'lines', type:'scatter', name:'Unadjusted', line:{color:'#dc2626', width:3, dash:'dash'} });
+    traces.push({ x:[minX,maxX], y:[a.intercept + a.slope*minX, a.intercept + a.slope*maxX], mode:'lines', type:'scatter', name:'Adjusted', line:{color:'#2563eb', width:3} });
+  }
+  Plotly.react(regressionPlot, traces, {
+    margin:{t:10,r:20,b:50,l:50},
+    xaxis:{title:`${scenario.treatment} (treatment)`},
+    yaxis:{title:`${scenario.outcome} (outcome)`},
+    showlegend:true,
+    legend:{orientation:'h', x:0, y:1.08, xanchor:'left', yanchor:'bottom'}
+  }, {responsive:true});
+}
+
+function drawSamplingPlot(){
+  if(!state.samplingResults){ Plotly.react(samplingPlot, [], {margin:{t:10}}, {responsive:true}); return; }
+  const traces=[
+    { x: state.samplingResults.unadj, type:'histogram', name:'Unadjusted slopes', opacity:0.75, marker:{color:'#dc2626'} },
+    { x: state.samplingResults.adj, type:'histogram', name:'Adjusted slopes', opacity:0.65, marker:{color:'#2563eb'} }
+  ];
+  const trueEffect = getScenario().trueEffects[state.estimand];
+  Plotly.react(samplingPlot, traces, {
+    barmode:'overlay',
+    bargap:0.02,
+    margin:{t:10,r:20,b:50,l:50},
+    xaxis:{title:'Treatment slope across repeated simulations'},
+    yaxis:{title:'Frequency'},
+    showlegend:true,
+    legend:{orientation:'h', x:0, y:1.08, xanchor:'left', yanchor:'bottom'},
+    shapes:[{ type:'line', x0:trueEffect, x1:trueEffect, y0:0, y1:1, xref:'x', yref:'paper', line:{color:'#111827', width:3, dash:'dot'} }],
+    annotations:[{ x:trueEffect, y:1.02, xref:'x', yref:'paper', text:'True effect', showarrow:false, font:{size:12,color:'#111827'} }]
+  }, {responsive:true});
+}
+
+function renderRegressionTable(){
+  if(!state.regression){ regressionTableBody.innerHTML=''; return; }
+  const trueEffect = getScenario().trueEffects[state.estimand];
+  const controlsText = controls => controls.length ? controls.join(', ') : 'None';
+  const biasText = slope => `${(slope - trueEffect).toFixed(3)}`;
+  regressionTableBody.innerHTML = `
+    <tr>
+      <td>Unadjusted</td>
+      <td>${controlsText([])}</td>
+      <td class="mono">${state.regression.unadj.slope.toFixed(3)}</td>
+      <td class="mono">${biasText(state.regression.unadj.slope)}</td>
+    </tr>
+    <tr>
+      <td>Adjusted</td>
+      <td>${controlsText(state.regression.controls)}</td>
+      <td class="mono">${state.regression.adj.slope.toFixed(3)}</td>
+      <td class="mono">${biasText(state.regression.adj.slope)}</td>
+    </tr>`;
+}
+
+function updateEstimandPanel(){
+  const scenario=getScenario();
+  const current=[...state.conditioned].sort();
+  const suggested=getSuggestedControls();
+  const label = state.estimand === 'total' ? 'Total effect' : state.estimand === 'direct' ? 'Direct effect' : 'Bias-inducing control demo';
+  targetEffectVal.textContent = label;
+  targetControlsVal.textContent = suggested.length ? suggested.join(', ') : 'None';
+  targetCurrentVal.textContent = current.length ? current.join(', ') : 'None';
+  if(state.estimand === 'total') targetInterpretationVal.textContent = 'For a total effect, do not automatically condition on mediators.';
+  else if(state.estimand === 'direct') targetInterpretationVal.textContent = 'For a direct effect, conditioning on the mediator can be part of the target definition.';
+  else targetInterpretationVal.textContent = 'This mode highlights clearly bias-inducing controls, such as colliders. Mediators are handled separately because they usually change the estimand rather than simply adding bias.';
+}
+
+function updateWhatHappenedText(){
+  if(!state.regression){ whatHappenedText.textContent = 'What just happened: waiting for a conditioning choice.'; return; }
+  const trueEffect = getScenario().trueEffects[state.estimand];
+  const before = state.regression.unadj.slope;
+  const after = state.regression.adj.slope;
+  const diff = after - before;
+  const towardTruth = Math.abs(after - trueEffect) < Math.abs(before - trueEffect);
+  const cond = [...state.conditioned].sort();
+  if(!cond.length){
+    whatHappenedText.textContent = 'What just happened: no variables are conditioned on, so the adjusted model matches the unadjusted model.';
+    return;
+  }
+  const direction = diff > 0 ? 'up' : diff < 0 ? 'down' : 'not at all';
+  const truthText = towardTruth ? 'toward' : 'away from';
+  whatHappenedText.textContent = `What just happened: conditioning on ${cond.join(', ')} moved the treatment slope ${direction} and ${truthText} the target effect of ${trueEffect.toFixed(3)}.`;
+}
+
+function updateSummary(){
+  const scenario=getScenario();
+  const conditioned=state.conditioned;
+  const details=allSimplePaths(scenario.treatment, scenario.outcome, scenario).map(path=>({ path, ...classifyPath(path, scenario, conditioned) }));
+  const openBackdoors = details.filter(d=>d.backdoor && d.open).length;
+  const recStatus = recommendedStatus(scenario, conditioned);
+  const conditioningText = conditioned.size ? [...conditioned].sort().join(', ') : 'None';
+  const trueEffect = scenario.trueEffects[state.estimand];
+
+  treatmentVal.textContent = scenario.treatment;
+  outcomeVal.textContent = scenario.outcome;
+  conditionedVal.textContent = conditioningText;
+  openBackdoorsVal.textContent = String(openBackdoors);
+  recommendedVal.textContent = getSuggestedControls().length ? getSuggestedControls().join(', ') : 'None';
+  trueEffectVal.textContent = trueEffect.toFixed(3);
+  unadjSlopeVal.textContent = state.regression ? state.regression.unadj.slope.toFixed(3) : '--';
+  adjSlopeVal.textContent = state.regression ? state.regression.adj.slope.toFixed(3) : '--';
+  adjBiasVal.textContent = state.regression ? (state.regression.adj.slope - trueEffect).toFixed(3) : '--';
+
+  if(openBackdoors === 0 && recStatus.extras.length === 0 && recStatus.missing.length === 0){
+    statusVal.textContent = 'Backdoor paths blocked with the suggested adjustment choice';
+  } else if(openBackdoors === 0) {
+    statusVal.textContent = 'Backdoor paths blocked, but extra controls may change the estimand';
+  } else {
+    statusVal.textContent = 'At least one backdoor path remains open';
+  }
+
+  const warnings=[];
+  if(recStatus.missing.length) warnings.push(`Missing suggested variable(s): ${recStatus.missing.join(', ')}.`);
+  if(conditioned.has('M') && scenario.nodes.M?.role === 'mediator' && state.estimand==='total') warnings.push('Conditioning on M changes the target away from the total effect.');
+  if(conditioned.has('C') && scenario.nodes.C?.role === 'collider') warnings.push('Conditioning on C opens collider bias.');
+  if(recStatus.extras.filter(x => !['M','C'].includes(x)).length) warnings.push(`Extra conditioned variable(s): ${recStatus.extras.filter(x => !['M','C'].includes(x)).join(', ')}.`);
+  warningVal.textContent = warnings.length ? warnings.join(' ') : 'No immediate warning.';
+
+  if(state.scenarioKey === 'confounding') cueVal.textContent = 'Adjust for Z and compare the adjusted slope with the true effect.';
+  else if(state.scenarioKey === 'mediation') cueVal.textContent = state.estimand==='direct' ? 'Direct-effect mode makes mediator control part of the target.' : 'Total-effect mode treats mediator control as a target change, not just a cleaner model.';
+  else if(state.scenarioKey === 'collider') cueVal.textContent = conditioned.has('C') ? 'Notice how the adjusted slope can move away from the true effect after conditioning on the collider.' : 'Leave C alone first, then condition on it and compare the change.';
+  else cueVal.textContent = 'Try Z only, then Z+M, then Z+C, and compare the adjusted slope with the true effect.';
+}
+
+function redraw(){
+  const scenario=getScenario();
+  scenarioTitle.textContent = scenario.title;
+  scenarioDescription.textContent = scenario.description;
+  realWorldExample.textContent = scenario.example || '';
+  renderSvg();
+  renderPaths();
+  drawRegressionPlot();
+  drawSamplingPlot();
+  renderRegressionTable();
+  updateEstimandPanel();
+  updateWhatHappenedText();
+  updateSummary();
+}
+
+function applySuggestedControls(){
+  state.conditioned = new Set(getSuggestedControls());
+  recomputeRegressionOnly();
+}
+
+scenarioSelect.addEventListener('change', () => {
+  state.scenarioKey = scenarioSelect.value;
+  state.conditioned = new Set();
+  state.samplingResults = null;
+  simulateData();
+  redraw();
+});
+
+estimandSelect.addEventListener('change', () => {
+  state.estimand = estimandSelect.value;
+  recomputeRegressionOnly();
+  redraw();
+});
+
+sampleSizeSelect.addEventListener('change', () => { simulateData(); redraw(); });
+noiseSelect.addEventListener('change', () => { simulateData(); redraw(); });
+clearConditioningBtn.addEventListener('click', () => { state.conditioned = new Set(); recomputeRegressionOnly(); redraw(); });
+conditionRecommendedBtn.addEventListener('click', () => { applySuggestedControls(); redraw(); });
+resimulateDataBtn.addEventListener('click', () => { simulateData(); redraw(); });
+runManyBtn.addEventListener('click', () => { runManySimulations(); drawSamplingPlot(); });
+showRoleHints.addEventListener('change', redraw);
+highlightBackdoors.addEventListener('change', redraw);
+showAdjustmentReasoning.addEventListener('change', redraw);
+showRegressionLines.addEventListener('change', drawRegressionPlot);
+
+document.getElementById('toggleHelp').addEventListener('click', () => {
+  const helpCard = document.getElementById('helpCard');
+  helpCard.style.display = helpCard.style.display === 'none' ? 'block' : 'none';
+});
+
+state.estimand = estimandSelect.value;
+state.conditioned = new Set();
+simulateData();
+redraw();
+</script>
+</body>
+</html>
