@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confidence Interval Explorer</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --border:#d9dde3;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --soft:#f3f4f6;
+      --blue:#2563eb;
+      --red:#dc2626;
+      --green:#16a34a;
+      --amber:#d97706;
+      --gray:#9ca3af;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--bg);color:var(--text)}
+    .container{max-width:1380px;margin:auto}
+    .app-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+    .left-column,.right-column{display:grid;gap:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+
+    /* Panel headers */
+    .panel-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+    .panel-header h3{margin:0}
+    .panel-badge{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:var(--soft);color:var(--muted);white-space:nowrap}
+
+    /* Intro / header */
+    .intro-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+    .intro-title-block{flex:1 1 500px;min-width:260px}
+    .intro-title-block h2{margin:0 0 6px}
+    .intro-subtitle{font-size:1rem;color:var(--muted);margin:0 0 12px;line-height:1.5}
+    .concept-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+    .concept-card{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--soft)}
+    .concept-label{font-weight:700;font-size:.9rem;color:var(--text)}
+    .concept-desc{font-size:.82rem;color:var(--muted);margin-top:4px;line-height:1.4}
+
+    /* Guide section */
+    .guide-toggle-btn{white-space:nowrap;align-self:flex-start;margin-top:4px}
+    .guide-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px;display:none}
+    .guide-section.open{display:block}
+    .guide-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+    .guide-col h4{margin:0 0 8px;font-size:.9rem;color:var(--text)}
+    .guide-col ol,.guide-col ul{margin:0;padding-left:18px}
+    .guide-col li{font-size:.85rem;color:var(--muted);line-height:1.5;margin-bottom:4px}
+    .guide-col li strong{color:var(--text)}
+
+    /* What-to-watch callout */
+    .what-to-watch{margin:0 0 10px;padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:.84rem;color:#075985;line-height:1.45}
+    .what-to-watch strong{color:#0c4a6e}
+
+    /* Controls */
+    .controls{display:grid;gap:10px}
+    .control-box{background:var(--soft);padding:10px;border-radius:10px;border:1px solid var(--border)}
+    .control-title{font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:6px;display:block}
+    button{padding:9px 12px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;margin-right:6px;margin-bottom:6px}
+    button:hover{background:#f8fafc}
+    input,select{width:100%}
+    .display-list,.checkbox-list{display:grid;gap:8px}
+    .display-row,.checkbox-list label{display:grid;grid-template-columns:18px 1fr;align-items:start;column-gap:10px;margin:0}
+    .display-row input[type="checkbox"],.checkbox-list input[type="checkbox"],.checkbox-list input[type="radio"]{width:auto;margin:0}
+
+    /* Summary metrics */
+    .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .metric{border:1px solid var(--border);background:var(--soft);border-radius:10px;padding:10px}
+    .metric-label{font-size:.8rem;color:var(--muted)}
+    .metric-value{font-weight:600;line-height:1.35}
+    .small{font-size:.9rem;color:var(--muted);line-height:1.45}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+    /* Pills */
+    .pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--border);font-size:.8rem;background:white}
+    .pill.good{background:#ecfdf5;color:#166534;border-color:#86efac}
+    .pill.warn{background:#fff7ed;color:#9a3412;border-color:#fdba74}
+    .pill.bad{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
+
+    /* Design read card */
+    .prominent-note{padding:14px 16px;border:1px solid #c7d2fe;border-left:5px solid #2563eb;background:#eff6ff;border-radius:10px}
+
+    /* Preset descriptions */
+    .preset-item{margin-bottom:4px}
+    .preset-desc{font-size:.78rem;color:var(--muted);margin:2px 0 8px;padding-left:2px;line-height:1.35}
+
+    /* Help card */
+    .help-card{width:100%;max-width:100%}
+    .help-section{margin-bottom:18px}
+    .help-section h4{margin:0 0 6px;font-size:.95rem;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px}
+    .help-section p,.help-section li{font-size:.88rem;color:var(--muted);line-height:1.5;margin:4px 0}
+    .help-section ul{padding-left:18px;margin:6px 0}
+    .help-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .case-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+    .case-box{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--soft)}
+    .case-box .case-label{font-weight:700;font-size:.82rem;color:var(--text)}
+    .case-box .case-desc{font-size:.78rem;color:var(--muted);margin-top:2px;line-height:1.35}
+
+    /* Plots */
+    #plotPop{height:320px}
+    #plotCI{height:760px}
+
+    @media (max-width:980px){
+      .app-grid{grid-template-columns:1fr}
+      .metric-grid,.concept-trio{grid-template-columns:1fr}
+      .guide-cols{grid-template-columns:1fr}
+      .help-2col,.case-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+    <div class="left-column">
+
+      <!-- Intro card -->
+      <div class="card">
+        <div class="intro-header">
+          <div class="intro-title-block">
+            <h2>Confidence Interval Explorer</h2>
+            <p class="intro-subtitle">Explore confidence intervals as repeated-sampling procedures. The app emphasizes long-run coverage, interval width, and how assumptions shape performance.</p>
+            <div class="concept-trio">
+              <div class="concept-card">
+                <div class="concept-label">Coverage</div>
+                <div class="concept-desc">A confidence procedure is judged by how often intervals capture the true mean across repeated samples, not by any single interval.</div>
+              </div>
+              <div class="concept-card">
+                <div class="concept-label">Precision</div>
+                <div class="concept-desc">Wider intervals are safer but less precise. Sample size and confidence level directly determine how wide each interval must be.</div>
+              </div>
+              <div class="concept-card">
+                <div class="concept-label">Assumptions</div>
+                <div class="concept-desc">Skewed populations and small samples can move observed coverage away from the nominal target. The z and t methods make different demands.</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;align-self:flex-start;margin-top:4px;">
+            <button class="guide-toggle-btn" id="toggleGuide">Quick-Start Guide</button>
+            <button id="toggleHelp">Full Reference</button>
+          </div>
+        </div>
+
+        <div class="guide-section" id="guideSection">
+          <div class="guide-cols">
+            <div class="guide-col">
+              <h4>Purpose</h4>
+              <ul>
+                <li>A confidence interval is a <strong>procedure</strong>, not a probability statement about one fixed result. The question is whether the procedure captures the true mean at the advertised rate over many repeated samples.</li>
+                <li>This app makes that abstract idea concrete by letting you watch many intervals being built, colored by whether they capture the true mean.</li>
+                <li>The key insight is that <strong>the true mean is fixed</strong>; the interval varies from sample to sample. Approximately the right fraction should be green.</li>
+              </ul>
+            </div>
+            <div class="guide-col">
+              <h4>How to Use</h4>
+              <ol>
+                <li><strong>Load a preset</strong> to start from a canonical teaching case.</li>
+                <li>Click <strong>Draw new intervals</strong> several times. Watch coverage fluctuate around the nominal level. Cumulative coverage stabilizes as runs accumulate.</li>
+                <li><strong>Increase n</strong> to see intervals narrow without changing the coverage rate much.</li>
+                <li><strong>Increase the confidence level</strong> to see intervals widen. The coverage rate rises toward the new nominal level.</li>
+                <li>Switch to a <strong>skewed population with small n</strong> to see why the normal approximation assumption matters for coverage.</li>
+                <li>Compare the <strong>sample SD with z</strong> method against the <strong>sample SD with t</strong> method at small n to see where z undercounts uncertainty.</li>
+              </ol>
+            </div>
+            <div class="guide-col">
+              <h4>What You Gain</h4>
+              <ul>
+                <li>A clear intuition that confidence <strong>refers to the procedure</strong>, not to your belief about where the true mean lies after seeing one interval.</li>
+                <li>An understanding that <strong>wider intervals are not a failure</strong> -- they reflect honest uncertainty, and the right width depends on the design, not the data alone.</li>
+                <li>A feel for <strong>when the t method matters</strong>: at large n the z and t results converge, but at small n the t method gives more conservative and more accurate coverage.</li>
+                <li>The ability to <strong>diagnose undercoverage</strong>: small n and skewed populations are the main stress cases for the standard interval formula.</li>
+                <li>An intuition for <strong>cumulative vs. single-run coverage</strong>: any one run may look off-target, but the long-run rate stabilizes near the nominal level for a well-specified procedure.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 1: Population -->
+      <div class="card">
+        <div class="panel-header"><h3>Population</h3><span class="panel-badge">Panel 1</span></div>
+        <p class="what-to-watch"><strong>Look for:</strong> where the true mean sits inside the population shape. The skewed distribution has a longer right tail; its mean is pulled rightward from the visual center of mass. Changing spread and shape changes the sampling problem the interval procedure faces.</p>
+        <div class="small" style="margin-bottom:8px;">This panel shows the full population (800 points) you are sampling from. The dashed vertical line marks the true population mean. All three populations are centered at 50 so comparisons across shapes are fair.</div>
+        <div id="plotPop"></div>
+      </div>
+
+      <!-- Panel 2: CI plot -->
+      <div class="card">
+        <div class="panel-header"><h3>Confidence Intervals</h3><span class="panel-badge">Panel 2</span></div>
+        <p class="what-to-watch"><strong>Look for:</strong> green intervals capture the true mean; red intervals miss it. The goal is not perfection in one run but long-run performance near the nominal level. Notice that missed intervals tend to be shorter -- they underestimated the spread in that particular sample.</p>
+        <div class="small" style="margin-bottom:8px;">Each horizontal segment is one confidence interval from one repeated sample. The black vertical line marks the true mean. Use the cumulative coverage row in the summary panel to track the long-run rate across multiple draws.</div>
+        <div id="plotCI"></div>
+      </div>
+
+      <!-- Panel 3: Design read -->
+      <div class="card">
+        <div class="panel-header"><h3>Design Read and Interpretation</h3><span class="panel-badge">Panel 3</span></div>
+        <p class="what-to-watch"><strong>Look for:</strong> whether this design is trading precision for coverage appropriately. Small n and skewed populations are the main stress tests. The cumulative read is more reliable than any single run.</p>
+        <div class="small" style="margin-bottom:8px;">This panel turns the visual pattern above into a plain-language design read. It reflects the current run only; click Draw new intervals several times to see how the message changes with sampling variation.</div>
+        <div class="prominent-note">
+          <div class="metric-label">Current read</div>
+          <div id="readVal" class="metric-value" style="margin-top:4px;">--</div>
+          <div id="designVal" class="small" style="margin-top:8px;">--</div>
+        </div>
+      </div>
+
+      <!-- Full reference / help card -->
+      <div class="card help-card" id="helpCard" style="display:none;">
+        <div class="panel-header"><h3>Full Reference</h3></div>
+        <div class="help-2col">
+          <div>
+            <div class="help-section">
+              <h4>Core idea</h4>
+              <p>A confidence interval is a procedure, not a probability statement about one fixed result. Before the sample is drawn, there is a 95% probability (under a 95% procedure) that the resulting interval will capture the true mean. After the interval is computed, the true mean is either inside it or not -- probability no longer applies to that specific interval.</p>
+              <p>The app visualizes this by drawing many intervals and coloring them by outcome. Roughly the right fraction should be green across a large number of runs.</p>
+            </div>
+            <div class="help-section">
+              <h4>Four coverage scenarios</h4>
+              <div class="case-grid">
+                <div class="case-box">
+                  <div class="case-label" style="color:var(--green)">Near-nominal coverage</div>
+                  <div class="case-desc">Observed rate is close to the nominal level. The procedure is working as advertised. Some misses are expected and normal.</div>
+                </div>
+                <div class="case-box">
+                  <div class="case-label" style="color:var(--red)">Undercoverage</div>
+                  <div class="case-desc">Observed rate is meaningfully below nominal. Common causes: sample SD with z critical at small n, or skewed population where the normal approximation breaks down.</div>
+                </div>
+                <div class="case-box">
+                  <div class="case-label" style="color:var(--amber)">Overcoverage</div>
+                  <div class="case-desc">Observed rate is above nominal. Wider-than-necessary intervals (e.g., using t when z would do at large n) produce conservative coverage at the cost of precision.</div>
+                </div>
+                <div class="case-box">
+                  <div class="case-label">Sampling variation</div>
+                  <div class="case-desc">Any single run can deviate from the nominal level by chance. Cumulative coverage across many runs reveals the true long-run rate of the procedure.</div>
+                </div>
+              </div>
+            </div>
+            <div class="help-section">
+              <h4>How to use this app</h4>
+              <ul>
+                <li>Fix a population and click Draw new intervals repeatedly to see coverage fluctuate around the nominal level.</li>
+                <li>Increase n to see intervals narrow. The coverage rate should stay near nominal; only the width changes.</li>
+                <li>Increase the confidence level to see intervals widen. A 99% interval is wider than a 95% interval for the same data.</li>
+                <li>Use a skewed population with small n to see why assumptions matter. The sample SD with z method will often show undercoverage here.</li>
+                <li>Compare sample SD with z vs sample SD with t at small n to see where the extra uncertainty in estimating the SD should be accounted for.</li>
+              </ul>
+            </div>
+          </div>
+          <div>
+            <div class="help-section">
+              <h4>The three interval methods</h4>
+              <ul>
+                <li><strong>Sample SD with t critical (recommended):</strong> Estimates the SD from the sample and uses a t critical value that accounts for the extra uncertainty in that estimate. This is the textbook correct method for unknown population SD. The t critical value is larger than z at small n and converges to z as n grows.</li>
+                <li><strong>Sample SD with z critical:</strong> Estimates the SD from the sample but uses the z critical value as if the SD were known. This undercounts uncertainty and produces intervals that are too narrow, leading to undercoverage at small n. Useful for demonstrating what goes wrong when the t adjustment is ignored.</li>
+                <li><strong>Population SD with z critical (known sigma):</strong> Uses the actual population SD rather than an estimate. This is the theoretically ideal case -- intervals are centered correctly and have the right width -- but it is rarely achievable in practice since the population SD is unknown.</li>
+              </ul>
+            </div>
+            <div class="help-section">
+              <h4>Cumulative coverage</h4>
+              <p>Any single batch of 25 intervals has high sampling variability in its coverage rate. With 25 intervals at 95% nominal, the standard deviation of the observed coverage rate is about 4.4 percentage points, so values from 86% to 100% are all plausible by chance alone. The cumulative coverage row accumulates across all Draw new intervals clicks for the current population and gives a more reliable estimate of the true long-run rate. It resets when you generate a new population or load a preset.</p>
+            </div>
+            <div class="help-section">
+              <h4>Interpreting misses</h4>
+              <ul>
+                <li>Missed intervals are not errors in reasoning -- they are expected outcomes of the procedure.</li>
+                <li>Misses tend to be shorter than captures because they came from samples that underestimated the spread.</li>
+                <li>If the miss rate is consistently higher than expected across many cumulative runs, check whether the method assumptions are violated for the current population and sample size.</li>
+              </ul>
+            </div>
+            <div class="help-section">
+              <h4>Interpretation reminders</h4>
+              <ul>
+                <li>Nominal coverage is the target; observed coverage varies from run to run and approaches nominal only in the long run.</li>
+                <li>Wider intervals often improve coverage but reduce precision. Neither goal dominates -- the right balance depends on the research context.</li>
+                <li>Changing display options does not change the underlying procedure or the intervals already computed.</li>
+                <li>The coverage tolerance shown in the interpretation panel scales with the number of intervals drawn so that the verdict is not misleadingly strict for small batches.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end left-column -->
+
+    <div class="right-column">
+
+      <!-- Presets -->
+      <div class="card">
+        <div class="panel-header"><h3>Teaching Presets</h3></div>
+        <div class="small" style="margin-bottom:10px;">Each preset sets up a common confidence-interval lesson. Load one, then change n, confidence level, or method to see how coverage and width respond.</div>
+        <div style="display:grid;gap:4px;">
+          <div class="preset-item">
+            <button id="presetBalanced" style="width:100%;margin:0;">Nominal coverage</button>
+            <p class="preset-desc">A stable starting point with moderate spread, a normal population, and the correct t method. Useful for seeing the standard relationship between interval width and nominal coverage.</p>
+          </div>
+          <div class="preset-item">
+            <button id="presetSmallSkew" style="width:100%;margin:0;">Small n with skew</button>
+            <p class="preset-desc">A small sample from a right-skewed population using the z method. This is the best case for showing that coverage drifts below the nominal level when assumptions are strained. Compare against the t method at the same settings.</p>
+          </div>
+          <div class="preset-item">
+            <button id="presetHighConfidence" style="width:100%;margin:0;">Wider intervals</button>
+            <p class="preset-desc">A 99% confidence level that produces noticeably wider intervals. Good for illustrating the tradeoff between precision and long-run capture rate.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="card">
+        <div class="panel-header"><h3>Controls</h3></div>
+        <div class="controls">
+
+          <div class="control-box">
+            <span class="control-title">Actions</span>
+            <div class="small" style="margin-bottom:8px;">Draw a fresh set of intervals from the same population to focus on sampling variation, or generate a new population to change the underlying distribution. Cumulative coverage accumulates across draws and resets when you change the population.</div>
+            <button id="reset" style="width:100%;margin:0 0 8px 0;">Draw new intervals</button>
+            <button id="newPopulation" style="width:100%;margin:0;">New population</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Inference settings</span>
+            <div class="small" style="margin-bottom:8px;">These change the interval procedure itself. Use them to compare nominal coverage, width, and method assumptions without changing the current population.</div>
+            <label class="small" for="confidenceLevel"><strong>Confidence level</strong></label>
+            <select id="confidenceLevel">
+              <option value="0.90">90%</option>
+              <option value="0.95" selected>95%</option>
+              <option value="0.99">99%</option>
+            </select>
+            <div style="height:8px"></div>
+            <label class="small" for="intervalCount"><strong>Number of intervals per draw</strong></label>
+            <select id="intervalCount">
+              <option value="25" selected>25</option>
+              <option value="100">100</option>
+              <option value="500">500</option>
+            </select>
+            <div style="height:8px"></div>
+            <span class="small"><strong>Interval method</strong></span>
+            <div class="checkbox-list" style="margin-top:6px;">
+              <label><input type="radio" name="methodMode" value="estimated-t" checked /><span>Sample SD, t critical (recommended)</span></label>
+              <label><input type="radio" name="methodMode" value="estimated-z" /><span>Sample SD, z critical (undercounts uncertainty)</span></label>
+              <label><input type="radio" name="methodMode" value="known-z" /><span>Population SD, z critical (known sigma)</span></label>
+            </div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Population and sample design</span>
+            <div class="small" style="margin-bottom:8px;">These control what kind of population you sample from and how much information each sample contains. They drive the main tradeoff between stability, width, and coverage.</div>
+            <label class="small" for="sampleSize"><strong>Sample size (n)</strong></label>
+            <input type="range" id="sampleSize" min="2" max="100" value="20" />
+            <div id="nVal" class="small">20</div>
+            <div class="small" style="margin-top:4px;">Sliding n is the most instructive action. Intervals narrow as n grows, but the coverage rate should stay near nominal -- only precision changes.</div>
+            <div style="height:8px"></div>
+            <label class="small" for="spread"><strong>Population spread (SD scale)</strong></label>
+            <input type="range" id="spread" min="1" max="20" value="8" />
+            <div id="spreadVal" class="small">8</div>
+            <div style="height:8px"></div>
+            <label class="small" for="distType"><strong>Population shape</strong></label>
+            <select id="distType">
+              <option value="normal">Normal</option>
+              <option value="skewed">Right skewed</option>
+              <option value="uniform">Uniform</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Display options</span>
+            <div class="small" style="margin-bottom:6px;">These change only how results are shown. They do not alter the interval procedure or the underlying sampling.</div>
+            <div class="display-list">
+              <div class="display-row"><input type="checkbox" id="showMissesOnly" /><span>Show misses only</span></div>
+              <div class="display-row"><input type="checkbox" id="sortByMean" /><span>Sort intervals by sample mean</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Interpretive cues -->
+      <div class="card">
+        <div class="panel-header"><h3>Interpretive Cues</h3></div>
+        <div class="small" style="margin-bottom:8px;">Quick read for the current run: whether coverage is on target, what may be driving any deviation, and which settings matter most right now.</div>
+        <div id="cueSentence" class="metric-value">--</div>
+        <div id="badgeRow" class="pill-row"></div>
+      </div>
+
+      <!-- Summary -->
+      <div class="card">
+        <div class="panel-header"><h3>Numerical Summary</h3></div>
+        <div class="small" style="margin-bottom:8px;">Key diagnostics for the current batch and the cumulative record. Cumulative coverage resets when the population changes.</div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Nominal level</div><div id="nominalVal" class="metric-value mono">95.0%</div></div>
+          <div class="metric"><div class="metric-label">Observed coverage (this draw)</div><div id="coverageVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Cumulative coverage</div><div id="cumCoverageVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Captured this draw</div><div id="captureVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Missed this draw</div><div id="missVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Intervals drawn (total)</div><div id="countVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Average interval width</div><div id="avgWidthVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Width range (min / max)</div><div id="widthRangeVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Latest interval</div><div id="latestVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Method in use</div><div id="methodVal" class="metric-value">--</div></div>
+        </div>
+      </div>
+
+    </div><!-- end right-column -->
+  </div>
+</div>
+
+<script>
+// DOM references
+const popPlot            = document.getElementById("plotPop");
+const ciPlot             = document.getElementById("plotCI");
+const nSlider            = document.getElementById("sampleSize");
+const spreadSlider       = document.getElementById("spread");
+const distType           = document.getElementById("distType");
+const confSelect         = document.getElementById("confidenceLevel");
+const intervalCountSelect = document.getElementById("intervalCount");
+const methodModeRadios   = document.querySelectorAll('input[name="methodMode"]');
+const showMissesOnly     = document.getElementById("showMissesOnly");
+const sortByMean         = document.getElementById("sortByMean");
+const nVal               = document.getElementById("nVal");
+const spreadVal          = document.getElementById("spreadVal");
+const nominalVal         = document.getElementById("nominalVal");
+const coverageVal        = document.getElementById("coverageVal");
+const cumCoverageVal     = document.getElementById("cumCoverageVal");
+const captureVal         = document.getElementById("captureVal");
+const missVal            = document.getElementById("missVal");
+const countVal           = document.getElementById("countVal");
+const avgWidthVal        = document.getElementById("avgWidthVal");
+const widthRangeVal      = document.getElementById("widthRangeVal");
+const latestVal          = document.getElementById("latestVal");
+const methodVal          = document.getElementById("methodVal");
+const cueSentence        = document.getElementById("cueSentence");
+const badgeRow           = document.getElementById("badgeRow");
+const readVal            = document.getElementById("readVal");
+const designVal          = document.getElementById("designVal");
+
+let population   = [];
+let intervals    = [];
+let fixedCiRange = null;
+let cumTotal     = 0;
+let cumCaptures  = 0;
+
+// ---- Math utilities -------------------------------------------------------
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function mean(a) { return a.length ? a.reduce((s, x) => s + x, 0) / a.length : NaN; }
+function sd(a) {
+  if (a.length < 2) return NaN;
+  const m = mean(a);
+  return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1));
+}
+
+// Rational inverse normal (Beasley-Springer-Moro) -- used as seed for t-quantile
+function inverseNormal(p) {
+  const a = [-39.69683028665376,220.9460984245205,-275.9285104469687,138.357751867269,-30.66479806614716,2.506628277459239];
+  const b = [-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572];
+  const c = [-0.007784894002430293,-0.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783];
+  const d = [0.007784695709041462,0.3224671290700398,2.445134137142996,3.754408661907416];
+  const plow = 0.02425, phigh = 1 - plow;
+  let q, r;
+  if (p < plow) {
+    q = Math.sqrt(-2 * Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+  if (phigh < p) {
+    q = Math.sqrt(-2 * Math.log(1 - p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+  q = p - 0.5; r = q * q;
+  return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+
+// Lanczos log-gamma -- used by exact t-quantile
+function logGammaFunc(z) {
+  const p = [0.99999999999980993,676.5203681218851,-1259.1392167224028,
+    771.32342877765313,-176.61502916214059,12.507343278686905,
+    -0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if (z < 0.5) return Math.log(Math.PI) - Math.log(Math.abs(Math.sin(Math.PI * z))) - logGammaFunc(1 - z);
+  z -= 1;
+  let x = p[0];
+  for (let i = 1; i < 9; i++) x += p[i] / (z + i);
+  const t = z + 7.5;
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(Math.abs(x));
+}
+
+// Regularized incomplete beta via Lentz continued fraction
+function incompleteBeta(a, b, x) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  if (x > (a + 1) / (a + b + 2)) return 1 - incompleteBeta(b, a, 1 - x);
+  const lbeta = logGammaFunc(a) + logGammaFunc(b) - logGammaFunc(a + b);
+  const front = Math.exp(a * Math.log(x) + b * Math.log(1 - x) - lbeta) / a;
+  const FPMIN = 1e-30, EPS = 1e-10, MAXIT = 200;
+  let c = 1, d = 1 - (a + b) * x / (a + 1);
+  if (Math.abs(d) < FPMIN) d = FPMIN;
+  d = 1 / d; let h = d;
+  for (let m = 1; m <= MAXIT; m++) {
+    let num = m * (b - m) * x / ((a - 1 + 2 * m) * (a + 2 * m));
+    d = 1 + num * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1 + num / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1 / d; h *= d * c;
+    num = -(a + m) * (a + b + m) * x / ((a + 2 * m) * (a + 1 + 2 * m));
+    d = 1 + num * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1 + num / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1 / d; const del = d * c; h *= del;
+    if (Math.abs(del - 1) < EPS) break;
+  }
+  return front * h;
+}
+
+// FIX: exact t-quantile via Newton-Raphson on the t-CDF, replacing the
+// coarse lookup table which had a dead zone for df 31-99.
+function tQuantile(p, df) {
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  let x = inverseNormal(p);  // normal quantile as seed
+  for (let i = 0; i < 60; i++) {
+    const x2   = df / (df + x * x);
+    const ib   = incompleteBeta(df / 2, 0.5, x2);
+    const cdf  = x >= 0 ? 1 - ib / 2 : ib / 2;
+    const fx   = cdf - p;
+    if (Math.abs(fx) < 1e-11) break;
+    const logpdf = logGammaFunc((df + 1) / 2) - logGammaFunc(df / 2)
+      - 0.5 * Math.log(df * Math.PI) - (df + 1) / 2 * Math.log(1 + x * x / df);
+    const pdf = Math.exp(logpdf);
+    if (pdf < 1e-15) break;
+    x -= fx / pdf;
+  }
+  return x;
+}
+
+// Critical value: exact for both z and t modes
+function getZ(conf) { return inverseNormal((1 + conf) / 2); }
+function getMethodMode() { return [...methodModeRadios].find(r => r.checked).value; }
+
+// FIX: replaces the coarse lookup table with exact computation
+// for all df including the previously-missing 31-99 range.
+function getCriticalValue(conf, df) {
+  if (getMethodMode().endsWith("-z")) return getZ(conf);
+  return tQuantile((1 + conf) / 2, df);
+}
+
+// ---- Population generation ------------------------------------------------
+function genPop() {
+  const s = +spreadSlider.value;
+  population = [];
+  // FIX: skewed population re-centered at 50 by subtracting the theoretical
+  // mean of exp(Z), which is e^0.5 for Z ~ N(0,1).
+  // Original had base 40 which produced a mean of ~45 at default settings.
+  const lnMean = Math.exp(0.5); // E[exp(Z)] for Z~N(0,1)
+  for (let i = 0; i < 800; i++) {
+    let x;
+    if (distType.value === "normal")       x = 50 + randn() * s;
+    else if (distType.value === "skewed")  x = 50 + (Math.exp(randn()) - lnMean) * s / 2.5;
+    else                                   x = 50 + (Math.random() - 0.5) * s * 4;
+    population.push(x);
+  }
+}
+
+function computeMuBandWidth() { return Math.max(sd(population) * 0.03, 0.35); }
+function computeCiXRange(mu)  { const pad = Math.max(sd(population) * 3.5, 8); return [mu - pad, mu + pad]; }
+
+function drawPop() {
+  const mu = mean(population);
+  const minX = Math.min(...population), maxX = Math.max(...population);
+  const bandHalf = computeMuBandWidth();
+  const shapes = [
+    { type:"rect", x0:mu-bandHalf, x1:mu+bandHalf, y0:0, y1:1, xref:"x", yref:"paper", fillcolor:"rgba(107,114,128,0.15)", line:{width:0} },
+    { type:"line", x0:mu, x1:mu, y0:0, y1:1, xref:"x", yref:"paper", line:{color:"#111827",width:3,dash:"dash"} }
+  ];
+  Plotly.react(popPlot,
+    [{ x:population, type:"histogram", nbinsx:32,
+       marker:{color:"rgba(107,114,128,0.72)",line:{color:"rgba(75,85,99,0.95)",width:0.7}},
+       opacity:0.95, hovertemplate:"Value=%{x:.2f}<br>Frequency=%{y}<extra></extra>" }],
+    { margin:{t:10,r:20,b:50,l:50},
+      xaxis:{title:"Value",range:[minX-2,maxX+2]},
+      yaxis:{title:"Frequency"},
+      showlegend:false, bargap:0,
+      plot_bgcolor:"#fcfcfd", paper_bgcolor:"#ffffff",
+      shapes,
+      annotations:[{ text:"True population mean", x:mu, y:1.03, xref:"x", yref:"paper",
+        showarrow:false, font:{size:11,color:"#111827"}, bgcolor:"rgba(255,255,255,0.85)", borderpad:2 }]
+    }, {responsive:true});
+}
+
+// ---- Interval building ----------------------------------------------------
+function buildInterval() {
+  const n       = +nSlider.value;
+  const conf    = +confSelect.value;
+  const crit    = getCriticalValue(conf, n - 1);
+  const mode    = getMethodMode();
+  const sample  = Array.from({ length: n }, () => population[Math.floor(Math.random() * population.length)]);
+  const xbar    = mean(sample);
+  const sampleSd  = sd(sample);
+  const popSigma  = sd(population);
+  const usedSigma = mode === "known-z" ? popSigma : sampleSd;
+  const se    = usedSigma / Math.sqrt(n);
+  const lower = xbar - crit * se;
+  const upper = xbar + crit * se;
+  const mu    = mean(population);
+  intervals.push({ mean:xbar, lower, upper, captures: lower <= mu && mu <= upper, width: upper - lower, se, crit });
+}
+
+function buildMany() {
+  intervals = [];
+  const k = +intervalCountSelect.value;
+  for (let i = 0; i < k; i++) buildInterval();
+  // Accumulate for cumulative coverage tracker
+  cumTotal    += intervals.length;
+  cumCaptures += intervals.filter(d => d.captures).length;
+}
+
+function resetCumulative() { cumTotal = 0; cumCaptures = 0; }
+
+// ---- CI plot --------------------------------------------------------------
+function drawCI() {
+  const mu = mean(population);
+  let data = [...intervals];
+  if (showMissesOnly.checked) data = data.filter(d => !d.captures);
+  if (sortByMean.checked) data.sort((a, b) => a.mean - b.mean);
+  if (!data.length) { Plotly.react(ciPlot, [], { margin:{t:10} }, {responsive:true}); return; }
+  const bandHalf   = computeMuBandWidth();
+  const colors     = data.map(d => d.captures ? "#16a34a" : "#dc2626");
+  const sizes      = data.map(d => d.captures ? 7.5 : 9);
+  const yPositions = data.map((_, i) => data.length - i);
+  const shapes = [
+    { type:"rect", x0:mu-bandHalf, x1:mu+bandHalf, y0:0, y1:1, xref:"x", yref:"paper", fillcolor:"rgba(107,114,128,0.15)", line:{width:0} },
+    { type:"line", x0:mu, x1:mu, y0:0, y1:1, xref:"x", yref:"paper", line:{color:"#111827",width:3} }
+  ];
+  Plotly.react(ciPlot,
+    [{ x:data.map(d=>d.mean), y:yPositions, mode:"markers", type:"scatter",
+       error_x:{ type:"data", array:data.map(d=>d.upper-d.mean), arrayminus:data.map(d=>d.mean-d.lower), thickness:1.5, width:0, color:"#9ca3af" },
+       marker:{ color:colors, size:sizes, line:{width:0} },
+       hovertemplate:"Mean=%{x:.3f}<extra></extra>" }],
+    { margin:{t:10,r:20,b:50,l:30},
+      xaxis:{ title:"Confidence interval for the mean", range:fixedCiRange, side:"bottom" },
+      yaxis:{ title:"", range:[0,data.length+1], showticklabels:false, ticks:"" },
+      showlegend:false, shapes },
+    {responsive:true});
+}
+
+// ---- Interpretation -------------------------------------------------------
+// FIX: coverage tolerance now scales with n_intervals rather than using
+// a fixed 3% band that was too tight for batches of 25 (where 1 SD ~ 4.4%).
+// Using +/- 1.5 SD of the binomial coverage proportion as the tolerance.
+function coverageTolerance(conf, k) {
+  return 1.5 * Math.sqrt(conf * (1 - conf) / Math.max(k, 1));
+}
+
+function updateInterpretation(total, captures, coverage, avgWidth, mode, conf) {
+  const smallN  = +nSlider.value < 30;
+  const skewed  = distType.value === "skewed";
+  const tol     = coverageTolerance(conf, total);
+  let read = '', design = '';
+  if (isNaN(coverage)) {
+    read = 'No intervals drawn yet.'; design = '';
+  } else if (coverage >= conf - tol && coverage <= Math.min(1, conf + tol)) {
+    read   = 'Observed coverage is close to the nominal target.';
+    design = 'This run is behaving about as expected for the current procedure and sample size. Even a well-calibrated procedure still misses sometimes -- that is a feature, not a flaw.';
+  } else if (coverage < conf - tol) {
+    read   = 'Observed coverage is below the nominal target.';
+    if (smallN && skewed)          design = 'This is the classic stress case: small samples from a skewed population can produce undercoverage because the normal approximation for the sampling distribution is not accurate.';
+    else if (mode === 'estimated-z') design = 'Using the z critical value with an estimated SD undercounts uncertainty at small n. Switching to the t method should improve coverage for this sample size.';
+    else                           design = 'This run is below the target. With more intervals the cumulative rate should move closer to the nominal level if the procedure is correctly specified.';
+  } else {
+    read   = 'Observed coverage is above the nominal target.';
+    design = 'This run is more conservative than the nominal level. Wider-than-needed intervals can produce overcoverage, which is safer but less precise than the target procedure would give.';
+  }
+  readVal.textContent    = read;
+  designVal.textContent  = design;
+  cueSentence.textContent = read;
+
+  const coverageClass = isNaN(coverage) ? '' : (coverage >= conf - tol && coverage <= Math.min(1, conf + tol)) ? 'good' : coverage < conf - tol ? 'bad' : 'warn';
+  const badges = [];
+  if (!isNaN(coverage)) {
+    badges.push(`<span class="pill ${coverageClass}">Observed ${(coverage * 100).toFixed(1)}% vs nominal ${(conf * 100).toFixed(0)}%</span>`);
+  }
+  badges.push(`<span class="pill">${mode === 'known-z' ? 'Population SD, z critical' : mode === 'estimated-t' ? 'Sample SD, t critical' : 'Sample SD, z critical'}</span>`);
+  badges.push(`<span class="pill ${smallN ? 'warn' : 'good'}">n = ${nSlider.value}${smallN ? ' (small sample)' : ''}</span>`);
+  if (skewed) badges.push('<span class="pill warn">Skewed population</span>');
+  else        badges.push('<span class="pill good">Symmetric-friendly shape</span>');
+  if (!isNaN(avgWidth)) badges.push(`<span class="pill">Avg width = ${avgWidth.toFixed(2)}</span>`);
+  badgeRow.innerHTML = badges.join('');
+}
+
+// ---- Summary --------------------------------------------------------------
+function updateSummary() {
+  const total    = intervals.length;
+  const captures = intervals.filter(d => d.captures).length;
+  const misses   = total - captures;
+  const coverage = total ? captures / total : NaN;
+  const avgWidth = total ? mean(intervals.map(d => d.width)) : NaN;
+  const widths   = intervals.map(d => d.width);
+  const minWidth = total ? Math.min(...widths) : NaN;
+  const maxWidth = total ? Math.max(...widths) : NaN;
+  const latest   = total ? intervals[intervals.length - 1] : null;
+  const conf     = +confSelect.value;
+  const mode     = getMethodMode();
+
+  nominalVal.textContent    = `${(conf * 100).toFixed(1)}%`;
+  coverageVal.textContent   = total ? `${(coverage * 100).toFixed(1)}%` : "--";
+  // FIX: cumulative coverage tracker (resets on new population or preset)
+  cumCoverageVal.textContent = cumTotal
+    ? `${((cumCaptures / cumTotal) * 100).toFixed(1)}% (${cumTotal} total)`
+    : "--";
+  captureVal.textContent    = String(captures);
+  missVal.textContent       = String(misses);
+  countVal.textContent      = String(total);
+  avgWidthVal.textContent   = Number.isFinite(avgWidth) ? avgWidth.toFixed(3) : "--";
+  // FIX: width range added to show variability across intervals in a single draw
+  widthRangeVal.textContent = Number.isFinite(minWidth)
+    ? `${minWidth.toFixed(2)} / ${maxWidth.toFixed(2)}`
+    : "--";
+  latestVal.textContent     = latest ? `[${latest.lower.toFixed(3)}, ${latest.upper.toFixed(3)}]` : "--";
+  methodVal.textContent     = mode === "known-z" ? "Population SD, z critical"
+    : mode === "estimated-t" ? "Sample SD, t critical"
+    : "Sample SD, z critical";
+
+  updateInterpretation(total, captures, coverage, avgWidth, mode, conf);
+}
+
+// ---- Orchestration --------------------------------------------------------
+function redraw() {
+  fixedCiRange = computeCiXRange(mean(population));
+  buildMany();
+  drawCI();
+  updateSummary();
+}
+
+function newPop() {
+  resetCumulative();
+  genPop();
+  drawPop();
+  redraw();
+}
+
+// FIX: default for 'balanced' preset changed from estimated-z to estimated-t,
+// since estimated-t is the textbook correct method. estimated-z is kept in the
+// smallSkew preset deliberately to demonstrate the anti-conservative behavior.
+function applyPreset(name) {
+  resetCumulative();
+  if (name === 'balanced') {
+    nSlider.value = 20; spreadSlider.value = 8; distType.value = 'normal';
+    confSelect.value = '0.95'; intervalCountSelect.value = '25';
+    document.querySelector('input[name="methodMode"][value="estimated-t"]').checked = true;
+  } else if (name === 'smallSkew') {
+    nSlider.value = 8; spreadSlider.value = 8; distType.value = 'skewed';
+    confSelect.value = '0.95'; intervalCountSelect.value = '25';
+    document.querySelector('input[name="methodMode"][value="estimated-z"]').checked = true;
+  } else {
+    nSlider.value = 20; spreadSlider.value = 8; distType.value = 'normal';
+    confSelect.value = '0.99'; intervalCountSelect.value = '25';
+    document.querySelector('input[name="methodMode"][value="estimated-t"]').checked = true;
+  }
+  nVal.textContent = nSlider.value;
+  spreadVal.textContent = spreadSlider.value;
+  newPop();
+}
+
+// ---- Event listeners ------------------------------------------------------
+nSlider.oninput              = () => { nVal.textContent = nSlider.value; redraw(); };
+spreadSlider.oninput         = () => { spreadVal.textContent = spreadSlider.value; };
+spreadSlider.onchange        = newPop;
+distType.onchange            = newPop;
+confSelect.onchange          = redraw;
+intervalCountSelect.onchange = redraw;
+methodModeRadios.forEach(r => r.onchange = redraw);
+showMissesOnly.onchange      = drawCI;
+sortByMean.onchange          = drawCI;
+
+document.getElementById("reset").onclick          = redraw;
+document.getElementById("newPopulation").onclick  = newPop;
+document.getElementById("presetBalanced").onclick     = () => applyPreset('balanced');
+document.getElementById("presetSmallSkew").onclick    = () => applyPreset('smallSkew');
+document.getElementById("presetHighConfidence").onclick = () => applyPreset('highConf');
+
+document.getElementById("toggleHelp").onclick = () => {
+  const hc = document.getElementById("helpCard");
+  hc.style.display = hc.style.display === "none" ? "block" : "none";
+};
+document.getElementById("toggleGuide").addEventListener("click", () => {
+  const g   = document.getElementById("guideSection");
+  const btn = document.getElementById("toggleGuide");
+  const open = g.classList.toggle("open");
+  btn.textContent = open ? "Hide Guide" : "Quick-Start Guide";
+});
+
+// ---- Init -----------------------------------------------------------------
+nVal.textContent      = nSlider.value;
+spreadVal.textContent = spreadSlider.value;
+genPop();
+drawPop();
+redraw();
+</script>
+</body>
+</html>

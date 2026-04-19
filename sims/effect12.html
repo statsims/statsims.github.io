@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Effect Size, Significance, and Power Lab</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --border:#d9dde3;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --soft:#f3f4f6;
+      --blue:#2563eb;
+      --red:#dc2626;
+      --green:#16a34a;
+      --amber:#d97706;
+      --gray:#9ca3af;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--bg);color:var(--text)}
+    .container{max-width:1380px;margin:auto}
+    .app-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+    .left-column,.right-column{display:grid;gap:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+    .controls{display:grid;gap:10px}
+    .control-box{background:var(--soft);padding:10px;border-radius:10px;border:1px solid var(--border)}
+    .control-title{font-size:.85rem;color:var(--text);font-weight:700;margin-bottom:6px;display:block}
+    button{padding:9px 12px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;margin-right:6px;margin-bottom:6px}
+    button:hover{background:#f8fafc}
+    input,select{width:100%}
+    .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .metric{border:1px solid var(--border);background:var(--soft);border-radius:10px;padding:10px}
+    .metric-label{font-size:.8rem;color:var(--muted)}
+    .metric-value{font-weight:600;line-height:1.35}
+    .small{font-size:.9rem;color:var(--muted);line-height:1.45}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .display-list{display:grid;gap:8px}
+    .display-row{display:grid;grid-template-columns:18px 1fr;align-items:start;column-gap:10px}
+    .display-row input[type="checkbox"]{width:auto;margin:0}
+    .pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .interpretive-panel .pill-row{margin-top:6px}
+    .interpretive-panel .metric-value{font-size:1rem}
+    .interpretive-panel .small{margin-top:6px}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--border);font-size:.8rem;background:white}
+    .pill.good{background:#ecfdf5;color:#166534;border-color:#86efac}
+    .pill.warn{background:#fff7ed;color:#9a3412;border-color:#fdba74}
+    .pill.bad{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
+    .context-note{margin-top:12px;padding:12px 14px;border:1px solid var(--border);border-left:4px solid #d97706;background:#fffbeb;border-radius:10px;font-size:.92rem;line-height:1.45;color:#6b7280}
+    .prominent-note{padding:14px 16px;border:1px solid #c7d2fe;border-left:5px solid #2563eb;background:#eff6ff;border-radius:10px}
+    .recommend-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .recommend-box{background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px}
+    .preset-stack{display:grid;grid-template-columns:1fr;gap:8px;margin-top:8px}
+    .preset-stack button{width:100%;margin-right:0;margin-bottom:0;display:block}
+    #plotObserved{height:360px}
+    #plotDecision{height:335px}
+    #plotPower{height:360px}
+
+    /* ── Intro / guide styles ── */
+    .intro-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+    .intro-title-block{flex:1 1 500px;min-width:260px}
+    .intro-title-block h2{margin:0 0 6px}
+    .intro-subtitle{font-size:1rem;color:var(--muted);margin:0 0 12px;line-height:1.5}
+    .concept-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+    .concept-card{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--soft)}
+    .concept-card .concept-icon{font-size:1.4rem;margin-bottom:4px}
+    .concept-card .concept-label{font-weight:700;font-size:.9rem;color:var(--text)}
+    .concept-card .concept-desc{font-size:.82rem;color:var(--muted);margin-top:4px;line-height:1.4}
+    .guide-toggle-btn{white-space:nowrap;align-self:flex-start;margin-top:4px}
+    .guide-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px;display:none}
+    .guide-section.open{display:block}
+    .guide-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+    .guide-col h4{margin:0 0 8px;font-size:.9rem;color:var(--text)}
+    .guide-col ol,.guide-col ul{margin:0;padding-left:18px}
+    .guide-col li{font-size:.85rem;color:var(--muted);line-height:1.5;margin-bottom:4px}
+    .guide-col li strong{color:var(--text)}
+
+    /* ── Panel annotation styles ── */
+    .panel-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+    .panel-header h3{margin:0}
+    .card > h3{margin:0 0 10px}
+    .panel-badge{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:var(--soft);color:var(--muted);white-space:nowrap}
+    .what-to-watch{margin:0 0 10px;padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:.84rem;color:#075985;line-height:1.45}
+    .what-to-watch strong{color:#0c4a6e}
+
+    /* ── Preset descriptions ── */
+    .preset-item{margin-bottom:4px}
+    .preset-desc{font-size:.78rem;color:var(--muted);margin:2px 0 8px 0;padding-left:2px;line-height:1.35}
+
+    /* ── Help card ── */
+    .help-card{margin-top:0;width:100%;max-width:100%}
+    .help-section{margin-bottom:18px}
+    .help-section h4{margin:0 0 6px;font-size:.95rem;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px}
+    .help-section p,.help-section li{font-size:.88rem;color:var(--muted);line-height:1.5;margin:4px 0}
+    .help-section ul{padding-left:18px;margin:6px 0}
+    .help-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .case-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+    .case-box{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--soft)}
+    .case-box .case-label{font-weight:700;font-size:.82rem;color:var(--text)}
+    .case-box .case-desc{font-size:.78rem;color:var(--muted);margin-top:2px;line-height:1.35}
+
+    @media (max-width:980px){
+      .app-grid{grid-template-columns:1fr}
+      .metric-grid{grid-template-columns:1fr}
+      .recommend-row{grid-template-columns:1fr}
+      .help-card{width:100%;max-width:100%}
+      .concept-trio{grid-template-columns:1fr}
+      .guide-cols{grid-template-columns:1fr}
+      .help-2col{grid-template-columns:1fr}
+      .case-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+    <div class="left-column">
+
+      <!-- ── INTRO CARD ────────────────────────────────────────────────────── -->
+      <div class="card">
+        <div class="intro-header">
+          <div class="intro-title-block">
+            <h2>Effect Size, Significance &amp; Power Lab</h2>
+            <p class="intro-subtitle">
+              An interactive simulator for understanding how the <em>size</em> of a difference,
+              the <em>statistical decision rule</em>, and the <em>study design</em> each
+              contribute to what you observe and what you can and cannot conclude.
+            </p>
+            <div class="concept-trio">
+              <div class="concept-card">
+                <div class="concept-label">Effect Size</div>
+                <div class="concept-desc">How large is the difference between groups in meaningful units? Large enough to care about?</div>
+              </div>
+              <div class="concept-card">
+                <div class="concept-label">Significance</div>
+                <div class="concept-desc">Is the observed difference incompatible with the null hypothesis under your decision rule?</div>
+              </div>
+              <div class="concept-card">
+                <div class="concept-label">Power</div>
+                <div class="concept-desc">How likely is this design to detect the effect if it truly exists at the assumed magnitude?</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;align-self:flex-start;margin-top:4px;">
+            <button class="guide-toggle-btn" id="toggleGuide">▼ Quick-Start Guide</button>
+            <button id="toggleHelp">📖 Full Reference</button>
+          </div>
+        </div>
+
+        <div class="guide-section" id="guideSection">
+          <div class="guide-cols">
+            <div class="guide-col">
+              <h4>Purpose</h4>
+              <ul>
+                <li>This lab exists to break the common habit of treating <strong>statistical significance as the only outcome that matters</strong>.</li>
+                <li>A p-value below .05 does not tell you the effect is large, important, or that your design was well-powered.</li>
+                <li>A p-value above .05 does not mean the effect is absent but it may just mean your study was too small to detect it.</li>
+                <li>By letting you see all three concepts simultaneously on the same simulated data, the lab makes these distinctions concrete and testable rather than abstract.</li>
+              </ul>
+            </div>
+            <div class="guide-col">
+              <h4>How to Use</h4>
+              <ol>
+                <li><strong>Start with a preset</strong> on the right panel. Each illustrates a classic scenario.</li>
+                <li>Observe the four panels: group distributions, the decision plot, the design read, and the power curve.</li>
+                <li><strong>Slide the group size (n)</strong> up and down. Watch the confidence interval narrow and power rise with the observed difference staying roughly the same.</li>
+                <li><strong>Move the null value</strong> to see how testing against a non-zero benchmark changes the z-statistic and p-value.</li>
+                <li><strong>Adjust the practical threshold</strong> (the green band) to define what counts as a meaningful difference for your context.</li>
+                <li>Click <strong>New observed data</strong> repeatedly to see how estimates vary across samples from the same population.</li>
+              </ol>
+            </div>
+            <div class="guide-col">
+              <h4>What You Gain</h4>
+              <ul>
+                <li><strong>Separate intuitions</strong> for magnitude (Cohen's d and raw difference), inferential decision (p-value and CI), and design quality (power and MDE).</li>
+                <li>An understanding that the <strong>same observed data can be "significant" or not</strong> depending purely on n, not because the effect changed.</li>
+                <li>A feel for why <strong>one-sided tests commit to a direction</strong> at a real cost: power falls to the alpha floor on the wrong side.</li>
+                <li>A practical tool for <strong>prospective design decisions</strong>: use the MDE and n-for-power readout to plan studies before you collect data.</li>
+                <li>The difference between <strong>z-approximation and exact Welch t</strong> and why it matters at small sample sizes.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PANEL 1: Observed Groups ─────────────────────────────────────── -->
+      <div class="card">
+        <div class="panel-header">
+          <h3>Observed Groups</h3>
+          <span class="panel-badge">Panel 1</span>
+        </div>
+        <p class="what-to-watch">
+          <strong>What to look for:</strong> The overlap between the two distributions.
+          Large overlap means small Cohen's d even if the means look separated.
+          As you increase <span class="mono">n</span>, the histograms grow denser but the
+          curves stay centered at the same means showing that precision (SE) improves
+          with sample size, not the underlying effect.
+        </p>
+        <div class="small" style="margin-bottom:8px;">
+          Histogram bars show the raw sample counts (normalized); the smooth curves show the fitted normal shape.
+          Increasing <span class="mono">n</span> extends the same base sample but it does not redraw from a different population.
+        </div>
+        <div id="plotObserved"></div>
+      </div>
+
+      <!-- ── PANEL 2: Decision View ────────────────────────────────────────── -->
+      <div class="card">
+        <div class="panel-header">
+          <h3>Decision View: Null, Interval &amp; Practical Size</h3>
+          <span class="panel-badge">Panel 2</span>
+        </div>
+        <p class="what-to-watch">
+          <strong>What to look for:</strong> Where the confidence interval sits relative to
+          <em>two</em> reference lines: the null (dashed gray) and the practical threshold (green band).
+          Excluding the null gives statistical significance. Landing outside the green band gives
+          practical meaningfulness. <strong>Both can be true or false independently</strong>,
+          producing four distinct cases. The goal is to reach a clear verdict on both.
+        </p>
+        <div class="small" id="decisionSubtitle" style="margin-bottom:8px;">
+          The black point is the observed mean difference (Group B − Group A). The blue segment is the confidence interval.
+          The dashed gray line is the null value. The green band marks differences you defined as practically small.
+        </div>
+        <div id="plotDecision"></div>
+      </div>
+
+      <!-- ── Design Read ───────────────────────────────────────────────────── -->
+      <div class="card">
+        <div class="panel-header">
+          <h3>Design Read and Interpretation</h3>
+          <span class="panel-badge">Panel 3</span>
+        </div>
+        <p class="what-to-watch">
+          <strong>What to look for:</strong> The plain-language summary of which of the four possible
+          study outcomes you are currently in. The n-for-power recommendation tells you whether your
+          design was appropriately sized. The efficiency read tells you whether you over- or under-sampled
+          for this true effect size.
+        </p>
+        <div id="prominentDesignCard" class="prominent-note">
+          <div class="metric-label">Current read</div>
+          <div id="prominentDecisionVal" class="metric-value" style="margin-top:4px;">--</div>
+          <div id="prominentDesignVal" class="small" style="margin-top:8px;">--</div>
+          <div id="designCueBox" class="context-note" style="display:none;"></div>
+          <div class="recommend-row">
+            <div class="recommend-box">
+              <div class="metric-label">n per group needed for .80 power</div>
+              <div id="nRecommendationVal" class="metric-value mono">--</div>
+            </div>
+            <div class="recommend-box">
+              <div class="metric-label">Efficiency read</div>
+              <div id="efficiencyVal" class="metric-value">--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PANEL 3: Power Curve ──────────────────────────────────────────── -->
+      <div class="card">
+        <div class="panel-header">
+          <h3>Power Curve</h3>
+          <span class="panel-badge">Panel 4</span>
+        </div>
+        <p class="what-to-watch">
+          <strong>What to look for:</strong> Three features of the curve. (1) <strong>Where the curve
+          crosses .80</strong> that x-value is the MDE, the smallest effect this design can reliably
+          detect. (2) <strong>The current dot</strong> is your assumed true effect to the left or
+          right of the MDE? Left means underpowered. (3) <strong>For one-sided tests</strong>, watch
+          what happens on the opposite side of zero: power falls to the alpha floor, showing the cost
+          of committing to a direction.
+        </p>
+        <div class="small" id="powerSubtitle" style="margin-bottom:8px;">
+          Power across all possible true signed differences. The amber vertical line marks the MDE or the
+          smallest absolute difference this design detects with ≥.80 power.
+        </div>
+        <div id="plotPower"></div>
+      </div>
+
+
+
+      <!-- ── Full Reference / Help Card ──────────────────────────────────────── -->
+      <div class="card help-card" id="helpCard" style="display:none;">
+    <h3>Full Reference</h3>
+
+    <div class="help-2col">
+      <div>
+        <div class="help-section">
+          <h4>Core Concepts</h4>
+          <p><strong>Statistical significance</strong> answers: is this result incompatible with the null value under the chosen decision rule (alpha level and test direction)? It depends on the observed difference, the variability, the sample size, and the null. It says nothing about practical importance.</p>
+          <p><strong>Effect size</strong> answers: how large is the difference in meaningful units? Cohen's d expresses the raw difference in pooled standard deviation units. Conventional labels (small ≈ 0.2, medium ≈ 0.5, large ≈ 0.8) are rough guides. Domain context should always inform what counts as practically important.</p>
+          <p><strong>Power</strong> answers: if the true effect is this large, how often would this design produce a statistically significant result? Power depends on n, alpha, SD, and the assumed true effect. Low power means an underpowered study or a real effect will often go undetected.</p>
+          <p><strong>MDE (Minimum Detectable Effect)</strong> is the smallest effect that reaches .80 power at the current n and alpha. It is useful for planning: if your MDE is larger than the smallest effect you care about, you need more participants.</p>
+        </div>
+
+        <div class="help-section">
+          <h4>The Four Study Outcomes</h4>
+          <div class="case-grid">
+            <div class="case-box">
+              <div class="case-label" style="color:var(--green)">✓ Significant + Practical</div>
+              <div class="case-desc">CI excludes the null AND lies outside the practically small region. The strongest verdict: the effect is real and matters.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label" style="color:var(--amber)">⚠ Significant, not Practical</div>
+              <div class="case-desc">CI excludes the null but part of it still overlaps the practically small region. Detectable but the magnitude is uncertain. Common with large n and small effects.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label" style="color:var(--amber)">⚠ Practical estimate, Inconclusive</div>
+              <div class="case-desc">Point estimate looks notable but CI still spans the null. The classic underpowered scenario. The effect may be real but the design cannot confirm it.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label" style="color:var(--red)">✗ Neither</div>
+              <div class="case-desc">CI spans the null and even plausible effects remain practically small. Genuine null result, or possibly an underpowered study with a small true effect.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="help-section">
+          <h4>Key Controls Explained</h4>
+          <ul>
+            <li><strong>Slide n while holding everything else fixed.</strong> This is the lab's core demonstration. The means barely move; the CI shrinks and power climbs. A result that was inconclusive at n = 16 may be clearly significant at n = 80 or the same effect, different design.</li>
+            <li><strong>Move the null value away from zero</strong> to test against a non-zero benchmark. All z, t, and p statistics update to reflect the new null. The CI is always centered on the observed difference; whether it contains the null depends on where you placed it.</li>
+            <li><strong>Adjust the practical threshold</strong> to see how the same interval can shift between "notable" and "trivially small" depending on your domain's standard for what matters.</li>
+            <li><strong>Switch to a one-sided test</strong> and watch the power curve. Power increases in the hypothesized direction but falls to alpha on the other side, that is one-sided tests are not free power.</li>
+            <li><strong>Click New observed data</strong> repeatedly at a fixed n to see sampling variability: how the same population produces different observed differences and sometimes different verdicts by chance alone.</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h4>z Approximation vs Exact Welch t</h4>
+          <p>Both test statistics use the same numerator: <code>(observed difference − null value) / SE</code>. They differ in how the p-value is computed. The z approximation uses the standard normal distribution. The exact Welch t-test uses the t-distribution with Welch–Satterthwaite degrees of freedom, which accounts for the additional uncertainty in estimating the SD from a small sample. At n ≥ 30 the difference is negligible. At n = 10–15 the exact t gives a larger (more conservative) p-value, which is more appropriate.</p>
+        </div>
+
+        <div class="help-section">
+          <h4>One-Sided Confidence Intervals</h4>
+          <p>For a one-sided "greater" test the CI is <code>[lower bound, +∞)</code>. Only the lower bound is informative where the null is excluded when it falls below that bound. For a one-sided "less" test it is <code>(−∞, upper bound]</code>. The app displays the open bound as ±∞ and uses the finite bound for all practical region checks.</p>
+        </div>
+
+        <div class="help-section">
+          <h4>Design Planning Workflow</h4>
+          <ul>
+            <li>Decide the smallest difference that would matter in your domain (practical threshold).</li>
+            <li>Set the true mean difference slider to that value.</li>
+            <li>Read the n-for-power recommendation. That is the minimum n to reach .80 power.</li>
+            <li>Alternatively, read the MDE at your intended n. If MDE &gt; your smallest meaningful difference, the design is underpowered for that question.</li>
+            <li>Tighten alpha to .01 for high-stakes decisions and observe how n requirements grow.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+    </div><!-- end left-column -->
+
+    <div class="right-column">
+
+      <!-- ── Presets ───────────────────────────────────────────────────────── -->
+      <div class="card">
+        <div class="panel-header"><h3>Teaching Presets</h3></div>
+        <div class="small" style="margin-bottom:10px;">
+          Each preset configures a classic scenario. After loading one, use the controls and try sliding <span class="mono">n</span>
+          or the practical threshold to see how the interpretation changes.
+        </div>
+        <div class="preset-stack">
+          <div class="preset-item">
+            <button id="presetTrivialSig">Trivial but significant</button>
+            <p class="preset-desc">A tiny true effect (d ≈ 0.2), large practical threshold. The p-value is small but the CI sits inside the practically small region. A reminder that significance does not imply importance.</p>
+          </div>
+          <div class="preset-item">
+            <button id="presetNotableInconclusive">Practically notable but inconclusive</button>
+            <p class="preset-desc">A moderate true effect. The point estimate looks meaningful, but the wide CI still crosses the null.  A classic underpowered study with an encouraging but unconfirmed result.</p>
+          </div>
+          <div class="preset-item">
+            <button id="presetBalanced">Balanced case</button>
+            <p class="preset-desc">A moderate true effect. A starting point where the design is reasonable but not over-engineered. Try increasing and decreasing n to see how the verdict shifts.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Controls ──────────────────────────────────────────────────────── -->
+      <div class="card">
+        <div class="panel-header"><h3>Controls</h3></div>
+        <div class="controls">
+
+          <div class="control-box">
+            <span class="control-title">Actions</span>
+            <div class="small" style="margin-bottom:8px;">
+              Draw a fresh study from the currently selected population settings.
+              Other controls update the interpretation without redrawing this sample unless noted.
+            </div>
+            <button id="newData" style="width:100%;margin:0;">New observed data</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Confidence level and test direction</span>
+            <label class="small" for="confidenceLevel">Confidence level / alpha</label>
+            <select id="confidenceLevel">
+              <option value="0.90">90% interval / α = .10</option>
+              <option value="0.95" selected>95% interval / α = .05</option>
+              <option value="0.99">99% interval / α = .01</option>
+            </select>
+            <div style="height:8px"></div>
+            <label class="small" for="testType">Test direction</label>
+            <select id="testType">
+              <option value="two-sided" selected>Two-sided: detect differences in either direction</option>
+              <option value="greater">One-sided: detect differences above the null</option>
+              <option value="less">One-sided: detect differences below the null</option>
+            </select>
+            <div class="small" id="onesidedCINote" style="margin-top:6px;display:none;">
+              One-sided tests commit to a direction. The CI has one open bound (shown as ±∞).
+              The power curve shows that power falls toward α on the un-hypothesized side.
+            </div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Group size (n per group)</span>
+            <input type="range" id="groupSize" min="8" max="250" value="30" />
+            <div id="groupSizeVal" class="small">30 per group</div>
+            <div class="small" style="margin-top:4px;">
+              Sliding this is the single most instructive action in the lab. The observed
+              difference barely moves; the CI and power change dramatically.
+              The same sample foundation is extended or trimmed.
+            </div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Null value</span>
+            <div class="small" style="margin-bottom:6px;">
+              The difference you are testing against. Ordinarily zero (no difference), but set it
+              to a non-zero value to test whether the effect exceeds a specific benchmark e.g.,
+              "Is the improvement greater than 2 points?". All test statistics and p-values
+              update to reflect the chosen null.
+            </div>
+            <input type="range" id="nullValue" min="-8" max="8" step="0.1" value="0" />
+            <div id="nullValueVal" class="small">0.0</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Practical significance threshold</span>
+            <div class="small" style="margin-bottom:6px;">
+              Set what counts as "too small to matter" in your subject domain.
+              This defines the green band in the decision plot. It is separate from the
+              statistical null; a difference can be statistically detectable and still
+              be practically negligible or practically important but statistically inconclusive.
+            </div>
+            <input type="range" id="practicalThreshold" min="0" max="6" step="0.1" value="1.0" />
+            <div id="practicalThresholdVal" class="small">Differences between −1.0 and +1.0 are treated as practically small</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">True population difference (for power model)</span>
+            <div class="small" style="margin-bottom:6px;">
+              Sets the underlying population effect for the next sample draw and for all power
+              calculations. Think of this as what the researcher assumes about the world when
+              planning the study. It does not change the observed data already on screen.
+            </div>
+            <label class="small" for="direction">Direction</label>
+            <select id="direction">
+              <option value="positive" selected>Group B higher than Group A</option>
+              <option value="negative">Group A higher than Group B</option>
+            </select>
+            <div style="height:8px"></div>
+            <label class="small" for="effectSize">True mean difference magnitude</label>
+            <input type="range" id="effectSize" min="0" max="12" step="0.1" value="2.5" />
+            <div id="effectSizeVal" class="small">2.5</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Display options</span>
+            <div class="display-list">
+              <div class="display-row"><input type="checkbox" id="showHistogram" checked /><span>Histogram bars (raw sample)</span></div>
+              <div class="display-row"><input type="checkbox" id="showDistributionBackdrop" checked /><span>Smooth fitted curves</span></div>
+                                          <div class="display-row"><input type="checkbox" id="showMDE" checked /><span>MDE line on power curve</span></div>
+                            <div class="display-row"><input type="checkbox" id="showNumericalSummary" /><span>Numerical summary card</span></div>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+
+      <div class="card interpretive-panel" id="interpretivePanel">
+        <div class="panel-header"><h3>Interpretive Cues</h3></div>
+        <div class="metric">
+          <div class="metric-label">Interpretive cue</div>
+          <div id="interpretiveCueVal" class="metric-value">--</div>
+        </div>
+        <div id="interpretiveBadgeRow" class="pill-row"></div>
+      </div>
+
+      <!-- ── Summary ───────────────────────────────────────────────────────── -->
+      <div class="card" id="summaryCard" style="display:none;">
+        <div class="panel-header"><h3>Numerical Summary</h3></div>
+        <div class="small" style="margin-bottom:10px;">
+          All statistics update live. Compare the z approximation with the exact Welch t at small n
+          to see where the approximation breaks down.
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Group A mean</div><div id="groupAMeanVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Group B mean</div><div id="groupBMeanVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Observed difference (B − A)</div><div id="diffVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Cohen's d (standardized effect)</div><div id="dVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Standard error of difference</div><div id="seVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">z vs null (normal approx.)</div><div id="tVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Exact t vs null (Welch df)</div><div id="tExactVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">p-value (z approx.)</div><div id="pVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">p-value (exact Welch t)</div><div id="pExactVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Confidence interval</div><div id="ciVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Null value inside CI?</div><div id="nullInCiVal" class="metric-value">--</div></div>
+          <div class="metric"><div class="metric-label">Current power</div><div id="powerVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">MDE at current n &amp; α</div><div id="mdeVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Sample drawn from</div><div id="sampleSourceVal" class="metric-value">--</div></div>
+                  </div>
+      </div>
+
+    </div><!-- end right-column -->
+  </div><!-- end app-grid -->
+
+  
+</div><!-- end container -->
+
+<script>
+// ─── DOM references ────────────────────────────────────────────────────────────
+const observedPlot   = document.getElementById('plotObserved');
+const decisionPlot   = document.getElementById('plotDecision');
+const powerPlot      = document.getElementById('plotPower');
+
+const groupSizeSlider          = document.getElementById('groupSize');
+const effectSizeSlider         = document.getElementById('effectSize');
+const directionSelect          = document.getElementById('direction');
+const confidenceLevelSelect    = document.getElementById('confidenceLevel');
+const testTypeSelect           = document.getElementById('testType');
+const nullValueSlider          = document.getElementById('nullValue');
+const practicalThresholdSlider = document.getElementById('practicalThreshold');
+const showHistogram            = document.getElementById('showHistogram');
+const showDistributionBackdrop = document.getElementById('showDistributionBackdrop');
+const showMDE                  = document.getElementById('showMDE');
+const showNumericalSummary     = document.getElementById('showNumericalSummary');
+const onesidedCINote           = document.getElementById('onesidedCINote');
+const summaryCard              = document.getElementById('summaryCard');
+const interpretiveCueVal       = document.getElementById('interpretiveCueVal');
+const interpretiveBadgeRow     = document.getElementById('interpretiveBadgeRow');
+
+const groupSizeVal         = document.getElementById('groupSizeVal');
+const effectSizeVal        = document.getElementById('effectSizeVal');
+const nullValueVal         = document.getElementById('nullValueVal');
+const practicalThresholdVal = document.getElementById('practicalThresholdVal');
+
+const groupAMeanVal    = document.getElementById('groupAMeanVal');
+const groupBMeanVal    = document.getElementById('groupBMeanVal');
+const diffVal          = document.getElementById('diffVal');
+const dVal             = document.getElementById('dVal');
+const seVal            = document.getElementById('seVal');
+const tVal             = document.getElementById('tVal');
+const tExactVal        = document.getElementById('tExactVal');
+const pVal             = document.getElementById('pVal');
+const pExactVal        = document.getElementById('pExactVal');
+const ciVal            = document.getElementById('ciVal');
+const nullInCiVal      = document.getElementById('nullInCiVal');
+const powerVal         = document.getElementById('powerVal');
+const mdeVal           = document.getElementById('mdeVal');
+const decisionSubtitle     = document.getElementById('decisionSubtitle');
+const powerSubtitle        = document.getElementById('powerSubtitle');
+const designCueBox         = document.getElementById('designCueBox');
+const prominentDecisionVal = document.getElementById('prominentDecisionVal');
+const prominentDesignVal   = document.getElementById('prominentDesignVal');
+const nRecommendationVal   = document.getElementById('nRecommendationVal');
+const efficiencyVal        = document.getElementById('efficiencyVal');
+const sampleSourceVal      = document.getElementById('sampleSourceVal');
+
+// ─── State ─────────────────────────────────────────────────────────────────────
+const FIXED_SD = 4;
+let baseSampleA = [];
+let baseSampleB = [];
+let observedA = [];
+let observedB = [];
+let result = null;
+let sharedEffectRange = [-6, 6];
+let sampleMeta = { effect: 2.5, direction: 'positive' };
+let observedPlotRange = [-10, 10]; // declared properly (was implicit global in original)
+
+// ─── Math utilities ───────────────────────────────────────────────────────────
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function mean(arr) { return arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : NaN; }
+function variance(arr) {
+  if (arr.length < 2) return NaN;
+  const m = mean(arr);
+  return arr.reduce((s, x) => s + (x - m) ** 2, 0) / (arr.length - 1);
+}
+function sd(arr) { const v = variance(arr); return Number.isFinite(v) ? Math.sqrt(v) : NaN; }
+
+// Abramowitz & Stegun erf (max error ~1.5e-7)
+function erf(x) {
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.exp(-x*x);
+  return sign * y;
+}
+function normalCdf(x) { return 0.5 * (1 + erf(x / Math.SQRT2)); }
+function normalPdf(x, mu, sigma) {
+  const z = (x - mu) / sigma;
+  return Math.exp(-0.5 * z * z) / (sigma * Math.sqrt(2 * Math.PI));
+}
+
+// Rational inverse normal (Beasley-Springer-Moro)
+function inverseNormal(p) {
+  const a = [-39.69683028665376,220.9460984245205,-275.9285104469687,138.357751867269,-30.66479806614716,2.506628277459239];
+  const b = [-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572];
+  const c = [-0.007784894002430293,-0.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783];
+  const d = [0.007784695709041462,0.3224671290700398,2.445134137142996,3.754408661907416];
+  const plow = 0.02425, phigh = 1 - plow;
+  let q, r;
+  if (p < plow) {
+    q = Math.sqrt(-2 * Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+  if (phigh < p) {
+    q = Math.sqrt(-2 * Math.log(1 - p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+  q = p - 0.5; r = q * q;
+  return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+
+// ─── Exact Welch t-distribution ───────────────────────────────────────────────
+function logGammaFunc(z) {
+  const p = [0.99999999999980993,676.5203681218851,-1259.1392167224028,
+    771.32342877765313,-176.61502916214059,12.507343278686905,
+    -0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if (z < 0.5) return Math.log(Math.PI) - Math.log(Math.abs(Math.sin(Math.PI*z))) - logGammaFunc(1-z);
+  z -= 1;
+  let x = p[0];
+  for (let i = 1; i < 9; i++) x += p[i] / (z + i);
+  const t = z + 7.5;
+  return 0.5*Math.log(2*Math.PI) + (z+0.5)*Math.log(t) - t + Math.log(Math.abs(x));
+}
+
+function incompleteBeta(a, b, x) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  if (x > (a+1)/(a+b+2)) return 1 - incompleteBeta(b, a, 1-x);
+  const lbeta = logGammaFunc(a) + logGammaFunc(b) - logGammaFunc(a+b);
+  const front = Math.exp(a*Math.log(x) + b*Math.log(1-x) - lbeta) / a;
+  const FPMIN = 1e-30, EPS = 1e-10, MAXIT = 200;
+  let c = 1, d = 1 - (a+b)*x/(a+1);
+  if (Math.abs(d) < FPMIN) d = FPMIN;
+  d = 1/d; let h = d;
+  for (let m = 1; m <= MAXIT; m++) {
+    let num = m*(b-m)*x / ((a-1+2*m)*(a+2*m));
+    d = 1+num*d; if (Math.abs(d)<FPMIN) d=FPMIN;
+    c = 1+num/c; if (Math.abs(c)<FPMIN) c=FPMIN;
+    d = 1/d; h *= d*c;
+    num = -(a+m)*(a+b+m)*x / ((a+2*m)*(a+1+2*m));
+    d = 1+num*d; if (Math.abs(d)<FPMIN) d=FPMIN;
+    c = 1+num/c; if (Math.abs(c)<FPMIN) c=FPMIN;
+    d = 1/d; const del = d*c; h *= del;
+    if (Math.abs(del-1) < EPS) break;
+  }
+  return front * h;
+}
+
+function tCdf(t, df) {
+  if (!isFinite(t) || !isFinite(df) || df <= 0) return NaN;
+  const x = df / (df + t*t);
+  const ib = incompleteBeta(df/2, 0.5, x);
+  return t >= 0 ? 1 - ib/2 : ib/2;
+}
+
+function tQuantile(p, df) {
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  let x = inverseNormal(p);
+  for (let i = 0; i < 60; i++) {
+    const fx = tCdf(x, df) - p;
+    if (Math.abs(fx) < 1e-11) break;
+    const logpdf = logGammaFunc((df+1)/2) - logGammaFunc(df/2)
+      - 0.5*Math.log(df*Math.PI) - (df+1)/2*Math.log(1 + x*x/df);
+    const pdf = Math.exp(logpdf);
+    if (pdf < 1e-15) break;
+    x -= fx / pdf;
+  }
+  return x;
+}
+
+function welchDf(varA, nA, varB, nB) {
+  const sA = varA/nA, sB = varB/nB;
+  const den = sA*sA/(nA-1) + sB*sB/(nB-1);
+  return den < 1e-15 ? nA+nB-2 : (sA+sB)**2 / den;
+}
+
+// ─── Critical value helpers ────────────────────────────────────────────────────
+function alphaFromConfidence(conf) { return 1 - conf; }
+function getZCritical(alpha, testType) {
+  return testType === 'two-sided' ? inverseNormal(1 - alpha/2) : inverseNormal(1 - alpha);
+}
+function getTCritical(alpha, testType, df) {
+  return testType === 'two-sided' ? tQuantile(1 - alpha/2, df) : tQuantile(1 - alpha, df);
+}
+
+// ─── Data generation ───────────────────────────────────────────────────────────
+function generateBaseSamples() {
+  const effect = +effectSizeSlider.value;
+  const direction = directionSelect.value;
+  const signedEffect = direction === 'positive' ? effect : -effect;
+  const baseMean = 50, shift = signedEffect / 2;
+  const maxN = +groupSizeSlider.max;
+  baseSampleA = [];
+  baseSampleB = [];
+  for (let i = 0; i < maxN; i++) {
+    baseSampleA.push(baseMean - shift + randn() * FIXED_SD);
+    baseSampleB.push(baseMean + shift + randn() * FIXED_SD);
+  }
+  sampleMeta = { effect, direction };
+  const allValues = [...baseSampleA, ...baseSampleB];
+  const pad = Math.max(6, FIXED_SD * 2.2);
+  observedPlotRange = [Math.min(...allValues) - pad, Math.max(...allValues) + pad];
+  applyCurrentN();
+}
+
+function applyCurrentN() {
+  const n = +groupSizeSlider.value;
+  observedA = baseSampleA.slice(0, n);
+  observedB = baseSampleB.slice(0, n);
+}
+
+// ─── Core statistics ───────────────────────────────────────────────────────────
+// z and p are computed vs the user-set nullValue (not always zero)
+function computeResults() {
+  const conf      = +confidenceLevelSelect.value;
+  const alpha     = alphaFromConfidence(conf);
+  const testType  = testTypeSelect.value;
+  const nullValue = +nullValueSlider.value;
+
+  const meanA = mean(observedA), meanB = mean(observedB);
+  const diff  = meanB - meanA;
+  const varA  = variance(observedA), varB = variance(observedB);
+  const nA    = observedA.length,    nB   = observedB.length;
+  const se    = Math.sqrt(varA/nA + varB/nB);
+
+  // Test statistic vs null value
+  const z = (diff - nullValue) / se;
+
+  // z-based p-value
+  let p;
+  if      (testType === 'two-sided') p = 2 * (1 - normalCdf(Math.abs(z)));
+  else if (testType === 'greater')   p = 1 - normalCdf(z);
+  else                               p = normalCdf(z);
+
+  // z-based CI
+  const zCrit  = getZCritical(alpha, testType);
+  const zLower = diff - zCrit * se;
+  const zUpper = diff + zCrit * se;
+
+  // Exact Welch t
+  const df     = welchDf(varA, nA, varB, nB);
+  const tStat  = z; // same numerator; distribution differs
+  let pExact;
+  if      (testType === 'two-sided') pExact = 2 * (1 - tCdf(Math.abs(tStat), df));
+  else if (testType === 'greater')   pExact = 1 - tCdf(tStat, df);
+  else                               pExact = tCdf(tStat, df);
+
+  const tCrit  = getTCritical(alpha, testType, df);
+  const tLower = diff - tCrit * se;
+  const tUpper = diff + tCrit * se;
+
+  // Cohen's d (pooled SD valid because nA = nB always)
+  const pooledSd = Math.sqrt((varA + varB) / 2);
+  const d = diff / pooledSd;
+
+  result = { meanA, meanB, diff, se, z, p, zLower, zUpper, tStat, df, pExact, tLower, tUpper, d, zCrit, tCrit, alpha, testType, nullValue };
+}
+
+// ─── Power ─────────────────────────────────────────────────────────────────────
+function computePowerAtEffect(effectSigned, nOverride = null) {
+  const n        = nOverride || +groupSizeSlider.value;
+  const alpha    = alphaFromConfidence(+confidenceLevelSelect.value);
+  const testType = testTypeSelect.value;
+  const nullValue = +nullValueSlider.value;
+  const zCrit    = getZCritical(alpha, testType);
+  const seTrue   = FIXED_SD * Math.sqrt(2 / n);
+  const mu       = (effectSigned - nullValue) / seTrue;
+  if      (testType === 'two-sided') return 1 - normalCdf(zCrit - mu) + normalCdf(-zCrit - mu);
+  else if (testType === 'greater')   return 1 - normalCdf(zCrit - mu);
+  else                               return normalCdf(-zCrit - mu);
+}
+
+function findMDE(direction, n) {
+  for (let x = 0; x <= 30; x += 0.02) {
+    const signed = direction === 'positive' ? x : -x;
+    if (computePowerAtEffect(signed, n) >= 0.8) return x;
+  }
+  return null;
+}
+
+function findNForTargetPower(targetPower, effectSigned) {
+  for (let n = 4; n <= 5000; n++) {
+    if (computePowerAtEffect(effectSigned, n) >= targetPower) return n;
+  }
+  return null;
+}
+
+function getTestLabel() {
+  if (testTypeSelect.value === 'two-sided') return 'two-sided';
+  if (testTypeSelect.value === 'greater')   return 'one-sided (greater than null)';
+  return 'one-sided (less than null)';
+}
+
+// ─── Plot: observed groups ─────────────────────────────────────────────────────
+function makeCurveTrace(mu, sigma, minX, maxX, colorFill, colorLine, peakH, name) {
+  const xs = [], ys = [];
+  for (let i = 0; i <= 180; i++) {
+    const x = minX + (maxX - minX) * (i / 180);
+    xs.push(x); ys.push(normalPdf(x, mu, sigma));
+  }
+  const maxY = Math.max(...ys);
+  return { x:xs, y:ys.map(y => y/maxY*peakH), mode:'lines', type:'scatter',
+    fill:'tozeroy', line:{color:colorLine,width:2}, fillcolor:colorFill,
+    name, hoverinfo:'skip', showlegend:false };
+}
+
+function drawObservedPlot() {
+  const minX = observedPlotRange[0], maxX = observedPlotRange[1];
+  const traces = [];
+  const peak = 1.05;
+
+  if (showHistogram.checked) {
+    const binSize = Math.max(0.3, (maxX - minX) / 30);
+    traces.push({
+      x: observedA, type:'histogram', name:'Group A',
+      autobinx:false, xbins:{start:minX, end:maxX, size:binSize},
+      histnorm:'probability density',
+      marker:{color:'rgba(37,99,235,0.28)', line:{color:'rgba(37,99,235,0.65)',width:1}},
+      showlegend:true
+    });
+    traces.push({
+      x: observedB, type:'histogram', name:'Group B',
+      autobinx:false, xbins:{start:minX, end:maxX, size:binSize},
+      histnorm:'probability density',
+      marker:{color:'rgba(220,38,38,0.22)', line:{color:'rgba(220,38,38,0.60)',width:1}},
+      showlegend:true
+    });
+  }
+
+  if (showDistributionBackdrop.checked) {
+    traces.push(makeCurveTrace(result.meanA, sd(observedA), minX, maxX, 'rgba(37,99,235,0.13)', 'rgba(37,99,235,0.8)', peak, 'A curve'));
+    traces.push(makeCurveTrace(result.meanB, sd(observedB), minX, maxX, 'rgba(220,38,38,0.13)', 'rgba(220,38,38,0.8)', peak, 'B curve'));
+  }
+
+  if (true) {
+    traces.push({ x:[result.meanA], y:[peak*0.93], mode:'markers', type:'scatter', showlegend:false,
+      marker:{symbol:'triangle-up',size:12,color:'#2563eb'}, hovertemplate:'Group A mean=%{x:.2f}<extra></extra>' });
+    traces.push({ x:[result.meanB], y:[peak*0.985], mode:'markers', type:'scatter', showlegend:false,
+      marker:{symbol:'triangle-up',size:12,color:'#dc2626'}, hovertemplate:'Group B mean=%{x:.2f}<extra></extra>' });
+  }
+
+  const shapes = [];
+  const annotations = [
+    { text:`A mean = ${result.meanA.toFixed(2)}`, x:result.meanA, y:1.035, xref:'x', yref:'paper', showarrow:false, font:{size:11,color:'#2563eb'} },
+    { text:`B mean = ${result.meanB.toFixed(2)}`, x:result.meanB, y:0.965, xref:'x', yref:'paper', showarrow:false, font:{size:11,color:'#dc2626'} }
+  ];
+
+  if (true) {
+    shapes.push(
+      {type:'line',x0:result.meanA,x1:result.meanA,y0:0,y1:0.92,xref:'x',yref:'paper',line:{color:'#2563eb',width:2,dash:'dot'}},
+      {type:'line',x0:result.meanB,x1:result.meanB,y0:0,y1:0.92,xref:'x',yref:'paper',line:{color:'#dc2626',width:2,dash:'dot'}}
+    );
+  }
+
+  Plotly.react(observedPlot, traces, {
+    margin:{t:18,r:20,b:50,l:50},
+    xaxis:{title:'Outcome value', range:[minX,maxX]},
+    yaxis:{title:'Density', range:[0,1.15], showticklabels:showHistogram.checked},
+    barmode:'overlay',
+    showlegend:showHistogram.checked,
+    legend:{orientation:'h',x:0,y:1.08,xanchor:'left',yanchor:'bottom'},
+    shapes, annotations
+  }, {responsive:true});
+}
+
+// ─── Plot: decision view ───────────────────────────────────────────────────────
+function drawDecisionPlot() {
+  const nullValue = +nullValueSlider.value;
+  const practical = +practicalThresholdSlider.value;
+  const conf      = +confidenceLevelSelect.value;
+  const testType  = testTypeSelect.value;
+
+  // Use t-based CI bounds for display and decision logic
+  const lower = result.tLower, upper = result.tUpper;
+  const values = [lower, upper, result.diff, nullValue, -practical, practical];
+  const minX = Math.min(...values) - 1.5, maxX = Math.max(...values) + 1.5;
+  sharedEffectRange = [minX, maxX];
+
+  const excludeNull = !(lower <= nullValue && nullValue <= upper);
+  const outsidePractical = result.diff < -practical || result.diff > practical;
+  const intervalEntirelyPracticalSmall = lower >= -practical && upper <= practical;
+  const intervalEntirelyOutsidePracticalSmall = upper < -practical || lower > practical;
+
+  // Extend open bounds to edge of plot for one-sided display
+  let displayLower = lower, displayUpper = upper;
+  if (testType === 'greater') displayUpper = maxX;
+  if (testType === 'less')    displayLower = minX;
+
+  const traces = [
+    { x:[displayLower, displayUpper], y:[0,0], mode:'lines', type:'scatter',
+      line:{color:'#2563eb',width:10},
+      hovertemplate:`${(conf*100).toFixed(0)}% CI: [%{x:.2f}]<extra></extra>`, showlegend:false },
+    { x:[result.diff], y:[0], mode:'markers', type:'scatter',
+      marker:{color:'#111827',size:14},
+      hovertemplate:'Observed difference=%{x:.2f}<extra></extra>', showlegend:false }
+  ];
+
+  const shapes = [
+    { type:'rect', x0:-practical, x1:practical, y0:-0.55, y1:0.55, xref:'x', yref:'y',
+      fillcolor:'rgba(22,163,74,0.12)', line:{width:0} },
+    { type:'line', x0:nullValue, x1:nullValue, y0:-0.55, y1:0.55, xref:'x', yref:'y',
+      line:{color:'#6b7280',width:2,dash:'dash'} }
+  ];
+
+  const annotations = [
+    { text:'Observed', x:result.diff, y:0.21, xref:'x', yref:'y', showarrow:false, font:{size:11,color:'#111827'} },
+    { text:'Null', x:nullValue, y:0.43, xref:'x', yref:'y', showarrow:false, font:{size:11,color:'#6b7280'} },
+    { text:'Practically small region', x:0, y:-0.39, xref:'x', yref:'y', showarrow:false, font:{size:11,color:'#166534'} }
+  ];
+
+  let sentence = '';
+  if      (excludeNull && intervalEntirelyOutsidePracticalSmall) sentence = 'The interval misses the null and sits outside the practically small region.';
+  else if (excludeNull && !intervalEntirelyOutsidePracticalSmall) sentence = 'The interval misses the null, but part of it still touches the practically small region.';
+  else if (!excludeNull && outsidePractical) sentence = 'The observed difference is outside the practically small region, but the interval still includes the null.';
+  else if (intervalEntirelyPracticalSmall) sentence = 'The interval sits inside the practically small region, so even plausible effects look minor.';
+  else sentence = 'The interval overlaps both the null and the practically small region so the result remains ambiguous.';
+  if (testType !== 'two-sided') sentence += ' (One-sided CI: open bound extends toward ±∞.)';
+  decisionSubtitle.textContent = `${sentence} Decision rule: ${getTestLabel()}.`;
+
+  Plotly.react(decisionPlot, traces, {
+    margin:{t:16,r:20,b:55,l:55},
+    xaxis:{title:'Difference in means (Group B − Group A)', range:[minX,maxX]},
+    yaxis:{visible:false, range:[-0.6,0.6]},
+    showlegend:false, shapes, annotations
+  }, {responsive:true});
+}
+
+// ─── Plot: power curve (full signed range + MDE) ───────────────────────────────
+function drawPowerPlot() {
+  const direction    = directionSelect.value;
+  const effect       = +effectSizeSlider.value;
+  const signedEffect = direction === 'positive' ? effect : -effect;
+  const absEffect    = Math.abs(signedEffect);
+  const alpha        = alphaFromConfidence(+confidenceLevelSelect.value);
+  const n            = +groupSizeSlider.value;
+
+  const maxAbs = Math.max(Math.abs(sharedEffectRange[0]), Math.abs(sharedEffectRange[1]), absEffect + 1, 4);
+  const xMin = -maxAbs, xMax = maxAbs;
+  const step = Math.max((xMax - xMin) / 300, 0.04);
+
+  const xs = [], ys = [];
+  for (let x = xMin; x <= xMax + 1e-9; x += step) {
+    xs.push(x); ys.push(computePowerAtEffect(x));
+  }
+
+  const traces = [{
+    x:xs, y:ys, mode:'lines', type:'scatter',
+    line:{color:'#2563eb',width:3},
+    hovertemplate:'True diff=%{x:.2f}<br>Power=%{y:.3f}<extra></extra>', showlegend:false
+  }];
+
+  if (true) {
+    traces.push({
+      x:[signedEffect], y:[computePowerAtEffect(signedEffect)],
+      mode:'markers', type:'scatter',
+      marker:{color:'#111827',size:12},
+      hovertemplate:'Current design<br>True diff=%{x:.2f}<br>Power=%{y:.3f}<extra></extra>', showlegend:false
+    });
+  }
+
+  const mde = findMDE(direction, n);
+  const mdeSign = direction === 'positive' ? (mde || 0) : -(mde || 0);
+
+  const shapes = [
+    { type:'line', x0:signedEffect, x1:signedEffect, y0:0, y1:1, xref:'x', yref:'y', line:{color:'#111827',width:2,dash:'dash'} },
+    { type:'line', x0:xMin, x1:xMax, y0:0.8, y1:0.8, xref:'x', yref:'y', line:{color:'#d97706',width:2,dash:'dot'} },
+    { type:'line', x0:xMin, x1:xMax, y0:alpha, y1:alpha, xref:'x', yref:'y', line:{color:'#ef4444',width:1,dash:'dot'} }
+  ];
+
+  const annotations = [
+    { text:'.80 target', x:0.02, y:0.82, xref:'paper', yref:'y', showarrow:false, font:{size:11,color:'#9a3412'} },
+    { text:`α = ${alpha.toFixed(2)}`, x:0.02, y:alpha+0.02, xref:'paper', yref:'y', showarrow:false, font:{size:10,color:'#ef4444'} },
+    { text:`True diff = ${signedEffect >= 0 ? '+' : ''}${signedEffect.toFixed(1)}`, x:signedEffect, y:1.04, xref:'x', yref:'paper', showarrow:false, font:{size:11,color:'#111827'} }
+  ];
+
+  if (showMDE.checked && mde !== null) {
+    shapes.push({ type:'line', x0:mdeSign, x1:mdeSign, y0:0, y1:1, xref:'x', yref:'y', line:{color:'#d97706',width:2,dash:'solid'} });
+    annotations.push({
+      text:`MDE = ${mde.toFixed(2)}`, x:mdeSign, y:0.42, xref:'x', yref:'y',
+      showarrow:true, arrowhead:2, ax:44, ay:-20,
+      font:{size:11,color:'#92400e'}, bgcolor:'rgba(255,251,235,0.92)', borderpad:3
+    });
+  }
+
+  const dirLabel = direction === 'positive' ? 'Assumed direction: Group B higher' : 'Assumed direction: Group A higher';
+  powerSubtitle.textContent = `The dot shows the current assumed true difference. The amber line marks the minimum detectable effect at .80 power. For one-sided tests, power stays near α on the opposite side of the null. ${dirLabel}.`;
+
+  Plotly.react(powerPlot, traces, {
+    margin:{t:16,r:20,b:55,l:55},
+    xaxis:{title:'True mean difference (Group B − Group A)', range:[xMin,xMax], zeroline:true, zerolinecolor:'#d1d5db', zerolinewidth:1},
+    yaxis:{title:'Power', range:[0,1]},
+    showlegend:false, shapes, annotations
+  }, {responsive:true});
+}
+
+// ─── Summary panel ─────────────────────────────────────────────────────────────
+function updateSummary() {
+  const nullValue = +nullValueSlider.value;
+  const practical = +practicalThresholdSlider.value;
+  const conf      = +confidenceLevelSelect.value;
+  const alpha     = alphaFromConfidence(conf);
+  const testType  = testTypeSelect.value;
+
+  const lower = result.tLower, upper = result.tUpper;
+  const nullInside = lower <= nullValue && nullValue <= upper;
+
+  const currentEffectSigned = directionSelect.value === 'positive' ? +effectSizeSlider.value : -(+effectSizeSlider.value);
+  const currentPower = computePowerAtEffect(currentEffectSigned);
+  const mde    = findMDE(directionSelect.value, +groupSizeSlider.value);
+  const targetN = findNForTargetPower(0.8, currentEffectSigned);
+
+  const intervalEntirelyPracticalSmall        = lower >= -practical && upper <= practical;
+  const intervalEntirelyOutsidePracticalSmall = upper < -practical  || lower > practical;
+  const observedPracticallyNotable            = result.diff < -practical || result.diff > practical;
+
+  // Fill metrics
+  groupAMeanVal.textContent = result.meanA.toFixed(2);
+  groupBMeanVal.textContent = result.meanB.toFixed(2);
+  diffVal.textContent       = result.diff.toFixed(2);
+  dVal.textContent          = result.d.toFixed(2);
+  seVal.textContent         = result.se.toFixed(3);
+  tVal.textContent          = result.z.toFixed(3);
+  tExactVal.textContent     = `${result.tStat.toFixed(3)}  (df = ${result.df.toFixed(1)})`;
+
+  const fmtP = p => p < 0.001 ? '< .001' : p.toFixed(3);
+  pVal.textContent      = fmtP(result.p);
+  pExactVal.textContent = fmtP(result.pExact);
+
+  if      (testType === 'greater') ciVal.textContent = `[${result.tLower.toFixed(2)}, +∞)`;
+  else if (testType === 'less')    ciVal.textContent = `(−∞, ${result.tUpper.toFixed(2)}]`;
+  else                             ciVal.textContent = `[${result.tLower.toFixed(2)}, ${result.tUpper.toFixed(2)}]`;
+
+  nullInCiVal.textContent = nullInside ? 'Yes, so null is compatible with data' : 'No, so null excluded';
+  powerVal.textContent    = currentPower.toFixed(3);
+  mdeVal.textContent      = mde !== null ? mde.toFixed(2) : '> 30';
+  sampleSourceVal.textContent = `effect ${sampleMeta.direction === 'positive' ? '+' : '−'}${sampleMeta.effect.toFixed(1)}, same base sample`;
+
+  onesidedCINote.style.display = testType !== 'two-sided' ? 'block' : 'none';
+
+  // Decision classification
+  let decisionCase = 'mixed', decisionText = '', designText = '';
+  if (!nullInside && intervalEntirelyOutsidePracticalSmall) {
+    decisionCase = 'sig_practical';
+    decisionText = 'Clear evidence of a practically meaningful effect.';
+    designText   = 'The design separates the null from a meaningfully sized difference. Both statistical and practical verdicts are positive.';
+  } else if (!nullInside && !intervalEntirelyOutsidePracticalSmall) {
+    decisionCase = 'sig_not_practical';
+    decisionText = 'Statistically detectable, but practical importance is uncertain.';
+    designText   = 'Precise enough to exclude the null, but not all plausible effects are clearly outside the practically small region. Often seen with large n and a small true effect.';
+  } else if (nullInside && observedPracticallyNotable) {
+    decisionCase = 'nonsig_practical';
+    decisionText = 'Potentially notable, but still inconclusive under this design.';
+    designText   = 'The point estimate looks meaningful, but the interval is too wide to rule out the null. Classic underpowered study: the effect may be real, but the design cannot confirm it yet.';
+  } else if (intervalEntirelyPracticalSmall) {
+    decisionCase = 'nonsig_not_practical';
+    decisionText = 'Little evidence of a practically meaningful effect.';
+    designText   = 'Even the plausible upper end of the interval remains inside the practically small region. This is a genuine null-like result given your practical threshold.';
+  } else {
+    decisionCase = 'mixed';
+    decisionText = 'Mixed result, so the study does not clearly separate null, trivial, and notable effects.';
+    designText   = 'The interval crosses multiple regions. Increase n to narrow the interval and reach a clearer verdict.';
+  }
+
+  interpretiveCueVal.textContent   = decisionText;
+  prominentDecisionVal.textContent = decisionText;
+  prominentDesignVal.textContent   = designText;
+
+  if (decisionCase === 'nonsig_practical') {
+    const suggestions = [];
+    if (currentPower < 0.8 && targetN) suggestions.push(`increasing n to about ${targetN} per group`);
+    suggestions.push('a larger true population difference');
+    if (alpha <= 0.05) suggestions.push('a less conservative alpha, if justified in advance');
+    const joinText = suggestions.length === 1 ? suggestions[0]
+      : suggestions.slice(0,-1).join(', ') + ', or ' + suggestions[suggestions.length-1];
+    designCueBox.style.display = 'block';
+    designCueBox.innerHTML = '<strong>Design cue:</strong> This is the classic underpowered scenario where the estimated effect looks practically meaningful, but the study cannot confirm it statistically. Detectability would improve with ' + joinText + '.';
+  } else {
+    designCueBox.style.display = 'none';
+  }
+
+  if (targetN === null) {
+    nRecommendationVal.textContent = '> 5,000 per group';
+    efficiencyVal.textContent      = 'The effect is very small relative to SD. Reaching .80 power requires an extremely large study under these assumptions.';
+  } else if (currentPower < 0.8) {
+    nRecommendationVal.textContent = `${targetN} per group`;
+    efficiencyVal.textContent      = `Current n = ${groupSizeSlider.value}. About ${targetN} per group needed to reach .80 power for this assumed effect.`;
+  } else if (+groupSizeSlider.value > targetN) {
+    nRecommendationVal.textContent = `${targetN} per group`;
+    efficiencyVal.textContent      = `Current n exceeds the .80 threshold. You could reduce to about ${targetN} per group and still maintain conventional power, potentially freeing resources.`;
+  } else {
+    nRecommendationVal.textContent = `${targetN} per group`;
+    efficiencyVal.textContent      = 'Current n is close to the .80 power target, meaning the design is appropriately sized for this assumed effect.';
+  }
+
+  const badges = [];
+  badges.push(`<span class="pill ${nullInside ? 'warn' : 'good'}">${nullInside ? 'Null remains plausible' : `Null excluded at α = ${alpha.toFixed(2).replace(/^0/,'')}`}</span>`);
+  if      (intervalEntirelyOutsidePracticalSmall) badges.push('<span class="pill good">Interval outside practically small region</span>');
+  else if (intervalEntirelyPracticalSmall)        badges.push('<span class="pill warn">Interval inside practically small region</span>');
+  else                                            badges.push('<span class="pill warn">Interval overlaps practically small region</span>');
+  badges.push(`<span class="pill">${getTestLabel()}</span>`);
+  if      (currentPower >= 0.8) badges.push('<span class="pill good">High power (≥.80)</span>');
+  else if (currentPower >= 0.5) badges.push('<span class="pill warn">Moderate power (.50–.79)</span>');
+  else                          badges.push('<span class="pill bad">Low power (< .50)</span>');
+  if (mde !== null) badges.push(`<span class="pill">MDE = ${mde.toFixed(2)}</span>`);
+  if (!nullInside && !intervalEntirelyOutsidePracticalSmall) badges.push('<span class="pill warn">Detectable but practical size unclear</span>');
+  if (nullInside && observedPracticallyNotable)               badges.push('<span class="pill bad">Notable estimate but inconclusive design</span>');
+  interpretiveBadgeRow.innerHTML = badges.join('');
+}
+
+// ─── Orchestration ─────────────────────────────────────────────────────────────
+function redrawAll()        { computeResults(); drawObservedPlot(); drawDecisionPlot(); drawPowerPlot(); updateSummary(); }
+function updateLabels() {
+  groupSizeVal.textContent = `${groupSizeSlider.value} per group`;
+  effectSizeVal.textContent = effectSizeSlider.value;
+  nullValueVal.textContent = (+nullValueSlider.value).toFixed(1);
+  const thr = (+practicalThresholdSlider.value).toFixed(1);
+  practicalThresholdVal.textContent = `Differences between −${thr} and +${thr} are treated as practically small`;
+}
+function regenerateFromNewSample() { updateLabels(); generateBaseSamples(); redrawAll(); }
+function redrawAfterNChange()       { updateLabels(); applyCurrentN();       redrawAll(); }
+function redrawControlOnly()        { updateLabels(); redrawAll(); }
+function syncDisplayCards()        { summaryCard.style.display = showNumericalSummary.checked ? 'block' : 'none'; }
+function redrawPowerOnly()          { updateLabels(); drawPowerPlot(); updateSummary(); }
+
+function applyPreset(name) {
+  if (name === 'trivialSig') {
+    groupSizeSlider.value = 220; effectSizeSlider.value = 0.8;
+    directionSelect.value = 'positive'; confidenceLevelSelect.value = 0.95;
+    nullValueSlider.value = 0; practicalThresholdSlider.value = 1.5;
+    testTypeSelect.value = 'two-sided';
+  } else if (name === 'notableInconclusive') {
+    groupSizeSlider.value = 16; effectSizeSlider.value = 2.4;
+    directionSelect.value = 'positive'; confidenceLevelSelect.value = 0.95;
+    nullValueSlider.value = 0; practicalThresholdSlider.value = 1.0;
+    testTypeSelect.value = 'two-sided';
+  } else {
+    groupSizeSlider.value = 40; effectSizeSlider.value = 2.5;
+    directionSelect.value = 'positive'; confidenceLevelSelect.value = 0.95;
+    nullValueSlider.value = 0; practicalThresholdSlider.value = 1.0;
+    testTypeSelect.value = 'two-sided';
+  }
+  regenerateFromNewSample();
+}
+
+// ─── Event listeners ───────────────────────────────────────────────────────────
+groupSizeSlider.addEventListener('input',  redrawAfterNChange);
+groupSizeSlider.addEventListener('change', redrawAfterNChange);
+confidenceLevelSelect.addEventListener('change', redrawControlOnly);
+testTypeSelect.addEventListener('change', redrawControlOnly);
+nullValueSlider.addEventListener('input',  redrawControlOnly);
+nullValueSlider.addEventListener('change', redrawControlOnly);
+practicalThresholdSlider.addEventListener('input',  redrawControlOnly);
+practicalThresholdSlider.addEventListener('change', redrawControlOnly);
+effectSizeSlider.addEventListener('input',  redrawPowerOnly);
+effectSizeSlider.addEventListener('change', redrawPowerOnly);
+directionSelect.addEventListener('change', redrawPowerOnly);
+showHistogram.addEventListener('change', redrawAll);
+showDistributionBackdrop.addEventListener('change', redrawAll);
+showMDE.addEventListener('change', redrawAll);
+showNumericalSummary.addEventListener('change', () => { syncDisplayCards(); });
+
+document.getElementById('newData').addEventListener('click', regenerateFromNewSample);
+document.getElementById('presetTrivialSig').addEventListener('click', () => applyPreset('trivialSig'));
+document.getElementById('presetNotableInconclusive').addEventListener('click', () => applyPreset('notableInconclusive'));
+document.getElementById('presetBalanced').addEventListener('click', () => applyPreset('balanced'));
+
+document.getElementById('toggleGuide').addEventListener('click', () => {
+  const g = document.getElementById('guideSection');
+  const btn = document.getElementById('toggleGuide');
+  const open = g.classList.toggle('open');
+  btn.textContent = open ? '▲ Hide Guide' : '▼ Quick-Start Guide';
+});
+
+document.getElementById('toggleHelp').addEventListener('click', () => {
+  const help = document.getElementById('helpCard');
+  help.style.display = help.style.display === 'none' ? 'block' : 'none';
+});
+
+// ─── Init ──────────────────────────────────────────────────────────────────────
+updateLabels();
+syncDisplayCards();
+generateBaseSamples();
+redrawAll();
+</script>
+</body>
+</html>
