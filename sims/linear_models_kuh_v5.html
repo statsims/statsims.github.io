@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linear Model Explorer: Observed, Predicted, and Residual Change</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --border:#d9dde3;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --soft:#f3f4f6;
+      --blue:#2563eb;
+      --red:#dc2626;
+      --green:#16a34a;
+      --amber:#d97706;
+      --gray:#6b7280;
+      --purple:#7c3aed;
+      --teal:#0f766e;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--bg);color:var(--text)}
+    .container{max-width:1360px;margin:auto}
+    .app-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+    .left-column,.right-column{display:grid;gap:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+    .left-stack{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    h2,h3{margin:0 0 10px 0}
+    p{margin:0;line-height:1.45}
+    .controls{display:grid;gap:10px}
+    .control-box{background:var(--soft);padding:10px;border-radius:10px;border:1px solid var(--border)}
+    .control-title{font-size:.85rem;color:var(--muted);margin-bottom:6px;display:block}
+    button{padding:9px 12px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;margin-right:6px;margin-bottom:6px}
+    button:hover{background:#f8fafc}
+    input,select{width:100%}
+    .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .metric{border:1px solid var(--border);background:var(--soft);border-radius:10px;padding:10px}
+    .metric-label{font-size:.8rem;color:var(--muted)}
+    .metric-value{font-weight:600;line-height:1.35}
+    .small{font-size:.9rem;color:var(--muted);line-height:1.45}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .display-list{display:grid;gap:8px}
+    .display-row{display:grid;grid-template-columns:18px 1fr;align-items:start;column-gap:10px}
+    .display-row input[type="checkbox"], .display-row input[type="radio"]{width:auto;margin:0}
+    .badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:.8rem;border:1px solid var(--border);background:white}
+    .badge.blue{color:var(--blue);border-color:#bfdbfe;background:#eff6ff}
+    .badge.red{color:var(--red);border-color:#fecaca;background:#fef2f2}
+    .badge.green{color:var(--green);border-color:#bbf7d0;background:#f0fdf4}
+    .badge.amber{color:#92400e;border-color:#fde68a;background:#fffbeb}
+    .dag-wrap{display:flex;justify-content:center;align-items:center;background:#fbfcfe;border:1px solid var(--border);border-radius:12px;padding:12px}
+    svg{max-width:100%;height:auto;display:block}
+    .dag-node circle{stroke:#334155;stroke-width:2;fill:#fff}
+    .dag-node text{font-size:14px;font-weight:700;fill:#111827;dominant-baseline:middle;text-anchor:middle;pointer-events:none}
+    .dag-node.active circle{fill:#dbeafe;stroke:var(--blue)}
+    .dag-node.outcome circle{fill:#dcfce7;stroke:var(--green)}
+    .dag-node.focal circle{fill:#fee2e2;stroke:var(--red)}
+    .dag-edge{stroke:#94a3b8;stroke-width:2.5;fill:none;marker-end:url(#dagArrow)}
+    .dag-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+    .dag-legend-item{display:flex;align-items:center;gap:8px;font-size:.86rem;color:var(--muted)}
+    .swatch{width:15px;height:15px;border-radius:999px;border:2px solid #334155;background:#fff}
+    table{width:100%;border-collapse:collapse;font-size:.94rem}
+    th,td{border-bottom:1px solid var(--border);padding:8px 6px;text-align:left;vertical-align:top}
+    th{font-size:.86rem;color:var(--muted);font-weight:600}
+    #plotObserved,#plotResiduals,#plotCoef,#plotItems,#plotStudent,#plotFit{height:360px}
+    .help-card{margin-top:18px;width:calc((100% - 16px) * 2 / 3);max-width:calc((100% - 16px) * 2 / 3)}
+    @media (max-width:980px){
+      .app-grid{grid-template-columns:1fr}
+      .left-stack{grid-template-columns:1fr}
+      .metric-grid{grid-template-columns:1fr}
+      .help-card{width:100%;max-width:100%}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+    <div class="left-column">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1 1 560px;min-width:280px;">
+            <h2>Linear Model Explorer: Observed, Predicted, and Residual Change</h2>
+            <p>
+              This lab uses <strong>nested linear models</strong> to show how prediction changes when theory-guided covariate blocks are added. The block structure follows a Kuh-style engagement framework: Q1–Q3 form a course engagement subscale, Q4–Q6 form a campus belonging / matriculation subscale, and background factors enter last.
+            </p>
+            <div class="badge-row">
+              <span class="badge blue">Observed vs predicted</span>
+              <span class="badge red">Residual change</span>
+              <span class="badge green">Theory-guided blocks</span>
+              <span class="badge amber">Coefficient path</span>
+            </div>
+          </div>
+          <button id="toggleHelp">Help with Interpretation</button>
+        </div>
+      </div>
+
+      <div class="left-stack">
+        <div class="card">
+          <h3>Observed vs Predicted Outcome</h3>
+          <div id="plotObserved"></div>
+          <div class="small">The dashed line is perfect prediction (<span class="mono">y = x</span>). Each point is one student. Closer points indicate better fit.</div>
+        </div>
+
+        <div class="card">
+          <h3>Residual View</h3>
+          <div id="plotResiduals"></div>
+          <div class="small">Residuals are the remaining prediction errors after the selected model is applied.</div>
+        </div>
+      </div>
+
+      <div class="left-stack">
+        <div class="card">
+          <h3>Seminar Coefficient Across Models</h3>
+          <div id="plotCoef"></div>
+          <div class="small">This path tracks how the seminar slope changes when engagement, belonging, and background controls are added.</div>
+        </div>
+
+        <div class="card">
+          <h3>Engagement and Belonging Subscales</h3>
+          <div id="plotItems"></div>
+          <div class="small">Students are not only fitting a regression. They are also using reliability-style groupings to turn Q1–Q3 and Q4–Q6 into conceptually distinct predictors.</div>
+        </div>
+      </div>
+
+      <div class="left-stack">
+        <div class="card">
+          <h3>One Student Across Models</h3>
+          <div id="plotStudent"></div>
+          <div class="small">The tracked case is the highlighted student when one is selected; otherwise it defaults to the largest miss in the displayed model. The horizontal line is that student’s observed GPA.</div>
+        </div>
+
+        <div class="card">
+          <h3>Meaningful Additions and a Simple DAG</h3>
+          <div class="dag-wrap">
+            <svg id="dagSvg" viewBox="0 0 560 300" aria-label="Meaningful covariates DAG"></svg>
+          </div>
+          <div class="dag-legend">
+            <div class="dag-legend-item"><span class="swatch" style="background:#fee2e2;border-color:var(--red)"></span><span>Focal predictor</span></div>
+            <div class="dag-legend-item"><span class="swatch" style="background:#dbeafe;border-color:var(--blue)"></span><span>Entered by current model</span></div>
+            <div class="dag-legend-item"><span class="swatch" style="background:#dcfce7;border-color:var(--green)"></span><span>Outcome</span></div>
+          </div>
+          <div id="dagRead" class="small" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <div class="left-stack">
+        <div class="card">
+          <h3>Incremental Fit from Meaningful Blocks</h3>
+          <div id="plotFit"></div>
+          <div class="small">Each bar shows what the next block bought you. Use this together with the DAG card: a block should be both substantively meaningful and worth something in fit.</div>
+        </div>
+
+        <div class="card">
+          <h3>Model Comparison</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Predictors</th>
+                <th>Seminar slope</th>
+                <th>95% CI</th>
+                <th>R²</th>
+                <th>RMSE</th>
+                <th>Mean residual</th>
+              </tr>
+            </thead>
+            <tbody id="modelTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Predictors</th>
+              <th>Seminar slope</th>
+              <th>R²</th>
+              <th>RMSE</th>
+              <th>Mean residual</th>
+            </tr>
+          </thead>
+          <tbody id="modelTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="right-column">
+      <div class="card">
+        <h3>Controls</h3>
+        <div class="controls">
+          <div class="control-box">
+            <span class="control-title">Preset teaching case</span>
+            <select id="presetSelect">
+              <option value="balanced" selected>Balanced case</option>
+              <option value="engagementExplains">Engagement explains much of seminar effect</option>
+              <option value="backgroundConfounding">Background confounding case</option>
+              <option value="strongDirect">Strong direct seminar effect</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Displayed model</span>
+            <select id="displayModel">
+              <option value="0">Model 1: Seminar only</option>
+              <option value="1">Model 2: + Course engagement</option>
+              <option value="2">Model 3: + Belonging</option>
+              <option value="3" selected>Model 4: + Background controls</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Sample size</span>
+            <input type="range" id="sampleSize" min="120" max="900" step="20" value="320" />
+            <div id="sampleSizeVal" class="small">320 students</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Outcome noise</span>
+            <input type="range" id="noise" min="0.10" max="0.90" step="0.05" value="0.35" />
+            <div id="noiseVal" class="small">0.35 GPA units</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Residual display</span>
+            <div class="display-list">
+              <div class="display-row"><input type="radio" name="residMode" value="predicted" checked /><span>Residuals vs predicted GPA</span></div>
+              <div class="display-row"><input type="radio" name="residMode" value="segments" /><span>Observed cases with vertical residual segments</span></div>
+            </div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Actions</span>
+            <button id="newData">New observed data</button>
+            <button id="highlightWorst">Highlight largest residual</button>
+            <button id="clearHighlight">Clear highlight</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Display</span>
+            <div class="display-list">
+              <div class="display-row"><input type="checkbox" id="showFitBand" checked /><span>Show soft fit bands</span></div>
+              <div class="display-row"><input type="checkbox" id="showEquityLine" checked /><span>Show line of perfect prediction</span></div>
+              <div class="display-row"><input type="checkbox" id="showBadges" checked /><span>Show interpretive badges</span></div>
+              <div class="display-row"><input type="checkbox" id="showCaseLabels" /><span>Label highlighted case</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Summary</h3>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Displayed model</div><div id="modelNameVal" class="metric-value">--</div></div>
+          <div class="metric"><div class="metric-label">Seminar slope</div><div id="seminarSlopeVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Intercept</div><div id="interceptVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">R²</div><div id="r2Val" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Adjusted R²</div><div id="adjR2Val" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">RMSE</div><div id="rmseVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Observed mean GPA</div><div id="meanObsVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Predicted mean GPA</div><div id="meanPredVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Course engagement scale</div><div id="courseScaleVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Belonging scale</div><div id="belongScaleVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Largest residual</div><div id="largestResidVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Interpretive cue</div><div id="cueVal" class="metric-value">--</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Current read</h3>
+        <div id="currentRead" class="small">
+          --
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card help-card" id="helpCard" style="display:none;">
+    <h3>Help with Interpretation</h3>
+    <div class="small">
+      <p><strong>Main idea:</strong> A more complete model changes not only the equation but also which outcomes are predicted well, which cases are over- or under-predicted, and how much of the seminar slope remains after related covariates enter.</p>
+      <p><strong>Why the block order matters:</strong> The app does not add predictors arbitrarily. Course engagement enters before belonging, and background controls enter last. That lets students ask whether changes in the seminar coefficient reflect overlap with engagement, overlap with belonging, or background confounding.</p>
+      <p><strong>Observed vs predicted:</strong> The closer the points sit to the <span class="mono">y = x</span> line, the closer the model’s predictions are to the observed GPAs.</p>
+      <p><strong>Residuals:</strong> A residual is <span class="mono">observed − predicted</span>. Positive residuals mean the model underpredicted the student. Negative residuals mean the model overpredicted the student.</p>
+      <p><strong>Coefficient path:</strong> If the seminar slope shrinks after engagement enters, some of the original seminar association overlaps with engagement differences. If it stays stable, the seminar effect is more independent of the added block.</p>
+      <p><strong>Uncertainty:</strong> The error bars show approximate 95% confidence intervals for the seminar coefficient in each model. A visible change in the point estimate matters more when the intervals move meaningfully, not when the estimate only wiggles inside broad uncertainty.</p>
+      <p><strong>Theory link:</strong> Following Kuh’s engagement logic, Q1–Q3 and Q4–Q6 are not treated as six disconnected items. They are organized into conceptually distinct subscales that can be evaluated and then used as predictors.</p>
+      <p><strong>Incremental fit:</strong> A meaningful block should not be judged only by whether it can be added. Compare the DAG card with the fit-gain panel to ask whether the new block both belongs conceptually and improves fit enough to matter.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const presetSelect = document.getElementById('presetSelect');
+const displayModelSelect = document.getElementById('displayModel');
+const sampleSizeSlider = document.getElementById('sampleSize');
+const noiseSlider = document.getElementById('noise');
+const sampleSizeVal = document.getElementById('sampleSizeVal');
+const noiseVal = document.getElementById('noiseVal');
+const showFitBand = document.getElementById('showFitBand');
+const showEquityLine = document.getElementById('showEquityLine');
+const showBadges = document.getElementById('showBadges');
+const showCaseLabels = document.getElementById('showCaseLabels');
+const modelTableBody = document.getElementById('modelTableBody');
+
+const modelNameVal = document.getElementById('modelNameVal');
+const seminarSlopeVal = document.getElementById('seminarSlopeVal');
+const interceptVal = document.getElementById('interceptVal');
+const r2Val = document.getElementById('r2Val');
+const adjR2Val = document.getElementById('adjR2Val');
+const rmseVal = document.getElementById('rmseVal');
+const meanObsVal = document.getElementById('meanObsVal');
+const meanPredVal = document.getElementById('meanPredVal');
+const courseScaleVal = document.getElementById('courseScaleVal');
+const belongScaleVal = document.getElementById('belongScaleVal');
+const largestResidVal = document.getElementById('largestResidVal');
+const cueVal = document.getElementById('cueVal');
+const currentRead = document.getElementById('currentRead');
+const dagRead = document.getElementById('dagRead');
+
+const presets = {
+  balanced: {
+    title: 'Balanced case',
+    seminarToEngagement: 0.45,
+    seminarToBelonging: 0.25,
+    seminarDirect: 0.14,
+    engagementToOutcome: 0.18,
+    belongingToOutcome: 0.12,
+    actToSeminar: 0.18,
+    actToOutcome: 0.02,
+    pellToSeminar: -0.16,
+    pellToOutcome: -0.20,
+    firstgenToSeminar: -0.08,
+    firstgenToOutcome: -0.10
+  },
+  engagementExplains: {
+    title: 'Engagement explains much of seminar effect',
+    seminarToEngagement: 0.82,
+    seminarToBelonging: 0.38,
+    seminarDirect: 0.04,
+    engagementToOutcome: 0.24,
+    belongingToOutcome: 0.08,
+    actToSeminar: 0.12,
+    actToOutcome: 0.02,
+    pellToSeminar: -0.08,
+    pellToOutcome: -0.14,
+    firstgenToSeminar: -0.04,
+    firstgenToOutcome: -0.08
+  },
+  backgroundConfounding: {
+    title: 'Background confounding case',
+    seminarToEngagement: 0.35,
+    seminarToBelonging: 0.20,
+    seminarDirect: 0.07,
+    engagementToOutcome: 0.16,
+    belongingToOutcome: 0.10,
+    actToSeminar: 0.35,
+    actToOutcome: 0.04,
+    pellToSeminar: -0.28,
+    pellToOutcome: -0.24,
+    firstgenToSeminar: -0.20,
+    firstgenToOutcome: -0.12
+  },
+  strongDirect: {
+    title: 'Strong direct seminar effect',
+    seminarToEngagement: 0.32,
+    seminarToBelonging: 0.18,
+    seminarDirect: 0.24,
+    engagementToOutcome: 0.15,
+    belongingToOutcome: 0.10,
+    actToSeminar: 0.10,
+    actToOutcome: 0.02,
+    pellToSeminar: -0.10,
+    pellToOutcome: -0.12,
+    firstgenToSeminar: -0.06,
+    firstgenToOutcome: -0.06
+  }
+};
+
+const modelDefs = [
+  { name: 'Model 1: Seminar only', predictors: ['seminar'], label: 'Seminar only' },
+  { name: 'Model 2: + Course engagement', predictors: ['seminar','courseScale'], label: 'Seminar + course engagement' },
+  { name: 'Model 3: + Belonging', predictors: ['seminar','courseScale','belongScale'], label: 'Seminar + engagement + belonging' },
+  { name: 'Model 4: + Background controls', predictors: ['seminar','courseScale','belongScale','actZ','pell','firstgen'], label: 'Seminar + engagement + belonging + background' }
+];
+
+let rows = [];
+let modelResults = [];
+let highlightedIndex = null;
+
+function randn() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function clamp(x, lo, hi){ return Math.max(lo, Math.min(hi, x)); }
+function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+function variance(arr){ const m=mean(arr); return arr.reduce((s,x)=>s+(x-m)**2,0)/(arr.length-1); }
+function sd(arr){ return Math.sqrt(variance(arr)); }
+
+function corr(a,b){
+  const ma=mean(a), mb=mean(b);
+  let num=0, da=0, db=0;
+  for(let i=0;i<a.length;i++){
+    const xa=a[i]-ma, xb=b[i]-mb;
+    num += xa*xb; da += xa*xa; db += xb*xb;
+  }
+  return num/Math.sqrt(da*db);
+}
+
+function alphaFromItems(itemNames){
+  const itemVars = itemNames.map(name => rows.map(r => r[name]));
+  const k = itemVars.length;
+  const total = rows.map(r => itemNames.reduce((s,n)=>s+r[n],0));
+  const varSum = itemVars.reduce((s,arr)=>s+variance(arr),0);
+  const totalVar = variance(total);
+  return (k/(k-1)) * (1 - varSum/totalVar);
+}
+
+function solveLinearSystem(A, b){
+  const n = A.length;
+  const M = A.map((row,i)=>[...row,b[i]]);
+  for(let col=0; col<n; col++){
+    let pivot = col;
+    for(let r=col+1; r<n; r++) if(Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot = r;
+    if(Math.abs(M[pivot][col]) < 1e-10) continue;
+    [M[col], M[pivot]] = [M[pivot], M[col]];
+    const div = M[col][col];
+    for(let c=col; c<=n; c++) M[col][c] /= div;
+    for(let r=0; r<n; r++){
+      if(r === col) continue;
+      const factor = M[r][col];
+      for(let c=col; c<=n; c++) M[r][c] -= factor * M[col][c];
+    }
+  }
+  return M.map(row=>row[n]);
+}
+
+function invertMatrix(A){
+  const n = A.length;
+  const inv = Array.from({length:n}, ()=>Array(n).fill(0));
+  for(let i=0;i<n;i++){
+    const e = Array(n).fill(0);
+    e[i] = 1;
+    const col = solveLinearSystem(A.map(row=>[...row]), e);
+    for(let r=0;r<n;r++) inv[r][i] = col[r];
+  }
+  return inv;
+}
+
+function runRegression(yName, xNames){
+  const X = rows.map(r => [1, ...xNames.map(name => r[name])]);
+  const y = rows.map(r => r[yName]);
+  const p = X[0].length;
+  const XtX = Array.from({length:p}, ()=>Array(p).fill(0));
+  const Xty = Array(p).fill(0);
+  for(let i=0;i<X.length;i++){
+    for(let j=0;j<p;j++){
+      Xty[j] += X[i][j] * y[i];
+      for(let k=0;k<p;k++) XtX[j][k] += X[i][j] * X[i][k];
+    }
+  }
+  const beta = solveLinearSystem(XtX.map(row=>[...row]), Xty);
+  const preds = X.map(row => row.reduce((s,v,i)=>s+v*beta[i],0));
+  const resid = y.map((v,i)=>v-preds[i]);
+  const sse = resid.reduce((s,e)=>s+e*e,0);
+  const sst = y.reduce((s,v)=>s+(v-mean(y))**2,0);
+  const r2 = 1 - sse/sst;
+  const n = y.length;
+  const k = xNames.length;
+  const adjR2 = 1 - ((1-r2)*(n-1)/(n-k-1));
+  const rmse = Math.sqrt(sse/n);
+  const sigma2 = sse / Math.max(1, n - p);
+  const XtXInv = invertMatrix(XtX);
+  const se = beta.map((_, idx) => Math.sqrt(Math.max(0, sigma2 * XtXInv[idx][idx])));
+  const coeffs = {};
+  const coeffSE = {};
+  const coeffCI = {};
+  xNames.forEach((name,idx)=>{
+    coeffs[name] = beta[idx+1];
+    coeffSE[name] = se[idx+1];
+    coeffCI[name] = {
+      lower: beta[idx+1] - 1.96 * se[idx+1],
+      upper: beta[idx+1] + 1.96 * se[idx+1]
+    };
+  });
+  return { intercept: beta[0], interceptSE: se[0], coeffs, coeffSE, coeffCI, preds, resid, r2, adjR2, rmse, predictors:xNames };
+}
+
+function buildData(){
+  const preset = presets[presetSelect.value];
+  const n = Number(sampleSizeSlider.value);
+  const noise = Number(noiseSlider.value);
+  rows = [];
+
+  for(let i=0;i<n;i++){
+    const actZ = randn();
+    const pell = Math.random() < clamp(0.45 - 0.12 * actZ, 0.12, 0.82) ? 1 : 0;
+    const firstgen = Math.random() < clamp(0.38 - 0.08 * actZ + 0.06 * pell, 0.10, 0.85) ? 1 : 0;
+
+    const seminarLatent = 0.25 + preset.actToSeminar * actZ + preset.pellToSeminar * pell + preset.firstgenToSeminar * firstgen + 0.65 * randn();
+    const seminar = seminarLatent > 0 ? 1 : 0;
+
+    const q1 = clamp(3.1 + 0.55*seminar + 0.25*actZ - 0.18*pell - 0.08*firstgen + 0.55*randn(), 1, 5);
+    const q2 = clamp(3.0 + 0.50*seminar + 0.20*actZ - 0.14*pell - 0.05*firstgen + 0.55*randn(), 1, 5);
+    const q3 = clamp(3.2 + 0.58*seminar + 0.22*actZ - 0.16*pell - 0.08*firstgen + 0.50*randn(), 1, 5);
+
+    const q4 = clamp(3.0 + 0.38*seminar + 0.12*actZ - 0.12*pell - 0.05*firstgen + 0.58*randn(), 1, 5);
+    const q5 = clamp(3.1 + 0.30*seminar + 0.10*actZ - 0.10*pell - 0.05*firstgen + 0.58*randn(), 1, 5);
+    const q6 = clamp(3.0 + 0.34*seminar + 0.08*actZ - 0.08*pell - 0.04*firstgen + 0.60*randn(), 1, 5);
+
+    const courseScale = (q1 + q2 + q3) / 3;
+    const belongScale = (q4 + q5 + q6) / 3;
+
+    let gpa = 2.15
+      + preset.seminarDirect * seminar
+      + preset.engagementToOutcome * courseScale
+      + preset.belongingToOutcome * belongScale
+      + preset.actToOutcome * (actZ * 10)
+      + preset.pellToOutcome * pell
+      + preset.firstgenToOutcome * firstgen
+      + noise * randn();
+
+    gpa = clamp(gpa, 0.0, 4.0);
+
+    rows.push({
+      id: i + 1,
+      seminar,
+      actZ,
+      pell,
+      firstgen,
+      q1,q2,q3,q4,q5,q6,
+      courseScale,
+      belongScale,
+      gpa
+    });
+  }
+
+  modelResults = modelDefs.map(def => ({...def, ...runRegression('gpa', def.predictors)}));
+  highlightedIndex = null;
+}
+
+function currentModel(){
+  return modelResults[Number(displayModelSelect.value)];
+}
+
+function largestResidualIndex(resids){
+  let idx = 0;
+  for(let i=1;i<resids.length;i++) if(Math.abs(resids[i]) > Math.abs(resids[idx])) idx = i;
+  return idx;
+}
+
+function updateSummary(){
+  const model = currentModel();
+  const seminarSlope = model.coeffs.seminar ?? 0;
+  const idxWorst = largestResidualIndex(model.resid);
+  const trackedIndex = highlightedIndex ?? idxWorst;
+
+  modelNameVal.textContent = model.name;
+  seminarSlopeVal.textContent = seminarSlope.toFixed(3);
+  interceptVal.textContent = model.intercept.toFixed(3);
+  r2Val.textContent = model.r2.toFixed(3);
+  adjR2Val.textContent = model.adjR2.toFixed(3);
+  rmseVal.textContent = model.rmse.toFixed(3);
+  meanObsVal.textContent = mean(rows.map(r=>r.gpa)).toFixed(3);
+  meanPredVal.textContent = mean(model.preds).toFixed(3);
+  courseScaleVal.textContent = `${mean(rows.map(r=>r.courseScale)).toFixed(2)} | α≈${alphaFromItems(['q1','q2','q3']).toFixed(2)}`;
+  belongScaleVal.textContent = `${mean(rows.map(r=>r.belongScale)).toFixed(2)} | α≈${alphaFromItems(['q4','q5','q6']).toFixed(2)}`;
+  largestResidVal.textContent = `${model.resid[idxWorst].toFixed(3)} at case ${rows[idxWorst].id}`;
+
+  const m1 = modelResults[0].coeffs.seminar;
+  const deltaSlope = seminarSlope - m1;
+  let cue = '';
+  if(Math.abs(deltaSlope) < 0.03) cue = 'The seminar slope is fairly stable across model building.';
+  else if(deltaSlope < 0) cue = 'The seminar slope shrank as additional blocks entered, suggesting overlap with later predictors.';
+  else cue = 'The seminar slope grew after later blocks entered, suggesting suppression or countervailing confounding.';
+  cueVal.textContent = cue;
+
+  currentRead.innerHTML = `
+    <p><strong>Preset:</strong> ${presets[presetSelect.value].title}</p>
+    <p><strong>Displayed model:</strong> ${model.label}.</p>
+    <p><strong>Fit read:</strong> This model explains about ${(model.r2*100).toFixed(1)}% of GPA variation in the simulated sample, with RMSE ≈ ${model.rmse.toFixed(2)}.</p>
+    <p><strong>Coefficient read:</strong> The seminar coefficient is ${seminarSlope.toFixed(3)} GPA units after controlling for the blocks currently in the model.</p>
+    <p><strong>Residual read:</strong> The largest visible miss is case ${rows[idxWorst].id}, where observed GPA differs from predicted GPA by ${model.resid[idxWorst].toFixed(2)}.</p>
+    <p><strong>Case-tracking read:</strong> Case ${rows[trackedIndex].id} has observed GPA ${rows[trackedIndex].gpa.toFixed(2)}. Compare how its prediction changes as meaningful blocks enter.</p>
+    <p><strong>Incremental fit read:</strong> Adding course engagement changed R² by ${(modelResults[1].r2-modelResults[0].r2).toFixed(3)}, adding belonging changed it by ${(modelResults[2].r2-modelResults[1].r2).toFixed(3)}, and adding background controls changed it by ${(modelResults[3].r2-modelResults[2].r2).toFixed(3)}.</p>
+    <p><strong>Interpretation:</strong> ${cue}</p>
+  `;
+}
+
+function drawObservedPlot(){
+  const model = currentModel();
+  const obs = rows.map(r=>r.gpa);
+  const pred = model.preds;
+  const minV = Math.min(...obs, ...pred);
+  const maxV = Math.max(...obs, ...pred);
+  const baseTrace = {
+    x: pred,
+    y: obs,
+    mode: 'markers',
+    type: 'scatter',
+    marker: {
+      color: rows.map(r=>r.seminar ? '#dc2626' : '#2563eb'),
+      size: rows.map((r,i)=> highlightedIndex===i ? 12 : 8),
+      line: { color: rows.map((r,i)=> highlightedIndex===i ? '#111827' : 'rgba(0,0,0,0)'), width: rows.map((r,i)=> highlightedIndex===i ? 2 : 0) }
+    },
+    text: rows.map((r,i)=> showCaseLabels.checked && highlightedIndex===i ? `Case ${r.id}` : ''),
+    textposition: 'top center',
+    customdata: rows.map((r,i)=>[r.id, r.seminar, obs[i]-pred[i]]),
+    hovertemplate: 'Case %{customdata[0]}<br>Predicted GPA=%{x:.2f}<br>Observed GPA=%{y:.2f}<br>Seminar=%{customdata[1]}<br>Residual=%{customdata[2]:.2f}<extra></extra>'
+  };
+
+  const traces = [baseTrace];
+  if(showFitBand.checked){
+    traces.push({
+      x:[minV,maxV,maxV,minV],
+      y:[minV-0.25,maxV-0.25,maxV+0.25,minV+0.25],
+      fill:'toself',
+      fillcolor:'rgba(107,114,128,0.10)',
+      line:{color:'rgba(0,0,0,0)'},
+      hoverinfo:'skip',
+      showlegend:false,
+      type:'scatter'
+    });
+  }
+
+  const shapes = [];
+  if(showEquityLine.checked){
+    shapes.push({ type:'line', x0:minV, x1:maxV, y0:minV, y1:maxV, line:{color:'#6b7280', width:2, dash:'dash'} });
+  }
+
+  Plotly.react('plotObserved', traces, {
+    margin:{t:10,r:20,b:50,l:55},
+    xaxis:{ title:'Predicted GPA', range:[minV-0.1, maxV+0.1] },
+    yaxis:{ title:'Observed GPA', range:[minV-0.1, maxV+0.1] },
+    showlegend:false,
+    shapes,
+    annotations: showBadges.checked ? [
+      { xref:'paper', yref:'paper', x:0.01, y:1.08, showarrow:false, text:'Blue = no seminar | Red = seminar', font:{size:12,color:'#6b7280'} }
+    ] : []
+  }, {responsive:true});
+}
+
+function getResidMode(){ return [...document.querySelectorAll('input[name="residMode"]')].find(r=>r.checked).value; }
+
+function drawResidualPlot(){
+  const model = currentModel();
+  const mode = getResidMode();
+
+  if(mode === 'predicted'){
+    const traces = [{
+      x: model.preds,
+      y: model.resid,
+      mode: 'markers',
+      type: 'scatter',
+      marker: {
+        color: rows.map(r=>r.seminar ? '#dc2626' : '#2563eb'),
+        size: rows.map((r,i)=> highlightedIndex===i ? 12 : 8),
+        line: { color: rows.map((r,i)=> highlightedIndex===i ? '#111827' : 'rgba(0,0,0,0)'), width: rows.map((r,i)=> highlightedIndex===i ? 2 : 0) }
+      },
+      text: rows.map((r,i)=> showCaseLabels.checked && highlightedIndex===i ? `Case ${r.id}` : ''),
+      textposition:'top center',
+      hovertemplate:'Predicted GPA=%{x:.2f}<br>Residual=%{y:.2f}<extra></extra>'
+    }];
+    Plotly.react('plotResiduals', traces, {
+      margin:{t:10,r:20,b:50,l:55},
+      xaxis:{ title:'Predicted GPA' },
+      yaxis:{ title:'Residual (observed − predicted)' },
+      shapes:[{ type:'line', x0:Math.min(...model.preds), x1:Math.max(...model.preds), y0:0, y1:0, line:{color:'#6b7280', width:2, dash:'dash'} }],
+      showlegend:false
+    }, {responsive:true});
+    return;
+  }
+
+  const segmentTraces = rows.map((r,i)=>({
+    x:[i+1, i+1],
+    y:[model.preds[i], r.gpa],
+    mode:'lines',
+    type:'scatter',
+    line:{ color: model.resid[i] >= 0 ? '#16a34a' : '#dc2626', width: highlightedIndex===i ? 3 : 1.5 },
+    hoverinfo:'skip',
+    showlegend:false
+  }));
+
+  const pointTrace = {
+    x: rows.map((_,i)=>i+1),
+    y: rows.map(r=>r.gpa),
+    mode:'markers',
+    type:'scatter',
+    name:'Observed',
+    marker:{ color:'#111827', size:6 },
+    hovertemplate:'Case %{x}<br>Observed GPA=%{y:.2f}<extra></extra>'
+  };
+  const predTrace = {
+    x: rows.map((_,i)=>i+1),
+    y: model.preds,
+    mode:'markers',
+    type:'scatter',
+    name:'Predicted',
+    marker:{ color:'#9ca3af', size:5, symbol:'diamond' },
+    hovertemplate:'Case %{x}<br>Predicted GPA=%{y:.2f}<extra></extra>'
+  };
+
+  Plotly.react('plotResiduals', [...segmentTraces, pointTrace, predTrace], {
+    margin:{t:10,r:20,b:50,l:55},
+    xaxis:{ title:'Case index' },
+    yaxis:{ title:'GPA' },
+    legend:{ orientation:'h', x:0, y:1.08 }
+  }, {responsive:true});
+}
+
+function drawCoefPath(){
+  const x = modelResults.map((m,idx)=>idx+1);
+  const y = modelResults.map(m=>m.coeffs.seminar ?? 0);
+  const ciLower = modelResults.map(m=>m.coeffCI.seminar?.lower ?? (m.coeffs.seminar ?? 0));
+  const ciUpper = modelResults.map(m=>m.coeffCI.seminar?.upper ?? (m.coeffs.seminar ?? 0));
+  const labels = modelResults.map(m=>m.name);
+  const ymin = Math.min(...ciLower);
+  Plotly.react('plotCoef', [{
+    x, y, mode:'lines+markers+text', type:'scatter',
+    line:{ color:'#d97706', width:3 },
+    marker:{ color:'#d97706', size:10 },
+    error_y:{
+      type:'data',
+      symmetric:false,
+      array: ciUpper.map((u,i)=>u-y[i]),
+      arrayminus: y.map((v,i)=>v-ciLower[i]),
+      thickness:1.5,
+      width:6,
+      color:'#d97706'
+    },
+    text: y.map(v=>v.toFixed(2)), textposition:'top center',
+    customdata: modelResults.map(m=>[
+      (m.coeffs.seminar ?? 0).toFixed(3),
+      (m.coeffSE.seminar ?? 0).toFixed(3),
+      (m.coeffCI.seminar?.lower ?? 0).toFixed(3),
+      (m.coeffCI.seminar?.upper ?? 0).toFixed(3)
+    ]),
+    hovertemplate:'Seminar slope=%{customdata[0]}<br>SE=%{customdata[1]}<br>95% CI [%{customdata[2]}, %{customdata[3]}]<extra></extra>'
+  }], {
+    margin:{t:10,r:20,b:50,l:55},
+    xaxis:{ title:'Nested model', tickvals:x, ticktext:['M1','M2','M3','M4'] },
+    yaxis:{ title:'Seminar slope with 95% CI' },
+    annotations: labels.map((label,idx)=>({ x:x[idx], y:ymin, yshift:-28, xref:'x', yref:'y', text:idx===Number(displayModelSelect.value)?`<b>${label}</b>`:label, showarrow:false, font:{size:11,color:'#6b7280'} }))
+  }, {responsive:true});
+}
+
+function drawSubscalePlot(){
+  const course = ['q1','q2','q3'].map(name => mean(rows.map(r=>r[name])));
+  const belong = ['q4','q5','q6'].map(name => mean(rows.map(r=>r[name])));
+  Plotly.react('plotItems', [
+    { x:['Q1','Q2','Q3'], y:course, type:'bar', name:'Course engagement', marker:{color:'#2563eb'} },
+    { x:['Q4','Q5','Q6'], y:belong, type:'bar', name:'Belonging / matriculation', marker:{color:'#7c3aed'} }
+  ], {
+    barmode:'group',
+    margin:{t:10,r:20,b:50,l:55},
+    xaxis:{ title:'Survey items' },
+    yaxis:{ title:'Average response', range:[1,5] },
+    legend:{ orientation:'h', x:0, y:1.08 }
+  }, {responsive:true});
+}
+
+
+function getTrackedIndex(){
+  return highlightedIndex ?? largestResidualIndex(currentModel().resid);
+}
+
+function drawFitGains(){
+  const labels = ['M2 vs M1','M3 vs M2','M4 vs M3'];
+  const deltaR2 = [
+    modelResults[1].r2 - modelResults[0].r2,
+    modelResults[2].r2 - modelResults[1].r2,
+    modelResults[3].r2 - modelResults[2].r2
+  ];
+  const rmseDrop = [
+    modelResults[0].rmse - modelResults[1].rmse,
+    modelResults[1].rmse - modelResults[2].rmse,
+    modelResults[2].rmse - modelResults[3].rmse
+  ];
+  const blockLabels = ['+ Course engagement','+ Belonging','+ Background'];
+  const colors = ['#2563eb','#7c3aed','#16a34a'];
+
+  Plotly.react('plotFit', [
+    {
+      x: labels, y: deltaR2, type:'bar', name:'ΔR²', marker:{color:colors},
+      text: deltaR2.map(v=>v.toFixed(3)), textposition:'outside',
+      hovertemplate:'%{x}<br>ΔR²=%{y:.3f}<extra></extra>'
+    },
+    {
+      x: labels, y: rmseDrop, type:'scatter', mode:'lines+markers+text', name:'RMSE reduction',
+      yaxis:'y2', line:{color:'#111827', width:3}, marker:{color:'#111827', size:9},
+      text: rmseDrop.map(v=>v.toFixed(3)), textposition:'top center',
+      hovertemplate:'%{x}<br>RMSE reduction=%{y:.3f}<extra></extra>'
+    }
+  ], {
+    margin:{t:18,r:55,b:55,l:55},
+    xaxis:{title:'Added meaningful block'},
+    yaxis:{title:'Change in R²', rangemode:'tozero'},
+    yaxis2:{title:'Reduction in RMSE', overlaying:'y', side:'right', rangemode:'tozero'},
+    legend:{orientation:'h', x:0, y:1.12},
+    annotations: blockLabels.map((label, idx)=>({
+      x: labels[idx], y:0, xref:'x', yref:'y', yshift:-26, showarrow:false,
+      text: idx===Number(displayModelSelect.value)-1 ? `<b>${label}</b>` : label,
+      font:{size:11,color:'#6b7280'}
+    }))
+  }, {responsive:true});
+}
+
+function drawStudentPath(){
+  const trackedIndex = getTrackedIndex();
+  const observed = rows[trackedIndex].gpa;
+  const preds = modelResults.map(m => m.preds[trackedIndex]);
+  const labels = ['M1','M2','M3','M4'];
+  Plotly.react('plotStudent', [
+    {
+      x: labels,
+      y: preds,
+      mode:'lines+markers+text',
+      type:'scatter',
+      line:{ color:'#0f766e', width:3 },
+      marker:{ color:'#0f766e', size:10 },
+      text: preds.map(v => v.toFixed(2)),
+      textposition:'top center',
+      name:'Predicted GPA',
+      hovertemplate:'Predicted GPA=%{y:.2f}<extra></extra>'
+    },
+    {
+      x: labels,
+      y: labels.map(() => observed),
+      mode:'lines',
+      type:'scatter',
+      line:{ color:'#6b7280', width:2, dash:'dash' },
+      name:'Observed GPA',
+      hovertemplate:'Observed GPA=' + observed.toFixed(2) + '<extra></extra>'
+    }
+  ], {
+    margin:{t:10,r:20,b:50,l:55},
+    xaxis:{ title:'Nested model' },
+    yaxis:{ title:'GPA', range:[Math.max(0, Math.min(observed, ...preds) - 0.25), Math.min(4, Math.max(observed, ...preds) + 0.25)] },
+    legend:{ orientation:'h', x:0, y:1.08 },
+    annotations:[
+      {
+        xref:'paper', yref:'paper', x:0.01, y:1.16, showarrow:false,
+        text:`Tracked case ${rows[trackedIndex].id} | seminar=${rows[trackedIndex].seminar} | course=${rows[trackedIndex].courseScale.toFixed(2)} | belonging=${rows[trackedIndex].belongScale.toFixed(2)}`,
+        font:{size:12,color:'#6b7280'}
+      }
+    ]
+  }, {responsive:true});
+}
+
+function drawDag(){
+  const svg = document.getElementById('dagSvg');
+  const activeByModel = [
+    new Set(['X','Y']),
+    new Set(['X','M','Y']),
+    new Set(['X','M','B','Y']),
+    new Set(['X','M','B','Z','U','Y'])
+  ][Number(displayModelSelect.value)];
+
+  const nodes = {
+    Z:{x:90,y:80,label:'Z'},
+    U:{x:90,y:220,label:'U'},
+    X:{x:220,y:150,label:'X'},
+    M:{x:340,y:90,label:'M'},
+    B:{x:340,y:220,label:'B'},
+    Y:{x:480,y:150,label:'Y'}
+  };
+  const edges = [
+    ['Z','X'], ['Z','Y'],
+    ['U','X'], ['U','Y'],
+    ['X','M'], ['X','B'], ['X','Y'],
+    ['M','Y'], ['B','Y']
+  ];
+
+  const defs = `<defs><marker id="dagArrow" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto"><polygon points="0 0, 12 4, 0 8" fill="#94a3b8"></polygon></marker></defs>`;
+  const edgeMarkup = edges.map(([a,b]) => `<line class="dag-edge" x1="${nodes[a].x}" y1="${nodes[a].y}" x2="${nodes[b].x}" y2="${nodes[b].y}"></line>`).join('');
+  const nodeMarkup = Object.entries(nodes).map(([id,node]) => {
+    const classes = ['dag-node'];
+    if(id === 'X') classes.push('focal');
+    if(id === 'Y') classes.push('outcome');
+    if(activeByModel.has(id) && id !== 'X' && id !== 'Y') classes.push('active');
+    return `<g class="${classes.join(' ')}" transform="translate(${node.x},${node.y})"><circle r="28"></circle><text y="1">${node.label}</text></g>`;
+  }).join('');
+  svg.innerHTML = defs + edgeMarkup + nodeMarkup;
+
+  const reads = [
+    '<strong>Model 1:</strong> X predicts Y alone. This is a baseline fit, not a justification for causal interpretation.',
+    '<strong>Model 2:</strong> M is added because it is theoretically meaningful. Here it is a post-X pathway variable, so it can improve prediction while also changing the meaning of the X coefficient.',
+    '<strong>Model 3:</strong> B is another substantively meaningful post-X pathway. It may sharpen prediction, but it is not just “another available covariate.”',
+    '<strong>Model 4:</strong> Z and U represent background factors that help justify why they belong in the model. They are not included because they exist; they are included because they plausibly shape both participation and outcome.'
+  ];
+  dagRead.innerHTML = reads[Number(displayModelSelect.value)];
+}
+
+function updateTable(){
+  modelTableBody.innerHTML = modelResults.map((m,idx)=>{
+    const ci = m.coeffCI.seminar
+      ? `[${m.coeffCI.seminar.lower.toFixed(3)}, ${m.coeffCI.seminar.upper.toFixed(3)}]`
+      : '--';
+    return `
+    <tr style="background:${idx===Number(displayModelSelect.value)?'rgba(37,99,235,0.05)':'transparent'};">
+      <td><strong>${m.name}</strong></td>
+      <td>${m.predictors.join(', ')}</td>
+      <td class="mono">${(m.coeffs.seminar ?? 0).toFixed(3)}</td>
+      <td class="mono">${ci}</td>
+      <td class="mono">${m.r2.toFixed(3)}</td>
+      <td class="mono">${m.rmse.toFixed(3)}</td>
+      <td class="mono">${mean(m.resid).toFixed(3)}</td>
+    </tr>
+  `}).join('');
+}
+
+function redraw(){
+  sampleSizeVal.textContent = `${sampleSizeSlider.value} students`;
+  noiseVal.textContent = `${Number(noiseSlider.value).toFixed(2)} GPA units`;
+  drawObservedPlot();
+  drawResidualPlot();
+  drawCoefPath();
+  drawSubscalePlot();
+  drawStudentPath();
+  drawDag();
+  drawFitGains();
+  updateTable();
+  updateSummary();
+}
+
+function regenerate(){
+  buildData();
+  redraw();
+}
+
+presetSelect.addEventListener('change', regenerate);
+displayModelSelect.addEventListener('change', redraw);
+sampleSizeSlider.addEventListener('input', regenerate);
+noiseSlider.addEventListener('input', regenerate);
+showFitBand.addEventListener('change', redraw);
+showEquityLine.addEventListener('change', redraw);
+showBadges.addEventListener('change', redraw);
+showCaseLabels.addEventListener('change', redraw);
+document.querySelectorAll('input[name="residMode"]').forEach(el => el.addEventListener('change', redraw));
+document.getElementById('newData').addEventListener('click', regenerate);
+document.getElementById('highlightWorst').addEventListener('click', ()=>{ highlightedIndex = largestResidualIndex(currentModel().resid); redraw(); });
+document.getElementById('clearHighlight').addEventListener('click', ()=>{ highlightedIndex = null; redraw(); });
+document.getElementById('toggleHelp').addEventListener('click', ()=>{
+  const card = document.getElementById('helpCard');
+  card.style.display = card.style.display === 'none' ? 'block' : 'none';
+});
+
+regenerate();
+</script>
+</body>
+</html>
