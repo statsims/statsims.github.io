@@ -1,137 +1,513 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
+<!-- saved from url=(0041)sims/index.html -->
+<html lang="en" data-theme="dark"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stats Sims</title>
-
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+  <link href="./index_files/css2" rel="stylesheet">
   <style>
     :root {
-      --bg: #f6f7f9;
-      --card: #ffffff;
-      --border: #d9dde3;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --accent: #2563eb;
+      --bg: #080c18;
+      --surface: #0f1628;
+      --surface2: #161d35;
+      --border: rgba(99, 140, 255, 0.15);
+      --border-hover: rgba(99, 140, 255, 0.55);
+      --text: #e8ecf8;
+      --muted: #6b7a9e;
+      --accent: #638cff;
+      --accent2: #f97316;
+      --glow: rgba(99, 140, 255, 0.2);
+      --grid-line: rgba(99,140,255,0.04);
+      --shadow-card: rgba(0,0,0,0.4);
+      --toggle-bg: rgba(255,255,255,0.07);
+      --toggle-border: rgba(99,140,255,0.25);
     }
 
+    [data-theme="light"] {
+      --bg: #f0f2f8;
+      --surface: #ffffff;
+      --surface2: #e8ebf5;
+      --border: rgba(80, 110, 220, 0.18);
+      --border-hover: rgba(80, 110, 220, 0.55);
+      --text: #141929;
+      --muted: #5a6480;
+      --accent: #3a6bef;
+      --accent2: #e85d04;
+      --glow: rgba(80, 110, 220, 0.12);
+      --grid-line: rgba(80,110,220,0.06);
+      --shadow-card: rgba(80,100,180,0.1);
+      --toggle-bg: rgba(0,0,0,0.05);
+      --toggle-border: rgba(80,110,220,0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: 'DM Mono', monospace;
       background: var(--bg);
       color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* ── background grid ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── noise overlay ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
     }
 
     .container {
-      max-width: 1000px;
-      margin: auto;
-      padding: 40px 20px;
+      position: relative;
+      z-index: 1;
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 64px 28px 80px;
+    }
+
+    /* ── header ── */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 56px;
+      gap: 24px;
+    }
+
+    .header-left { flex: 1; }
+
+    .eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.1s forwards;
     }
 
     h1 {
-      font-size: 2.2rem;
-      margin-bottom: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.6rem, 6vw, 4.2rem);
+      font-weight: 800;
+      line-height: 1.0;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      opacity: 0;
+      animation: fadeUp 0.55s ease 0.2s forwards;
+    }
+
+    h1 span {
+      color: var(--accent);
     }
 
     .subtitle {
+      margin-top: 16px;
+      font-size: 0.9rem;
+      font-weight: 300;
       color: var(--muted);
-      margin-bottom: 30px;
+      max-width: 420px;
+      line-height: 1.7;
+      opacity: 0;
+      animation: fadeUp 0.55s ease 0.3s forwards;
     }
 
+    /* ── decorative SVG chart ── */
+    .deco {
+      width: 180px;
+      flex-shrink: 0;
+      opacity: 0;
+      animation: fadeIn 1s ease 0.5s forwards;
+    }
+    @media (max-width: 600px) { .deco { display: none; } }
+
+    /* ── section label ── */
+    .section-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.4s forwards;
+    }
+
+    /* ── grid ── */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 14px;
+      margin-bottom: 40px;
     }
 
+    /* ── card ── */
     .card {
-      background: var(--card);
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px;
-      transition: 0.2s;
+      border-radius: 10px;
+      padding: 22px 22px 20px;
       text-decoration: none;
       color: inherit;
+      display: block;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      opacity: 0;
+      animation: fadeUp 0.45s ease forwards;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, var(--glow), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.35s;
     }
 
     .card:hover {
-      transform: translateY(-3px);
-      border-color: var(--accent);
+      transform: translateY(-4px);
+      border-color: var(--border-hover);
+      box-shadow: 0 0 28px var(--glow), 0 8px 24px var(--shadow-card);
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    .card-num {
+      font-size: 0.62rem;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      opacity: 0.6;
+      margin-bottom: 12px;
+      font-weight: 400;
     }
 
     .card-title {
-      font-weight: 600;
-      margin-bottom: 6px;
+      font-family: 'Syne', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+      line-height: 1.25;
     }
 
     .card-desc {
-      font-size: 0.9rem;
+      font-size: 0.78rem;
       color: var(--muted);
+      line-height: 1.6;
+      font-weight: 300;
     }
 
-    footer {
-      margin-top: 40px;
-      font-size: 0.85rem;
+    .card-arrow {
+      position: absolute;
+      bottom: 18px;
+      right: 20px;
+      font-size: 1rem;
+      color: var(--accent);
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .card:hover .card-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* ── tag chips on cards ── */
+    .card-tag {
+      display: inline-block;
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 7px;
       color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* staggered animation delays */
+    .card:nth-child(1)  { animation-delay: 0.35s; }
+    .card:nth-child(2)  { animation-delay: 0.40s; }
+    .card:nth-child(3)  { animation-delay: 0.45s; }
+    .card:nth-child(4)  { animation-delay: 0.50s; }
+    .card:nth-child(5)  { animation-delay: 0.55s; }
+    .card:nth-child(6)  { animation-delay: 0.60s; }
+    .card:nth-child(7)  { animation-delay: 0.65s; }
+    .card:nth-child(8)  { animation-delay: 0.70s; }
+    .card:nth-child(9)  { animation-delay: 0.75s; }
+    .card:nth-child(10) { animation-delay: 0.80s; }
+    .card:nth-child(11) { animation-delay: 0.85s; }
+    .card:nth-child(12) { animation-delay: 0.90s; }
+
+    /* ── footer ── */
+    footer {
+      margin-top: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      opacity: 0;
+      animation: fadeIn 0.6s ease 1s forwards;
+    }
+
+    footer::before {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 1px;
+      background: var(--muted);
+      opacity: 0.4;
+    }
+
+    /* ── theme toggle ── */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--toggle-bg);
+      border: 1px solid var(--toggle-border);
+      border-radius: 999px;
+      padding: 6px 14px 6px 10px;
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: border-color 0.2s, color 0.2s, background 0.3s;
+      user-select: none;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .theme-toggle .icon {
+      font-size: 0.95rem;
+      line-height: 1;
+      transition: transform 0.4s ease;
+    }
+
+    .theme-toggle:hover .icon {
+      transform: rotate(20deg);
+    }
+
+    /* ── keyframes ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
   </style>
 </head>
 <body>
-
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+  <span class="icon" id="themeIcon">☀️</span>
+  <span id="themeLabel">Light</span>
+</button>
 <div class="container">
-  <h1>Stats Sims</h1>
-  <div class="subtitle">
-    Interactive simulations for learning quantitative analysis
-  </div>
 
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="eyebrow">Interactive Learning Tools</div>
+      <h1>Stats<span>Sims</span></h1>
+      <p class="subtitle">Hands-on simulations for quantitative analysis — built to make abstract concepts click.</p>
+    </div>
+
+    <!-- Decorative mini scatter-plot SVG -->
+    <svg class="deco" viewBox="0 0 180 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- regression line -->
+      <line x1="20" y1="100" x2="160" y2="20" stroke="#638cff" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.4"></line>
+      <!-- CI band -->
+      <path d="M20,108 Q90,58 160,12 L160,28 Q90,78 20,92 Z" fill="#638cff" opacity="0.06"></path>
+      <!-- dots -->
+      <circle cx="28" cy="94" r="3.5" fill="#638cff" opacity="0.7"></circle>
+      <circle cx="44" cy="80" r="2.5" fill="#638cff" opacity="0.5"></circle>
+      <circle cx="58" cy="73" r="4" fill="#f97316" opacity="0.8"></circle>
+      <circle cx="72" cy="66" r="2.5" fill="#638cff" opacity="0.6"></circle>
+      <circle cx="88" cy="55" r="3" fill="#638cff" opacity="0.7"></circle>
+      <circle cx="100" cy="50" r="2" fill="#638cff" opacity="0.4"></circle>
+      <circle cx="112" cy="44" r="3.5" fill="#638cff" opacity="0.6"></circle>
+      <circle cx="126" cy="38" r="2.5" fill="#f97316" opacity="0.7"></circle>
+      <circle cx="140" cy="30" r="3" fill="#638cff" opacity="0.5"></circle>
+      <circle cx="152" cy="22" r="2" fill="#638cff" opacity="0.6"></circle>
+      <!-- axes -->
+      <line x1="16" y1="108" x2="164" y2="108" stroke="#6b7a9e" stroke-width="1" opacity="0.3"></line>
+      <line x1="16" y1="108" x2="16" y2="14" stroke="#6b7a9e" stroke-width="1" opacity="0.3"></line>
+    </svg>
+  </header>
+
+  <!-- Simulation Cards -->
+  <div class="section-label">// simulations</div>
   <div class="grid">
 
     <a class="card" href="sims/corr2.html">
+      <div class="card-num">01</div>
+      <div class="card-tag">Bivariate</div>
       <div class="card-title">Correlation Explorer</div>
-      <div class="card-desc">Understand direction, strength, noise, and outliers</div>
+      <div class="card-desc">Understand direction, strength, noise, and the pull of outliers.</div>
+      <div class="card-arrow">→</div>
     </a>
 
     <a class="card" href="sims/ci12.html">
+      <div class="card-num">02</div>
+      <div class="card-tag">Inference</div>
       <div class="card-title">Confidence Interval Explorer</div>
-      <div class="card-desc">Visualize interval coverage and width</div>
+      <div class="card-desc">Visualize interval coverage, width, and what "95% confident" really means.</div>
+      <div class="card-arrow">→</div>
     </a>
 
     <a class="card" href="sims/sampdist6.html">
+      <div class="card-num">03</div>
+      <div class="card-tag">Sampling</div>
       <div class="card-title">Sampling Distribution</div>
-      <div class="card-desc">See how sample means form a distribution</div>
+      <div class="card-desc">Watch sample means accumulate into a distribution across repeated draws.</div>
+      <div class="card-arrow">→</div>
     </a>
 
     <a class="card" href="sims/cisig4.html">
+      <div class="card-num">04</div>
+      <div class="card-tag">Hypothesis Testing</div>
       <div class="card-title">Significance via CI</div>
-      <div class="card-desc">Link confidence intervals to hypothesis testing</div>
+      <div class="card-desc">Link confidence intervals directly to hypothesis testing logic.</div>
+      <div class="card-arrow">→</div>
     </a>
 
     <a class="card" href="sims/dag9.html">
+      <div class="card-num">05</div>
+      <div class="card-tag">Causal Inference</div>
       <div class="card-title">DAG Explorer</div>
-      <div class="card-desc">Understand confounding, mediation, and bias</div>
+      <div class="card-desc">Map confounding, mediation, colliders, and selection bias.</div>
+      <div class="card-arrow">→</div>
     </a>
 
-    <a class="card" href="sims/UnlikelyOutcome9.html">
+    <a class="card" href="sims/UnlikelyOutcome13.html">
+      <div class="card-num">06</div>
+      <div class="card-tag">Probability</div>
       <div class="card-title">Unlikely Outcomes</div>
-      <div class="card-desc">Explore rare events and probability intuition</div>
+      <div class="card-desc">Build intuition for rare events and how tail probabilities behave.</div>
+      <div class="card-arrow">→</div>
     </a>
 
     <a class="card" href="sims/effect12.html">
+      <div class="card-num">07</div>
+      <div class="card-tag">Effect Size</div>
       <div class="card-title">Effect Size Explorer</div>
-      <div class="card-desc">Interpret magnitude beyond significance</div>
+      <div class="card-desc">Interpret practical magnitude beyond statistical significance.</div>
+      <div class="card-arrow">→</div>
     </a>
 
     <a class="card" href="sims/ols4.html">
-      <div class="card-title">Regression Explorer</div>
-      <div class="card-desc">Understand slope, fit, and prediction</div>
+      <div class="card-num">08</div>
+      <div class="card-tag">Regression</div>
+      <div class="card-title">OLS Regression Explorer</div>
+      <div class="card-desc">Drag points and see how slope, intercept, and R² respond in real time.</div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a class="card" href="sims/linearmodel7.html">
+      <div class="card-num">09</div>
+      <div class="card-tag">Regression</div>
+      <div class="card-title">Linear Model Builder</div>
+      <div class="card-desc">Construct and interrogate linear models with multiple predictors.</div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a class="card" href="sims/advreg2.html">
+      <div class="card-num">10</div>
+      <div class="card-tag">Advanced</div>
+      <div class="card-title">Advanced Regression</div>
+      <div class="card-desc">Go beyond OLS — interactions, nonlinearity, and model comparison.</div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a class="card" href="sims/centers6.html">
+      <div class="card-num">11</div>
+      <div class="card-tag">Descriptive Stats</div>
+      <div class="card-title">Centers Explorer</div>
+      <div class="card-desc">Compare mean, median, and mode and see how distributions shift them.</div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a class="card" href="sims/textedit4.html">
+      <div class="card-num">12</div>
+      <div class="card-tag">Tools</div>
+      <div class="card-title">Text &amp; Annotation</div>
+      <div class="card-desc">A lightweight editor for notes, analysis write-ups, and annotations.</div>
+      <div class="card-arrow">→</div>
     </a>
 
   </div>
 
   <footer>
-    Built for applied statistics learning • Stats Sims
+    Built for applied statistics learning &nbsp;·&nbsp; Stats Sims
   </footer>
 </div>
+<script>
+  const root = document.documentElement;
+  const btn   = document.getElementById('themeToggle');
+  const icon  = document.getElementById('themeIcon');
+  const label = document.getElementById('themeLabel');
 
-</body>
-</html>
+  // Load saved preference (default: dark)
+  const saved = localStorage.getItem('statssims-theme') || 'dark';
+  applyTheme(saved);
+
+  btn.addEventListener('click', () => {
+    const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    localStorage.setItem('statssims-theme', next);
+  });
+
+  function applyTheme(t) {
+    root.dataset.theme = t;
+    if (t === 'light') {
+      icon.textContent  = '🌙';
+      label.textContent = 'Dark';
+    } else {
+      icon.textContent  = '☀️';
+      label.textContent = 'Light';
+    }
+  }
+</script>
+
+
+</body></html>
