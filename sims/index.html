@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statistics Labs</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Statistics Labs</h1>
+    <p>First lab: Fit Your Own Line</p>
+
+    <div class="controls">
+      <label>
+        Slope:
+        <input type="range" id="slope" min="-3" max="3" step="0.1" value="1">
+        <span id="slopeValue">1</span>
+      </label>
+
+      <label>
+        Intercept:
+        <input type="range" id="intercept" min="-10" max="10" step="0.1" value="0">
+        <span id="interceptValue">0</span>
+      </label>
+
+      <button id="newData">New Data</button>
+    </div>
+
+    <div id="plot"></div>
+
+    <div class="output">
+      <p><strong>Line:</strong> <span id="equation"></span></p>
+      <p><strong>SSE:</strong> <span id="sse"></span></p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

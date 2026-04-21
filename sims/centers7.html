@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)file:///Users/psimac/Downloads/stats_explorer_3.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Descriptive Statistics Lab</title>
+<style>
+  :root {
+    --bg:#f6f7f9;
+    --card:#ffffff;
+    --border:#d9dde3;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --soft:#f3f4f6;
+    --blue:#2563eb;
+    --red:#dc2626;
+    --green:#16a34a;
+    --amber:#d97706;
+    --gray:#9ca3af;
+  }
+  *{box-sizing:border-box}
+  body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+  .container{max-width:1380px;margin:auto}
+
+  /* ── CARDS ── */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+  .card>h3{margin:0 0 10px;font-size:1rem}
+  .small{font-size:.9rem;color:var(--muted);line-height:1.45}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+  /* ── LAYOUT ── */
+  .app-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+  .left-col,.right-col{display:grid;gap:16px;align-content:start}
+  @media(max-width:980px){.app-grid{grid-template-columns:1fr}}
+  /* keep the help card from inheriting gap spacing */
+  .help-card{margin-top:16px}
+
+  /* ── INTRO HEADER ── */
+  .intro-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .intro-title-block{flex:1 1 400px;min-width:260px}
+  .intro-title-block h2{margin:0 0 6px;font-size:1.25rem}
+  .intro-subtitle{font-size:.93rem;color:var(--muted);margin:0;line-height:1.5}
+
+  /* ── GUIDE / HELP TOGGLE BUTTONS (stacked, right of header) ── */
+  .header-btn-col{display:flex;flex-direction:column;gap:8px;align-self:flex-start;margin-top:4px;white-space:nowrap}
+  .guide-toggle-btn,button.help-toggle-btn{padding:7px 12px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;font-family:Arial,sans-serif;font-size:.84rem;color:var(--text);white-space:nowrap}
+  .guide-toggle-btn:hover,button.help-toggle-btn:hover{background:#f8fafc}
+
+  /* ── QUICK-START GUIDE (inside header card) ── */
+  .guide-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px;display:none}
+  .guide-section.open{display:block}
+  .guide-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+  @media(max-width:700px){.guide-cols{grid-template-columns:1fr}}
+  .guide-col h4{margin:0 0 8px;font-size:.92rem;color:var(--text)}
+  .guide-col ol,.guide-col ul{margin:0;padding-left:18px}
+  .guide-col li{font-size:.84rem;color:var(--muted);line-height:1.5;margin-bottom:4px}
+  .guide-col li strong{color:var(--text)}
+
+  /* ── FULL REFERENCE (separate card, hidden) ── */
+  .help-card{display:none;width:100%;max-width:100%}
+  .help-card.open{display:block}
+  .help-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:700px){.help-2col{grid-template-columns:1fr}}
+  .help-section{margin-bottom:18px}
+  .help-section:last-child{margin-bottom:0}
+  .help-section h4{margin:0 0 6px;font-size:.95rem;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px}
+  .help-section p,.help-section li{font-size:.88rem;color:var(--muted);line-height:1.5;margin:4px 0}
+  .help-section ul{padding-left:18px;margin:6px 0}
+  .help-section li strong{color:var(--text)}
+  .case-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+  .case-box{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--soft)}
+  .case-box .case-label{font-weight:700;font-size:.82rem;color:var(--text)}
+  .case-box .case-desc{font-size:.78rem;color:var(--muted);margin-top:2px;line-height:1.35}
+  .ref-formula{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.78rem;color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe;border-radius:4px;padding:2px 6px;display:inline-block;margin-top:2px}
+
+  /* ── PANEL HEADER ── */
+  .panel-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .panel-header h3{margin:0}
+  .panel-badge{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:var(--soft);color:var(--muted);white-space:nowrap}
+  .what-to-watch{margin:0 0 10px;padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:.84rem;color:#075985;line-height:1.45}
+  .what-to-watch strong{color:#0c4a6e}
+
+  /* ── VIZ ── */
+  .viz-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--soft);border-radius:10px 10px 0 0;margin:-16px -16px 12px}
+  .viz-legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .leg{display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--muted)}
+  .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .viz-meta{font-size:.78rem;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  #main-svg{display:block;width:100%;background:#fff;border:1px solid var(--border);border-radius:8px}
+  .viz-hint{text-align:center;padding:5px;font-size:.74rem;color:var(--gray);border-top:1px solid var(--border);background:var(--soft);border-radius:0 0 8px 8px;margin-top:-1px}
+
+  /* ── LIVE INSIGHT ── */
+  .live-insight{padding:10px 13px;border:1px solid var(--border);border-left:4px solid var(--amber);background:#fffbeb;border-radius:10px;font-size:.86rem;line-height:1.5;color:var(--muted);margin-top:12px}
+  .live-insight strong{color:#92400e}
+
+  /* ── STATS PANEL ── */
+  .stats-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stats-group{display:flex;flex-direction:column;gap:7px}
+  .stats-group-label{font-size:.72rem;text-transform:uppercase;letter-spacing:1.4px;color:var(--gray);padding:2px 0;margin-bottom:2px}
+  .metric{border:1px solid var(--border);background:var(--soft);border-radius:10px;padding:10px;border-left:3px solid transparent}
+  .metric.m-blue{border-left-color:var(--blue)}
+  .metric.m-green{border-left-color:var(--green)}
+  .metric.m-amber{border-left-color:var(--amber)}
+  .metric.m-gray{border-left-color:var(--gray)}
+  .metric-label{font-size:.74rem;color:var(--muted)}
+  .metric-value{font-weight:700;font-size:1.05rem;line-height:1.3;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .metric.m-blue .metric-value{color:var(--blue)}
+  .metric.m-green .metric-value{color:var(--green)}
+  .metric.m-amber .metric-value{color:var(--amber)}
+  .metric.m-gray .metric-value{color:#374151}
+  .metric-sub{font-size:.7rem;color:var(--gray);margin-top:1px}
+
+  /* ── SHAPE BAR ── */
+  .shape-bar{margin-top:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--soft);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .shape-bar-label{font-size:.74rem;color:var(--muted);white-space:nowrap}
+  .shape-gap-track{flex:1;height:8px;background:var(--border);border-radius:4px;position:relative;min-width:80px}
+  .shape-gap-fill{height:100%;border-radius:4px;background:var(--amber);transition:width .3s}
+  .shape-bar-meta{font-size:.78rem;color:var(--muted);white-space:nowrap}
+
+  /* ── NOTES ── */
+  .context-note{padding:11px 13px;border:1px solid var(--border);border-left:4px solid var(--amber);background:#fffbeb;border-radius:10px;font-size:.88rem;line-height:1.45;color:var(--muted)}
+  .context-note strong{color:#92400e}
+  .info-note{padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid var(--blue);border-radius:8px;font-size:.84rem;color:#1e40af;line-height:1.45;margin-bottom:12px}
+  .info-note strong{color:#1e3a8a}
+  .prominent-note{padding:12px 14px;border:1px solid #c7d2fe;border-left:5px solid var(--blue);background:#eff6ff;border-radius:10px}
+
+  /* ── CONCEPT TABS ── */
+  .tab-bar{display:flex;border-bottom:2px solid var(--border);overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;margin:-16px -16px 0}
+  .tab-bar::-webkit-scrollbar{display:none}
+  .ctab{background:none;border:none;border-bottom:2px solid transparent;border-radius:0;color:var(--muted);padding:9px 13px;font-family:Arial,sans-serif;font-size:.82rem;cursor:pointer;white-space:nowrap;margin-bottom:-2px;font-weight:600;flex-shrink:0}
+  .ctab:hover{color:var(--text);background:var(--soft)}
+  .ctab.active{color:var(--blue);border-bottom-color:var(--blue);background:none}
+
+  /* ── CONCEPT PANEL ── */
+  .concept-panel{padding-top:16px;animation:fadeUp .2s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  .concept-intro{margin-bottom:14px;max-width:680px}
+  .concept-intro h3{margin:0 0 5px;font-size:1.05rem}
+  .concept-intro p{font-size:.88rem;color:var(--muted);margin:0}
+
+  /* ── CONCEPT CARDS ── */
+  .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .cgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+  @media(max-width:700px){.cgrid,.cgrid3{grid-template-columns:1fr}}
+  .ccard{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--soft)}
+  .ccard h4{margin:0 0 6px;font-size:.92rem;color:var(--text)}
+  .ccard p{font-size:.83rem;color:var(--muted);line-height:1.55;margin:0}
+  .ccard p+p{margin-top:6px}
+
+  /* ── SUB VIZ ── */
+  .sub-viz{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .sub-viz-title{padding:7px 12px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--soft)}
+  .sub-viz svg{display:block;width:100%;height:auto;overflow:visible}
+
+  /* ── FORMULA ── */
+  .formula{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.8rem;color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:7px 10px;margin:7px 0;display:inline-block;line-height:1.55}
+
+  /* ── PERCENTILE ── */
+  .pctl-bar{display:flex;align-items:center;gap:12px;padding:8px 12px;border-top:1px solid var(--border);background:var(--soft)}
+  .pctl-bar label{font-size:.8rem;color:var(--muted);white-space:nowrap}
+  .pctl-bar input[type=range]{flex:1;accent-color:var(--green);min-width:0}
+  .pctl-val{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88rem;color:var(--green);min-width:90px;text-align:right;font-weight:700}
+
+  /* ── OUTLIER CONTROLS ── */
+  .oc-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .oc-btn-red{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;padding:7px 12px;border-radius:10px;font-family:Arial,sans-serif;font-size:.84rem;cursor:pointer}
+  .oc-btn-red:hover{background:#fee2e2}
+
+  /* ── BEFORE/AFTER ── */
+  .before-after{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+  .ba-box{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--soft)}
+  .ba-label{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px}
+  .ba-row{display:flex;justify-content:space-between;font-size:.84rem;margin-bottom:3px}
+  .ba-row span:first-child{color:var(--muted)}
+  .ba-row span:last-child{font-weight:700;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+  /* ── BUTTONS ── */
+  button{padding:7px 12px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;font-family:Arial,sans-serif;font-size:.84rem;color:var(--text)}
+  button:hover{background:#f8fafc}
+  button.active-btn{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;font-weight:700}
+
+  /* ── BADGES + PILLS ── */
+  .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:.76rem;font-weight:700;margin-right:3px}
+  .bblue{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe}
+  .bgreen{background:#dcfce7;color:#166534;border:1px solid #86efac}
+  .bamber{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+  .bgray{background:var(--soft);color:var(--muted);border:1px solid var(--border)}
+  .skew-pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:.78rem;font-weight:700}
+  .skew-right{background:#fff7ed;color:#9a3412;border:1px solid #fdba74}
+  .skew-left{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
+  .skew-sym{background:#ecfdf5;color:#166534;border:1px solid #86efac}
+
+  /* ── USE TABLE ── */
+  .use-table{width:100%;border-collapse:collapse;font-size:.84rem}
+  .use-table th{background:var(--soft);padding:9px 12px;text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);border-bottom:2px solid var(--border);font-weight:700}
+  .use-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top;line-height:1.5}
+  .use-table tr:last-child td{border-bottom:none}
+  .use-table tr:hover td{background:#fafafa}
+
+  /* ── EQUAL SHARES ── */
+  .es-toggle-btn{display:block;margin:0 auto 6px;background:var(--soft);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:10px;font-family:Arial,sans-serif;font-size:.82rem;cursor:pointer}
+  .es-toggle-btn:hover{background:#e5e7eb}
+
+  /* ── COMPARISON BARS ── */
+  .comp-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .comp-label{font-size:.78rem;color:var(--muted);width:95px;text-align:right;flex-shrink:0}
+  .comp-bar-wrap{flex:1;background:var(--soft);border-radius:4px;height:20px;border:1px solid var(--border);min-width:0}
+  .comp-bar{height:100%;border-radius:3px}
+  .comp-val{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.78rem;width:44px;text-align:left;flex-shrink:0;font-weight:700}
+
+  /* ── DATASET PANEL ── */
+  .preset-stack{display:grid;gap:8px;margin-top:10px}
+  .preset-item{margin:0}
+  .preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .preset-btn{width:100%;text-align:left;padding:7px 10px;border:1px solid #bfc6d1;border-radius:8px;background:white;cursor:pointer;font-family:Arial,sans-serif;font-size:.82rem;color:var(--text);display:block;line-height:1.3}
+  .preset-btn:hover{background:#f8fafc}
+  .preset-btn.active-btn{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;font-weight:700}
+  .preset-desc{font-size:.74rem;color:var(--muted);margin:3px 0 8px 1px;line-height:1.3}
+  .custom-data-box{margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
+  .custom-data-box label{display:block;font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:4px}
+  .custom-data-box .label-sub{font-size:.76rem;color:var(--muted);margin-bottom:6px;display:block}
+  .custom-data-box textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.8rem;color:var(--text);resize:vertical;min-height:56px;background:var(--soft)}
+  .custom-data-box textarea:focus{outline:none;border-color:#93c5fd;background:white}
+  .load-btn{margin-top:6px;width:100%;background:#eff6ff;border:1px solid #93c5fd;color:#1d4ed8;font-weight:700}
+  .load-btn:hover{background:#dbeafe}
+  .load-error{font-size:.76rem;color:var(--red);margin-top:4px;display:none}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ══ MAIN GRID ══ -->
+  <div class="app-grid">
+    <div class="left-col">
+
+      <!-- HEADER (now inside left column, compact) -->
+      <div class="card">
+        <div class="intro-header">
+          <div class="intro-title-block">
+            <h2>Descriptive Statistics Lab</h2>
+            <p class="intro-subtitle">
+              An interactive exploration of center, spread, and distribution shape.
+              Choose a preset or paste your own data. Use the concept tabs to connect live numbers to the underlying ideas.
+            </p>
+          </div>
+          <div class="header-btn-col">
+            <button class="guide-toggle-btn" id="toggleGuide">▼ Quick-Start Guide</button>
+            <button class="help-toggle-btn" id="toggleHelp">📚 Full Reference</button>
+          </div>
+        </div>
+
+        <div class="guide-section" id="guideSection">
+          <div class="guide-cols">
+            <div class="guide-col">
+              <h4>Getting Started</h4>
+              <ol>
+                <li><strong>Choose a preset dataset</strong> from the right panel. Each illustrates a different statistical story.</li>
+                <li><strong>Click the chart</strong> to add your own values. Click any dot to remove a value.</li>
+                <li>Use the <strong>concept tabs</strong> below the chart to explore each idea in depth with live formulas.</li>
+                <li><strong>Paste your own data</strong> in the custom data box to analyze any comma-separated numbers.</li>
+                <li>Try the <strong>Outliers tab</strong> to add extreme values and watch the mean get pulled while the median holds steady.</li>
+              </ol>
+            </div>
+            <div class="guide-col">
+              <h4>Reading the Chart</h4>
+              <ul>
+                <li><strong>Blue dashed line:</strong> The mean. Its label updates live.</li>
+                <li><strong>Green solid line:</strong> The median. When it differs from the mean, the data is skewed.</li>
+                <li><strong>Shaded box:</strong> The IQR, the middle 50% of the data, from Q1 to Q3.</li>
+                <li><strong>Dashed whiskers:</strong> Extend to the minimum and maximum non-outlier values.</li>
+                <li><strong>Blue dots:</strong> Typical values, stacked vertically when they overlap.</li>
+                <li><strong>Red dots:</strong> Statistical outliers, more than 1.5 times the IQR beyond the box.</li>
+              </ul>
+            </div>
+            <div class="guide-col">
+              <h4>Key Takeaways</h4>
+              <ul>
+                <li>When <strong>mean equals median</strong>, the data is roughly symmetric and the mean is reliable.</li>
+                <li>When <strong>mean exceeds median</strong>, a right tail is pulling the average up. Use the median.</li>
+                <li>The <strong>IQR and MAD</strong> are always the right spread measures when outliers are present.</li>
+                <li><strong>No single number</strong> fully describes a bimodal distribution. Always inspect the shape.</li>
+                <li>Standard deviation <strong>squares distances</strong>, so one outlier can inflate it dramatically. MAD does not.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHART -->
+      <div class="card">
+        <div class="viz-header">
+          <div class="viz-legend">
+            <div class="leg"><div class="leg-dot" style="background:var(--blue)"></div>Mean</div>
+            <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Median</div>
+            <div class="leg"><div class="leg-dot" style="background:rgba(37,99,235,0.22);border:1px solid #93c5fd"></div>IQR box</div>
+            <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>Outlier</div>
+          </div>
+          <div class="viz-meta" id="viz-meta">n = 20  |  sum = 1578</div>
+        </div>
+        <svg id="main-svg" viewBox="0 0 720 240" height="240"><line x1="36" y1="168" x2="692" y2="168" stroke="#e5e7eb" stroke-width="1"></line><line x1="36" y1="168" x2="36" y2="173" stroke="#e5e7eb" stroke-width="1"></line><text x="36" y="184" text-anchor="middle" fill="#9ca3af" font-size="10.5" font-family="Arial,sans-serif">52</text><line x1="129.7142857142857" y1="168" x2="129.7142857142857" y2="173" stroke="#e5e7eb" stroke-width="1"></line><text x="129.7142857142857" y="184" text-anchor="middle" fill="#9ca3af" font-size="10.5" font-family="Arial,sans-serif">60</text><line x1="223.4285714285714" y1="168" x2="223.4285714285714" y2="173" stroke="#e5e7eb" stroke-width="1"></line><text x="223.4285714285714" y="184" text-anchor="middle" fill="#9ca3af" font-size="10.5" font-family="Arial,sans-serif">67</text><line x1="317.1428571428572" y1="168" x2="317.1428571428572" y2="173" stroke="#e5e7eb" stroke-width="1"></line><text x="317.1428571428572" y="184" text-anchor="middle" fill="#9ca3af" font-size="10.5" font-family="Arial,sans-serif">75</text><line x1="410.8571428571428" y1="168" x2="410.8571428571428" y2="173" stroke="#e5e7eb" stroke-width="1"></line><text x="410.8571428571428" y="184" text-anchor="middle" fill="#9ca3af" font-size="10.5" font-family="Arial,sans-serif">82</text><line x1="504.57142857142867" y1="168" x2="504.57142857142867" y2="173" stroke="#e5e7eb" stroke-width="1"></line><text x="504.57142857142867" y="184" text-anchor="middle" fill="#9ca3af" font-size="10.5" font-family="Arial,sans-serif">90</text><line x1="598.2857142857143" y1="168" x2="598.2857142857143" y2="173" stroke="#e5e7eb" stroke-width="1"></line><text x="598.2857142857143" y="184" text-anchor="middle" fill="#9ca3af" font-size="10.5" font-family="Arial,sans-serif">97</text><line x1="692" y1="168" x2="692" y2="173" stroke="#e5e7eb" stroke-width="1"></line><text x="692" y="184" text-anchor="middle" fill="#9ca3af" font-size="10.5" font-family="Arial,sans-serif">105</text><line x1="159.77358490566039" y1="203" x2="317.5849056603774" y2="203" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="3,2"></line><line x1="422.7924528301887" y1="203" x2="568.2264150943397" y2="203" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="3,2"></line><line x1="159.77358490566039" y1="194" x2="159.77358490566039" y2="212" stroke="#93c5fd" stroke-width="1.5"></line><line x1="568.2264150943397" y1="194" x2="568.2264150943397" y2="212" stroke="#93c5fd" stroke-width="1.5"></line><rect x="317.5849056603774" y="190" width="105.20754716981133" height="26" fill="rgba(37,99,235,0.07)" stroke="#93c5fd" stroke-width="1.5" rx="2"></rect><line x1="364" y1="190" x2="364" y2="216" stroke="#16a34a" stroke-width="2.5"></line><text x="317.5849056603774" y="229" text-anchor="middle" fill="#93c5fd" font-size="9.5" font-family="Arial,sans-serif">Q1</text><text x="422.7924528301887" y="229" text-anchor="middle" fill="#93c5fd" font-size="9.5" font-family="Arial,sans-serif">Q3</text><line x1="368.9509433962265" y1="28" x2="368.9509433962265" y2="170" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="4,2.5"></line><text x="368.9509433962265" y="24" text-anchor="middle" fill="#1d4ed8" font-size="11.5" font-family="Arial,sans-serif" font-weight="700">x=78.9</text><circle cx="159.77358490566039" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="62" style="cursor:pointer"></circle><circle cx="234.0377358490566" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="68" style="cursor:pointer"></circle><circle cx="271.16981132075466" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="71" style="cursor:pointer"></circle><circle cx="283.54716981132077" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="72" style="cursor:pointer"></circle><circle cx="308.3018867924528" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="74" style="cursor:pointer"></circle><circle cx="320.6792452830189" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="75" style="cursor:pointer"></circle><circle cx="333.0566037735849" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="76" style="cursor:pointer"></circle><circle cx="345.4339622641509" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="77" style="cursor:pointer"></circle><circle cx="357.811320754717" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="78" style="cursor:pointer"></circle><circle cx="357.811320754717" cy="147" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="78" style="cursor:pointer"></circle><circle cx="370.188679245283" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="79" style="cursor:pointer"></circle><circle cx="388.7547169811321" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="80" style="cursor:pointer"></circle><circle cx="388.7547169811321" cy="147" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="81" style="cursor:pointer"></circle><circle cx="407.3207547169811" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="82" style="cursor:pointer"></circle><circle cx="419.6981132075472" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="83" style="cursor:pointer"></circle><circle cx="432.0754716981132" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="84" style="cursor:pointer"></circle><circle cx="444.45283018867923" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="85" style="cursor:pointer"></circle><circle cx="469.2075471698113" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="87" style="cursor:pointer"></circle><circle cx="518.7169811320755" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="91" style="cursor:pointer"></circle><circle cx="568.2264150943397" cy="161" r="6" fill="#2563eb" fill-opacity="0.6" stroke="#93c5fd" stroke-width="1.8" class="dot" data-v="95" style="cursor:pointer"></circle></svg>
+        <div class="viz-hint">Click the chart to add a value • Click any dot to remove it</div>
+        <div class="live-insight" id="live-insight"><strong>Insight:</strong> <span id="insight-text">The data is roughly symmetric. The mean (78.9) and median (78.5) are close, differing by only 0.4. The mean is a reliable summary of center here. Standard deviation is 7.5.</span></div>
+      </div>
+
+      <!-- CONCEPT TABS -->
+      <div class="card">
+        <div class="tab-bar">
+          <button class="ctab active" data-tab="mean">The Mean</button>
+          <button class="ctab" data-tab="median">Median &amp; Percentiles</button>
+          <button class="ctab" data-tab="spread">Spread</button>
+          <button class="ctab" data-tab="outliers">Outliers</button>
+          <button class="ctab" data-tab="robust">Robust Measures</button>
+          <button class="ctab" data-tab="guide">When to Use</button>
+        </div>
+        <div class="concept-panel" id="concept-panel">
+  <div class="concept-intro">
+    <h3>What is the Mean?</h3>
+    <p>The mean (arithmetic average) is what you get if you spread all values out equally across every observation. It is also the <strong>balance point</strong> of the data: values above pull right, values below pull left, and they cancel out exactly. This is why the sum of all deviations from the mean is always zero.</p>
+  </div>
+  <div class="formula">x-bar = (x1 + x2 + ... + xn) / n = 1578 / 20 = <strong>78.9</strong></div>
+  <div class="sub-viz" style="margin-top:12px">
+    <div class="sub-viz-title">Equal Shares - what if every value was the same?</div>
+    <div style="text-align:center;padding:8px 0 4px">
+      <button class="es-toggle-btn" onclick="toggleEqualShares()">Level to the Mean</button>
+    </div>
+    <svg viewBox="0 0 620 88" style="display:block;width:100%;height:auto"><line x1="8" y1="78" x2="612" y2="78" stroke="#e5e7eb" stroke-width="1"></line><line x1="8" y1="24.0157894736842" x2="612" y2="24.0157894736842" stroke="#2563eb" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"></line><rect x="91" y="35.57894736842105" width="20" height="42.42105263157895" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="113" y="31.473684210526315" width="20" height="46.526315789473685" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="135" y="29.421052631578945" width="20" height="48.578947368421055" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="157" y="28.736842105263158" width="20" height="49.26315789473684" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="179" y="27.368421052631582" width="20" height="50.63157894736842" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="201" y="26.684210526315788" width="20" height="51.31578947368421" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="223" y="26" width="20" height="52" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="245" y="25.315789473684212" width="20" height="52.68421052631579" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="267" y="24.631578947368418" width="20" height="53.36842105263158" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="289" y="24.631578947368418" width="20" height="53.36842105263158" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="311" y="23.94736842105263" width="20" height="54.05263157894737" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="333" y="23.263157894736842" width="20" height="54.73684210526316" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="355" y="22.578947368421055" width="20" height="55.421052631578945" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="377" y="21.89473684210526" width="20" height="56.10526315789474" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="399" y="21.210526315789473" width="20" height="56.78947368421053" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="421" y="20.526315789473685" width="20" height="57.473684210526315" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="443" y="19.842105263157897" width="20" height="58.1578947368421" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="465" y="18.473684210526315" width="20" height="59.526315789473685" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="487" y="15.736842105263158" width="20" height="62.26315789473684" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect><rect x="509" y="13" width="20" height="65" fill="rgba(37,99,235,0.18)" stroke="#93c5fd" stroke-width="1" rx="2"></rect></svg>
+    <div style="padding:4px 12px 10px;font-size:.78rem;color:var(--muted);text-align:center">
+      Each bar is one data value. The dashed line marks the mean <strong style="color:var(--blue)">78.9</strong>.
+    </div>
+  </div>
+  <div class="sub-viz">
+    <div class="sub-viz-title">Deviations from the Mean - they always sum to zero</div>
+    <svg viewBox="0 0 620 68" style="display:block;width:100%;height:auto"><line x1="28" y1="50" x2="606" y2="50" stroke="#e5e7eb" stroke-width="1"></line><line x1="321.3320754716982" y1="36" x2="138.30188679245282" y2="36" stroke="#dc2626" stroke-width="1.5" opacity="0.55"></line><circle cx="138.30188679245282" cy="50" r="4.5" fill="#dc2626" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="203.2830188679245" y2="36" stroke="#dc2626" stroke-width="1.5" opacity="0.55"></line><circle cx="203.2830188679245" cy="50" r="4.5" fill="#dc2626" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="235.77358490566036" y2="36" stroke="#dc2626" stroke-width="1.5" opacity="0.55"></line><circle cx="235.77358490566036" cy="50" r="4.5" fill="#dc2626" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="246.60377358490567" y2="36" stroke="#dc2626" stroke-width="1.5" opacity="0.55"></line><circle cx="246.60377358490567" cy="50" r="4.5" fill="#dc2626" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="268.2641509433962" y2="36" stroke="#dc2626" stroke-width="1.5" opacity="0.55"></line><circle cx="268.2641509433962" cy="50" r="4.5" fill="#dc2626" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="279.09433962264154" y2="36" stroke="#dc2626" stroke-width="1.5" opacity="0.55"></line><circle cx="279.09433962264154" cy="50" r="4.5" fill="#dc2626" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="289.9245283018868" y2="36" stroke="#dc2626" stroke-width="1.5" opacity="0.55"></line><circle cx="289.9245283018868" cy="50" r="4.5" fill="#dc2626" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="300.7547169811321" y2="36" stroke="#dc2626" stroke-width="1.5" opacity="0.55"></line><circle cx="300.7547169811321" cy="50" r="4.5" fill="#dc2626" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="311.5849056603774" y2="36" stroke="#dc2626" stroke-width="1.5" opacity="0.55"></line><circle cx="311.5849056603774" cy="50" r="4.5" fill="#dc2626" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="311.5849056603774" y2="36" stroke="#dc2626" stroke-width="1.5" opacity="0.55"></line><circle cx="311.5849056603774" cy="50" r="4.5" fill="#dc2626" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="322.4150943396226" y2="36" stroke="#2563eb" stroke-width="1.5" opacity="0.55"></line><circle cx="322.4150943396226" cy="50" r="4.5" fill="#2563eb" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="333.2452830188679" y2="36" stroke="#2563eb" stroke-width="1.5" opacity="0.55"></line><circle cx="333.2452830188679" cy="50" r="4.5" fill="#2563eb" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="344.0754716981132" y2="36" stroke="#2563eb" stroke-width="1.5" opacity="0.55"></line><circle cx="344.0754716981132" cy="50" r="4.5" fill="#2563eb" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="354.90566037735846" y2="36" stroke="#2563eb" stroke-width="1.5" opacity="0.55"></line><circle cx="354.90566037735846" cy="50" r="4.5" fill="#2563eb" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="365.73584905660374" y2="36" stroke="#2563eb" stroke-width="1.5" opacity="0.55"></line><circle cx="365.73584905660374" cy="50" r="4.5" fill="#2563eb" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="376.566037735849" y2="36" stroke="#2563eb" stroke-width="1.5" opacity="0.55"></line><circle cx="376.566037735849" cy="50" r="4.5" fill="#2563eb" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="387.3962264150943" y2="36" stroke="#2563eb" stroke-width="1.5" opacity="0.55"></line><circle cx="387.3962264150943" cy="50" r="4.5" fill="#2563eb" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="409.05660377358487" y2="36" stroke="#2563eb" stroke-width="1.5" opacity="0.55"></line><circle cx="409.05660377358487" cy="50" r="4.5" fill="#2563eb" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="452.377358490566" y2="36" stroke="#2563eb" stroke-width="1.5" opacity="0.55"></line><circle cx="452.377358490566" cy="50" r="4.5" fill="#2563eb" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="36" x2="495.6981132075472" y2="36" stroke="#2563eb" stroke-width="1.5" opacity="0.55"></line><circle cx="495.6981132075472" cy="50" r="4.5" fill="#2563eb" fill-opacity="0.6"></circle><line x1="321.3320754716982" y1="6" x2="321.3320754716982" y2="50" stroke="#2563eb" stroke-width="2.5"></line><text x="321.3320754716982" y="4" text-anchor="middle" fill="#1d4ed8" font-size="9" font-family="Arial,sans-serif" font-weight="700">x=78.9</text></svg>
+    <div style="padding:6px 12px 10px;font-size:.78rem;color:var(--muted)">
+      <span style="color:var(--blue)">Blue</span>: values above the mean.
+      <span style="color:var(--red)">Red</span>: values below.
+      Sum of all deviations: <span style="font-family:ui-monospace,monospace;color:var(--green);font-weight:700">-0.00</span>
+    </div>
+  </div>
+  <div class="cgrid">
+    <div class="ccard">
+      <h4>Equal Shares</h4>
+      <p>If you added up all 20 values and split the total equally, each would receive <strong style="color:var(--blue)">78.9</strong>. That is exactly what the mean represents: the share each observation would get if all were equal.</p>
+    </div>
+    <div class="ccard">
+      <h4>The Balance Point</h4>
+      <p>The mean is the fulcrum where a number-line seesaw balances. Every value above pulls right, every value below pulls left. They cancel out exactly, which is why the sum of deviations is always zero regardless of the dataset.</p>
+    </div>
+    <div class="ccard">
+      <h4>When It Works Best</h4>
+      <p>The mean is most informative when data is roughly symmetric with no extreme outliers. It uses every data point, making it statistically efficient, and it is required by most formal tests: t-test, ANOVA, and regression all depend on it.</p>
+    </div>
+    <div class="ccard">
+      <h4>When It Misleads</h4>
+      <p>One extreme value can make the mean completely unrepresentative. A single billionaire walks into a room and the mean income of everyone inside jumps to hundreds of millions, while the median barely moves.</p>
+    </div>
+  </div></div>
+      </div>
+
+    </div>
+
+    <!-- ══ RIGHT COLUMN ══ -->
+    <div class="right-col">
+
+      <!-- DATASET SELECTOR -->
+      <div class="card">
+        <div class="panel-header">
+          <h3>Choose a Dataset</h3>
+        </div>
+        <div class="small">Each preset illustrates a different statistical story. Notice how center and spread behave differently across distribution shapes.</div>
+        <div class="preset-grid" id="scenario-btns" style="margin-top:10px"><button class="preset-btn active-btn">Test Scores</button><button class="preset-btn">House Prices</button><button class="preset-btn">Incomes</button><button class="preset-btn">Product Ratings</button><button class="preset-btn">Normal Distribution</button><button class="preset-btn">Outlier Effect</button></div>
+        <div id="scenario-descs"><p id="active-desc" class="preset-desc">Roughly symmetric</p></div>
+
+        <div class="custom-data-box">
+          <label for="custom-input">Your Own Data</label>
+          <span class="label-sub">Paste comma-separated numbers, then click Load.</span>
+          <textarea id="custom-input" placeholder="e.g. 12, 45, 67, 23, 89, 34, 56 ..."></textarea>
+          <div id="load-error" class="load-error">Could not parse that input. Use comma-separated numbers.</div>
+          <button class="load-btn" onclick="loadCustomData()">Load Custom Data</button>
+        </div>
+      </div>
+
+      <!-- LIVE STATS -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">Live Statistics</h3>
+        <div class="stats-2col">
+          <div class="stats-group">
+            <div class="stats-group-label">Center</div>
+            <div class="metric m-blue">
+              <div class="metric-label">Mean (x-bar)</div>
+              <div class="metric-value" id="sv-mean">78.9</div>
+              <div class="metric-sub">arithmetic average</div>
+            </div>
+            <div class="metric m-green">
+              <div class="metric-label">Median</div>
+              <div class="metric-value" id="sv-median">78.5</div>
+              <div class="metric-sub">middle value (P50)</div>
+            </div>
+            <div class="metric m-amber">
+              <div class="metric-label">Mode</div>
+              <div class="metric-value" id="sv-mode" style="font-size:.88rem">78</div>
+              <div class="metric-sub">most frequent</div>
+            </div>
+          </div>
+          <div class="stats-group">
+            <div class="stats-group-label">Spread</div>
+            <div class="metric m-gray">
+              <div class="metric-label">Std Dev</div>
+              <div class="metric-value" id="sv-std">7.5</div>
+              <div class="metric-sub">avg dist from mean</div>
+            </div>
+            <div class="metric m-gray">
+              <div class="metric-label">IQR</div>
+              <div class="metric-value" id="sv-iqr">8.5</div>
+              <div class="metric-sub">Q3 minus Q1</div>
+            </div>
+            <div class="metric m-gray">
+              <div class="metric-label">Range</div>
+              <div class="metric-value" id="sv-range">33</div>
+              <div class="metric-sub" id="sv-range-sub">95 minus 62</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SHAPE BAR -->
+        <div class="shape-bar">
+          <div class="shape-bar-label">Shape</div>
+          <div id="sv-skew"><span class="skew-pill skew-sym">symmetric</span></div>
+          <div class="shape-gap-track" title="Mean-median gap as a share of spread">
+            <div class="shape-gap-fill" id="shape-gap-fill" style="width: 1.77087%;"></div>
+          </div>
+          <div class="shape-bar-meta" id="sv-skew-sub">gap: 0.4</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ FULL REFERENCE (hidden card, appears below grid) ══ -->
+  <div class="card help-card" id="helpCard">
+    <h3 style="margin-bottom:14px">Full Reference</h3>
+    <div class="help-2col">
+      <div>
+        <div class="help-section">
+          <h4>Measures of Center</h4>
+          <p><strong>Mean</strong> is the sum of all values divided by n. It is the balance point of the data: the sum of deviations above and below the mean is always exactly zero. It uses every observation, which makes it statistically efficient but sensitive to extreme values.</p>
+          <p><strong>Median</strong> is the middle value when data is sorted. It depends only on position, not magnitude, which makes it completely resistant to outliers. When data is skewed, the median is almost always a better summary of center than the mean.</p>
+          <p><strong>Mode</strong> is the most frequently occurring value. It is the only measure of center that applies to categorical data. Data can be bimodal or multimodal, and in those cases no single mean or median captures the distribution's shape.</p>
+          <p><strong>Harmonic mean</strong> is defined as n divided by the sum of reciprocals. It is the correct average for rates and ratios (speeds, P/E ratios, efficiencies) where arithmetic averaging overcounts fast values.</p>
+          <p style="margin-top:6px"><span class="ref-formula">x-bar = sum(xi) / n</span>  <span class="ref-formula">H = n / sum(1/xi)</span></p>
+        </div>
+        <div class="help-section">
+          <h4>Measures of Spread</h4>
+          <p><strong>Range</strong> (max minus min) is the simplest spread measure but is completely determined by the two most extreme values. A single typo can make it meaningless.</p>
+          <p><strong>IQR</strong> (Q3 minus Q1) is the spread of the middle 50% of the data. It is immune to outliers because it never touches the extremes. Tukey's fence rule uses 1.5 times the IQR beyond Q1 and Q3 to flag outliers.</p>
+          <p><strong>Standard deviation</strong> squares the distances from the mean before averaging them (then square-roots the result). Squaring amplifies large deviations, so outliers have a disproportionate effect. Required by most formal tests.</p>
+          <p><strong>MAD</strong> (Median Absolute Deviation) takes the median of all absolute distances from the median. It is the most robust spread measure available. Multiplied by 1.4826, it estimates the standard deviation for normal data.</p>
+          <p style="margin-top:6px"><span class="ref-formula">s = sqrt(sum((xi - x-bar)^2) / n)</span>  <span class="ref-formula">MAD = median(|xi - M|)</span></p>
+        </div>
+        <div class="help-section">
+          <h4>Key Rules and Thresholds</h4>
+          <div class="case-grid">
+            <div class="case-box">
+              <div class="case-label">Outlier fences</div>
+              <div class="case-desc">Below Q1 minus 1.5 * IQR or above Q3 plus 1.5 * IQR. Red dots on the chart.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label">Normal distribution rule</div>
+              <div class="case-desc">68% within ±1s, 95% within ±2s, 99.7% within ±3s of the mean.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label">Skew signal</div>
+              <div class="case-desc">Mean above median means a right tail. Mean below median means a left tail.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label">MAD to sigma</div>
+              <div class="case-desc">For normally distributed data: sigma is approximately 1.4826 times the MAD.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="help-section">
+          <h4>Robust Alternatives to the Mean</h4>
+          <p><strong>Trimmed mean:</strong> Remove the top and bottom p% of values, then take the arithmetic mean of what remains. Olympic judges have used this for decades: drop the highest and lowest scores to reduce the influence of any single judge's extreme rating.</p>
+          <p><strong>Winsorized mean:</strong> Instead of removing the extremes, replace them with the value at the trim boundary, then average. This preserves the sample size while limiting distortion. Preferred over trimming when n is small.</p>
+          <p><strong>Weighted mean:</strong> Assign each observation a weight reflecting its importance, then divide the weighted sum by the total weight. Used in GPA calculations, portfolio returns, opinion polls, and any situation where some observations count more than others.</p>
+          <p style="margin-top:6px"><span class="ref-formula">w-bar = sum(wi * xi) / sum(wi)</span></p>
+        </div>
+        <div class="help-section">
+          <h4>Choosing the Right Measure</h4>
+          <ul>
+            <li><strong>Symmetric, no outliers:</strong> Use the mean and standard deviation. They are most efficient and required for t-tests, ANOVA, and regression.</li>
+            <li><strong>Skewed or outlier-prone:</strong> Use the median and IQR. Income, home prices, and reaction times nearly always fall here.</li>
+            <li><strong>Rates and ratios:</strong> Use the harmonic mean. Arithmetic averaging of rates produces incorrect results.</li>
+            <li><strong>Categorical data:</strong> Use the mode. Mean and median require an ordinal structure that categories lack.</li>
+            <li><strong>Bimodal data:</strong> Report both modes and show the full distribution. A single summary statistic hides the story.</li>
+            <li><strong>Spread with outliers present:</strong> Use IQR or MAD. Standard deviation squares deviations, which amplifies outlier influence.</li>
+          </ul>
+        </div>
+        <div class="help-section">
+          <h4>Common Misunderstandings</h4>
+          <ul>
+            <li><strong>"Average" usually means mean in news reports</strong>, even when median would be more appropriate. Real estate, income, and salary statistics should always be reported as medians.</li>
+            <li><strong>A large standard deviation does not mean bad data.</strong> High-variance processes are real; the SD is describing them accurately. The question is whether the spread was expected.</li>
+            <li><strong>Removing outliers is not automatically correct.</strong> An outlier may be the most important data point in the dataset. Always investigate before discarding.</li>
+            <li><strong>The mode is not always unique.</strong> Bimodal and multimodal data have more than one mode, which itself is useful information about the distribution's structure.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ============================================================
+// SCENARIOS
+// ============================================================
+const SCENARIOS = {
+  test:      { name:'Test Scores',         desc:'Roughly symmetric',
+               data:[62,68,71,72,74,75,76,77,78,78,79,80,81,82,83,84,85,87,91,95] },
+  housing:   { name:'House Prices',        desc:'Right-skewed, luxury outlier',
+               data:[185,195,210,220,225,230,240,245,250,255,260,270,280,295,310,320,350,420,580,1200] },
+  income:    { name:'Incomes',             desc:'Extreme right skew',
+               data:[32,38,42,45,48,50,52,55,58,60,62,65,70,75,80,90,110,145,220,850] },
+  ratings:   { name:'Product Ratings',     desc:'Bimodal: love or hate',
+               data:[1,1,1,1,2,2,3,4,5,5,5,5,5,5,5,5,5,5,5,5] },
+  symmetric: { name:'Normal Distribution', desc:'Mean, median, mode agree',
+               data:[55,60,63,65,67,68,70,71,72,73,74,75,76,77,79,80,83,85,88,95] },
+  outlier:   { name:'Outlier Effect',      desc:'Watch the mean get dragged',
+               data:[70,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,90,200] }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let data = [...SCENARIOS.test.data];
+let activeScenario = 'test';
+let activeTab = 'mean';
+let percentileP = 50;
+let equalSharesMode = false;
+let svgClickBound = false;
+let baselineStats = null; // for before/after on outlier tab
+
+// ============================================================
+// STATISTICS
+// ============================================================
+const srt = a => [...a].sort((x,y)=>x-y);
+function sMean(a){ return a.reduce((s,v)=>s+v,0)/a.length; }
+function sMedian(a){
+  const s=srt(a),n=s.length;
+  return n%2===0?(s[n/2-1]+s[n/2])/2:s[Math.floor(n/2)];
+}
+function sMode(a){
+  const f={};a.forEach(v=>f[v]=(f[v]||0)+1);
+  const mx=Math.max(...Object.values(f));
+  if(mx===1)return null;
+  return Object.keys(f).filter(k=>f[k]===mx).map(Number).sort((a,b)=>a-b);
+}
+function sStd(a){
+  const m=sMean(a);
+  return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/a.length);
+}
+function sPct(a,p){
+  const s=srt(a),n=s.length,i=(p/100)*(n-1),lo=Math.floor(i),hi=Math.ceil(i);
+  return s[lo]+(i-lo)*(s[hi]-s[lo]);
+}
+function sIQR(a){ return sPct(a,75)-sPct(a,25); }
+function sMAD(a){ const m=sMedian(a); return sMedian(a.map(v=>Math.abs(v-m))); }
+function sWinsor(a,p=0.1){
+  const s=srt(a),n=s.length,k=Math.floor(n*p);
+  if(k===0)return sMean(a);
+  return sMean(s.map(v=>Math.max(s[k],Math.min(s[n-1-k],v))));
+}
+function sTrim(a,p=0.1){
+  const s=srt(a),n=s.length,k=Math.floor(n*p);
+  return sMean(s.slice(k,n-k));
+}
+function sHarmonic(a){
+  if(a.some(v=>v<=0))return null;
+  return a.length/a.reduce((s,v)=>s+1/v,0);
+}
+const fmt=(v,d=1)=>(v===null||v===undefined||isNaN(v))?'--':Number(v).toFixed(d);
+
+// ============================================================
+// SCALE + STACKING
+// ============================================================
+const VW=720, DOT_R=6, ML=36, MR=28, MT=28;
+function xScale(d){
+  const s=srt(d),mn=s[0],mx=s[s.length-1];
+  const pad=Math.max((mx-mn)*0.13,10);
+  const dMin=mn-pad,dMax=mx+pad,rMin=ML,rMax=VW-MR;
+  return{ dMin,dMax,
+    to:v=>rMin+(v-dMin)/(dMax-dMin)*(rMax-rMin),
+    from:x=>dMin+(x-rMin)/(rMax-rMin)*(dMax-dMin) };
+}
+function stackDots(d,sc){
+  const bw=DOT_R*2.4;
+  // First pass: assign each value to a bin and collect pixel positions
+  const binData={};
+  d.forEach(v=>{
+    const bx=Math.round(sc.to(v)/bw);
+    if(!binData[bx])binData[bx]={xs:[],count:0};
+    binData[bx].xs.push(sc.to(v));
+  });
+  // Compute centroid x for each bin so the column is perfectly vertical
+  const binCX={};
+  Object.entries(binData).forEach(([bx,b])=>{
+    binCX[bx]=b.xs.reduce((a,x)=>a+x,0)/b.xs.length;
+  });
+  // Second pass: assign stacking order
+  const binCount={};
+  return d.map(v=>{
+    const bx=Math.round(sc.to(v)/bw);
+    if(!binCount[bx])binCount[bx]=0;
+    return{v,x:binCX[bx],stack:binCount[bx]++};
+  });
+}
+
+// ============================================================
+// MAIN VISUALIZATION
+// ============================================================
+const DOT_BASE_Y=168, BOX_Y=190, BOX_H=26;
+function renderMainViz(){
+  if(data.length<2)return;
+  const svg=document.getElementById('main-svg');
+  const sc=xScale(data);
+  const pts=stackDots(data,sc);
+  const m=sMean(data),med=sMedian(data);
+  const q1=sPct(data,25),q3=sPct(data,75),iq=sIQR(data);
+  const mn=Math.min(...data),mx=Math.max(...data);
+  const fLo=q1-1.5*iq,fHi=q3+1.5*iq;
+  const xm=sc.to(m),xmed=sc.to(med),xq1=sc.to(q1),xq3=sc.to(q3);
+  const xmn=sc.to(mn),xmx=sc.to(mx),bMid=BOX_Y+BOX_H/2;
+
+  let ticks='';
+  for(let i=0;i<=7;i++){
+    const v=sc.dMin+(sc.dMax-sc.dMin)*i/7,x=sc.to(v);
+    ticks+=`<line x1="${x}" y1="${DOT_BASE_Y}" x2="${x}" y2="${DOT_BASE_Y+5}" stroke="#e5e7eb" stroke-width="1"/>`;
+    ticks+=`<text x="${x}" y="${DOT_BASE_Y+16}" text-anchor="middle" fill="#9ca3af" font-size="10.5" font-family="Arial,sans-serif">${Math.round(v)}</text>`;
+  }
+
+  let box='';
+  box+=`<line x1="${xmn}" y1="${bMid}" x2="${xq1}" y2="${bMid}" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+  box+=`<line x1="${xq3}" y1="${bMid}" x2="${xmx}" y2="${bMid}" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+  box+=`<line x1="${xmn}" y1="${BOX_Y+4}" x2="${xmn}" y2="${BOX_Y+BOX_H-4}" stroke="#93c5fd" stroke-width="1.5"/>`;
+  box+=`<line x1="${xmx}" y1="${BOX_Y+4}" x2="${xmx}" y2="${BOX_Y+BOX_H-4}" stroke="#93c5fd" stroke-width="1.5"/>`;
+  box+=`<rect x="${xq1}" y="${BOX_Y}" width="${xq3-xq1}" height="${BOX_H}" fill="rgba(37,99,235,0.07)" stroke="#93c5fd" stroke-width="1.5" rx="2"/>`;
+  box+=`<line x1="${xmed}" y1="${BOX_Y}" x2="${xmed}" y2="${BOX_Y+BOX_H}" stroke="#16a34a" stroke-width="2.5"/>`;
+  box+=`<text x="${xq1}" y="${BOX_Y+BOX_H+13}" text-anchor="middle" fill="#93c5fd" font-size="9.5" font-family="Arial,sans-serif">Q1</text>`;
+  box+=`<text x="${xq3}" y="${BOX_Y+BOX_H+13}" text-anchor="middle" fill="#93c5fd" font-size="9.5" font-family="Arial,sans-serif">Q3</text>`;
+
+  let lines='';
+  lines+=`<line x1="${xm}" y1="${MT}" x2="${xm}" y2="${DOT_BASE_Y+2}" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="4,2.5"/>`;
+  const mLX=Math.min(Math.max(xm,ML+26),VW-MR-26);
+  lines+=`<text x="${mLX}" y="${MT-4}" text-anchor="middle" fill="#1d4ed8" font-size="11.5" font-family="Arial,sans-serif" font-weight="700">x=${fmt(m)}</text>`;
+  if(Math.abs(xm-xmed)>8){
+    lines+=`<line x1="${xmed}" y1="${MT+12}" x2="${xmed}" y2="${DOT_BASE_Y+2}" stroke="#16a34a" stroke-width="1.5"/>`;
+    const medLX=Math.min(Math.max(xmed,ML+26),VW-MR-26);
+    lines+=`<text x="${medLX}" y="${MT+9}" text-anchor="middle" fill="#15803d" font-size="11.5" font-family="Arial,sans-serif" font-weight="700">M=${fmt(med)}</text>`;
+  }
+
+  const axis=`<line x1="${ML}" y1="${DOT_BASE_Y}" x2="${VW-MR}" y2="${DOT_BASE_Y}" stroke="#e5e7eb" stroke-width="1"/>`;
+
+  let dots='';
+  pts.forEach(p=>{
+    const cy=DOT_BASE_Y-DOT_R-1-(p.stack*(DOT_R*2+2));
+    const isOut=p.v>fHi||p.v<fLo;
+    dots+=`<circle cx="${p.x}" cy="${cy}" r="${DOT_R}" fill="${isOut?'#dc2626':'#2563eb'}" fill-opacity="0.6" stroke="${isOut?'#fca5a5':'#93c5fd'}" stroke-width="1.8" class="dot" data-v="${p.v}" style="cursor:pointer"/>`;
+  });
+
+  svg.innerHTML=`${axis}${ticks}${box}${lines}${dots}`;
+  svg.querySelectorAll('.dot').forEach(d=>{
+    d.addEventListener('click',e=>{
+      e.stopPropagation();
+      const v=parseFloat(d.getAttribute('data-v')),idx=data.indexOf(v);
+      if(idx!==-1){data.splice(idx,1);update();}
+    });
+    d.addEventListener('mouseenter',()=>{d.setAttribute('r',DOT_R+2);d.setAttribute('fill-opacity','1');});
+    d.addEventListener('mouseleave',()=>{d.setAttribute('r',DOT_R);d.setAttribute('fill-opacity','0.6');});
+  });
+
+  if(!svgClickBound){
+    svgClickBound=true;
+    svg.addEventListener('click',e=>{
+      const rect=svg.getBoundingClientRect();
+      const px=(e.clientX-rect.left)/rect.width*VW;
+      const sc2=xScale(data),v=sc2.from(px);
+      if(v>=sc2.dMin+2&&v<=sc2.dMax-2){data.push(Math.round(v*10)/10);update();}
+    });
+  }
+}
+
+// ============================================================
+// LIVE INSIGHT (always dynamic)
+// ============================================================
+function generateInsight(){
+  if(data.length<2)return'Load a dataset to see a live interpretation.';
+  const m=sMean(data),med=sMedian(data),sd=sStd(data),iq=sIQR(data);
+  const diff=m-med,relDiff=Math.abs(diff)/Math.max(Math.abs(m),1);
+  const q1=sPct(data,25),q3=sPct(data,75);
+  const outliers=data.filter(v=>v<q1-1.5*iq||v>q3+1.5*iq);
+
+  if(outliers.length>0){
+    const woOut=data.filter(v=>v>=q1-1.5*iq&&v<=q3+1.5*iq);
+    const mWo=sMean(woOut);
+    const pulled=diff>0?'above':'below';
+    return`${outliers.length} statistical outlier${outliers.length>1?'s are':' is'} present. The mean (${fmt(m)}) sits ${fmt(Math.abs(diff))} ${pulled} the median (${fmt(med)}), pulled by the extreme value${outliers.length>1?'s':''}. Without the outlier${outliers.length>1?'s':''}, the mean would be approximately ${fmt(mWo)}. The median is unaffected.`;
+  }
+  if(relDiff>0.08){
+    const dir=diff>0?'right':'left';
+    return`The data is ${dir}-skewed. The mean (${fmt(m)}) is ${fmt(Math.abs(diff))} ${diff>0?'above':'below'} the median (${fmt(med)}), pulled by the longer ${diff>0?'upper':'lower'} tail. The median is the better summary of a typical value here.`;
+  }
+  const mo=sMode(data);
+  if(mo&&mo.length>=2){
+    return`The data appears bimodal with modes at ${mo.slice(0,2).join(' and ')}. The mean (${fmt(m)}) and median (${fmt(med)}) both land between the two peaks and may not represent any typical value well. Inspect the full distribution.`;
+  }
+  return`The data is roughly symmetric. The mean (${fmt(m)}) and median (${fmt(med)}) are close, differing by only ${fmt(Math.abs(diff))}. The mean is a reliable summary of center here. Standard deviation is ${fmt(sd)}.`;
+}
+
+// ============================================================
+// STATS UPDATE
+// ============================================================
+function updateStats(){
+  if(data.length<2)return;
+  const m=sMean(data),med=sMedian(data),mo=sMode(data);
+  const sd=sStd(data),iq=sIQR(data),rng=Math.max(...data)-Math.min(...data);
+  const diff=m-med,relDiff=Math.abs(diff)/Math.max(sd,0.01);
+
+  set('sv-mean',fmt(m));
+  set('sv-median',fmt(med));
+  set('sv-mode',mo?mo.slice(0,3).join(', ')+(mo.length>3?'...':''):'none');
+  set('sv-std',fmt(sd));
+  set('sv-iqr',fmt(iq));
+  set('sv-range',fmt(rng,0));
+  document.getElementById('sv-range-sub').textContent=fmt(Math.max(...data),0)+' minus '+fmt(Math.min(...data),0);
+
+  const skewEl=document.getElementById('sv-skew');
+  const skewSubEl=document.getElementById('sv-skew-sub');
+  const rawRelDiff=Math.abs(diff)/Math.max(Math.abs(m),Math.abs(med),1);
+  if(rawRelDiff>0.05){
+    const dir=diff>0?'right':'left',cls=diff>0?'skew-right':'skew-left';
+    skewEl.innerHTML=`<span class="skew-pill ${cls}">${dir}-skewed</span>`;
+    skewSubEl.textContent='gap: '+fmt(Math.abs(diff));
+  } else {
+    skewEl.innerHTML='<span class="skew-pill skew-sym">symmetric</span>';
+    skewSubEl.textContent='gap: '+fmt(Math.abs(diff));
+  }
+  const gapPct=Math.min(Math.abs(relDiff)/3*100,100);
+  document.getElementById('shape-gap-fill').style.width=gapPct+'%';
+
+  document.getElementById('viz-meta').textContent='n = '+data.length+'  |  sum = '+fmt(data.reduce((a,b)=>a+b,0),0);
+  document.getElementById('insight-text').textContent=generateInsight();
+}
+
+function set(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+
+// ============================================================
+// CUSTOM DATA LOADER
+// ============================================================
+function loadCustomData(){
+  const raw=document.getElementById('custom-input').value;
+  const errEl=document.getElementById('load-error');
+  const nums=raw.split(/[,\s\n]+/).map(s=>s.trim()).filter(Boolean).map(Number);
+  if(nums.length<3||nums.some(isNaN)){
+    errEl.style.display='block';return;
+  }
+  errEl.style.display='none';
+  data=[...nums];
+  activeScenario='';
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active-btn'));
+  baselineStats=null;
+  update();
+}
+
+// ============================================================
+// TAB RENDERING
+// ============================================================
+function renderConceptPanel(){
+  const panel=document.getElementById('concept-panel');
+  switch(activeTab){
+    case 'mean':    panel.innerHTML=tabMean();break;
+    case 'median':  panel.innerHTML=tabMedian();attachMedianControls();break;
+    case 'spread':  panel.innerHTML=tabSpread();break;
+    case 'outliers':panel.innerHTML=tabOutliers();break;
+    case 'robust':  panel.innerHTML=tabRobust();break;
+    case 'guide':   panel.innerHTML=tabGuide();break;
+  }
+}
+
+// ---- MEAN -----------------------------------------------
+function tabMean(){
+  const d=data,m=sMean(d),n=d.length;
+  const total=fmt(d.reduce((a,b)=>a+b,0),0);
+  const sumDev=fmt(d.reduce((s,v)=>s+(v-m),0),2);
+  return `
+  <div class="concept-intro">
+    <h3>What is the Mean?</h3>
+    <p>The mean (arithmetic average) is what you get if you spread all values out equally across every observation. It is also the <strong>balance point</strong> of the data: values above pull right, values below pull left, and they cancel out exactly. This is why the sum of all deviations from the mean is always zero.</p>
+  </div>
+  <div class="formula">x-bar = (x1 + x2 + ... + xn) / n = ${total} / ${n} = <strong>${fmt(m)}</strong></div>
+  <div class="sub-viz" style="margin-top:12px">
+    <div class="sub-viz-title">Equal Shares - what if every value was the same?</div>
+    <div style="text-align:center;padding:8px 0 4px">
+      <button class="es-toggle-btn" onclick="toggleEqualShares()">${equalSharesMode?'Show Original Values':'Level to the Mean'}</button>
+    </div>
+    ${equalSharesSVG(d,m)}
+    <div style="padding:4px 12px 10px;font-size:.78rem;color:var(--muted);text-align:center">
+      ${equalSharesMode
+        ? `All ${n} values leveled to the mean <strong style="color:var(--blue)">${fmt(m)}</strong>. The total is preserved and distributed equally.`
+        : `Each bar is one data value. The dashed line marks the mean <strong style="color:var(--blue)">${fmt(m)}</strong>.`}
+    </div>
+  </div>
+  <div class="sub-viz">
+    <div class="sub-viz-title">Deviations from the Mean - they always sum to zero</div>
+    ${deviationsSVG(d,m)}
+    <div style="padding:6px 12px 10px;font-size:.78rem;color:var(--muted)">
+      <span style="color:var(--blue)">Blue</span>: values above the mean.
+      <span style="color:var(--red)">Red</span>: values below.
+      Sum of all deviations: <span style="font-family:ui-monospace,monospace;color:var(--green);font-weight:700">${sumDev}</span>
+    </div>
+  </div>
+  <div class="cgrid">
+    <div class="ccard">
+      <h4>Equal Shares</h4>
+      <p>If you added up all ${n} values and split the total equally, each would receive <strong style="color:var(--blue)">${fmt(m)}</strong>. That is exactly what the mean represents: the share each observation would get if all were equal.</p>
+    </div>
+    <div class="ccard">
+      <h4>The Balance Point</h4>
+      <p>The mean is the fulcrum where a number-line seesaw balances. Every value above pulls right, every value below pulls left. They cancel out exactly, which is why the sum of deviations is always zero regardless of the dataset.</p>
+    </div>
+    <div class="ccard">
+      <h4>When It Works Best</h4>
+      <p>The mean is most informative when data is roughly symmetric with no extreme outliers. It uses every data point, making it statistically efficient, and it is required by most formal tests: t-test, ANOVA, and regression all depend on it.</p>
+    </div>
+    <div class="ccard">
+      <h4>When It Misleads</h4>
+      <p>One extreme value can make the mean completely unrepresentative. A single billionaire walks into a room and the mean income of everyone inside jumps to hundreds of millions, while the median barely moves.</p>
+    </div>
+  </div>`;
+}
+
+function deviationsSVG(d,m){
+  const w=620,h=68,sc=xScale(d);
+  const to=v=>30+(v-sc.dMin)/(sc.dMax-sc.dMin)*(w-46);
+  const baseY=50,xm=to(m);
+  let s=`<svg viewBox="0 0 ${w} ${h}" style="display:block;width:100%;height:auto">`;
+  s+=`<line x1="28" y1="${baseY}" x2="${w-14}" y2="${baseY}" stroke="#e5e7eb" stroke-width="1"/>`;
+  srt(d).forEach(v=>{
+    const xv=to(v),col=v>=m?'#2563eb':'#dc2626';
+    s+=`<line x1="${xm}" y1="${baseY-14}" x2="${xv}" y2="${baseY-14}" stroke="${col}" stroke-width="1.5" opacity="0.55"/>`;
+    s+=`<circle cx="${xv}" cy="${baseY}" r="4.5" fill="${col}" fill-opacity="0.6"/>`;
+  });
+  s+=`<line x1="${xm}" y1="6" x2="${xm}" y2="${baseY}" stroke="#2563eb" stroke-width="2.5"/>`;
+  s+=`<text x="${xm}" y="4" text-anchor="middle" fill="#1d4ed8" font-size="9" font-family="Arial,sans-serif" font-weight="700">x=${fmt(m)}</text>`;
+  return s+'</svg>';
+}
+
+function equalSharesSVG(d,m){
+  const sorted=srt(d),w=620,h=88,n=sorted.length;
+  const bw=Math.min(22,(w-36)/n),startX=18+(w-36-bw*n)/2;
+  const maxH=65,mx=Math.max(...sorted);
+  let s=`<svg viewBox="0 0 ${w} ${h}" style="display:block;width:100%;height:auto">`;
+  s+=`<line x1="8" y1="${h-10}" x2="${w-8}" y2="${h-10}" stroke="#e5e7eb" stroke-width="1"/>`;
+  const meanY=(h-10)-maxH*(m/mx);
+  s+=`<line x1="8" y1="${meanY}" x2="${w-8}" y2="${meanY}" stroke="#2563eb" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>`;
+  sorted.forEach((v,i)=>{
+    const x=startX+i*bw,frac=(equalSharesMode?m:v)/mx,barH=maxH*frac,barY=(h-10)-barH;
+    s+=`<rect x="${x+1}" y="${barY}" width="${bw-2}" height="${barH}" fill="${equalSharesMode?'rgba(37,99,235,0.3)':'rgba(37,99,235,0.18)'}" stroke="${equalSharesMode?'#2563eb':'#93c5fd'}" stroke-width="1" rx="2"/>`;
+  });
+  return s+'</svg>';
+}
+
+function toggleEqualShares(){equalSharesMode=!equalSharesMode;renderConceptPanel();}
+
+// ---- MEDIAN -----------------------------------------------
+function tabMedian(){
+  const d=data,med=sMedian(d),q1=sPct(d,25),q3=sPct(d,75),pVal=sPct(d,percentileP);
+  return `
+  <div class="concept-intro">
+    <h3>Median and Percentiles</h3>
+    <p>The median is the middle value when data is sorted. Half the values lie below it, half above. Percentiles generalize this idea: the 25th percentile has 25% of values below it, the 75th has 75% below, and so on. Together they let you place any value within the full distribution.</p>
+  </div>
+  <div class="sub-viz">
+    <div class="sub-viz-title">Sorted Data - drag the slider to explore any percentile</div>
+    ${sortedArraySVG(srt(d),med,pVal)}
+    <div class="pctl-bar">
+      <label>Percentile:</label>
+      <input type="range" id="pct-slider" min="1" max="99" value="${percentileP}">
+      <div class="pctl-val" id="pct-display">P${percentileP} = ${fmt(pVal)}</div>
+    </div>
+  </div>
+  <div class="cgrid">
+    <div class="ccard">
+      <h4>Finding the Median</h4>
+      <p>Sort all ${d.length} values. If n is odd, take the middle. If n is even, average the two middle values. Current median: <strong style="color:var(--green)">${fmt(med)}</strong>. Exactly ${d.filter(v=>v<med).length} values lie below and ${d.filter(v=>v>med).length} lie above.</p>
+    </div>
+    <div class="ccard">
+      <h4>Quartiles and the Box</h4>
+      <p>Q1 (P25) = <strong style="color:var(--blue)">${fmt(q1)}</strong><br>
+         Q2 (P50) = <strong style="color:var(--green)">${fmt(med)}</strong> (the median)<br>
+         Q3 (P75) = <strong style="color:var(--blue)">${fmt(q3)}</strong><br>
+         IQR = Q3 minus Q1 = <strong>${fmt(q3-q1)}</strong></p>
+    </div>
+    <div class="ccard">
+      <h4>Real-World Percentiles</h4>
+      <p>Standardized test scores are reported as percentiles. Scoring at P85 means you outperformed 85% of test-takers. Children's growth charts, blood pressure norms, and income brackets all use the same principle.</p>
+    </div>
+    <div class="ccard">
+      <h4>Why the Median is Robust</h4>
+      <p>The median only cares about position, not magnitude. Change the highest value in this dataset to 10,000,000 and the median stays at <strong style="color:var(--green)">${fmt(med)}</strong>. The mean would jump enormously.</p>
+    </div>
+  </div>`;
+}
+
+function sortedArraySVG(s,med,pVal){
+  const n=s.length,w=620,h=56,bw=Math.min(26,(w-36)/n),startX=(w-bw*n)/2;
+  const bh=30,by=10;
+  let svg=`<svg viewBox="0 0 ${w} ${h}" style="display:block;width:100%;height:auto">`;
+  s.forEach((v,i)=>{
+    const x=startX+i*bw,isM=Math.abs(v-med)<0.001,isP=!isM&&Math.abs(v-pVal)<0.1&&percentileP!==50;
+    let fill='rgba(37,99,235,0.07)',stroke='#bfdbfe',textCol='#9ca3af';
+    if(isM){fill='rgba(22,163,74,0.18)';stroke='#16a34a';textCol='#15803d';}
+    if(isP){fill='rgba(217,119,6,0.13)';stroke='#d97706';textCol='#92400e';}
+    svg+=`<rect x="${x+1}" y="${by}" width="${bw-2}" height="${bh}" fill="${fill}" stroke="${stroke}" stroke-width="1.2" rx="2"/>`;
+    if(bw>14)svg+=`<text x="${x+bw/2}" y="${by+bh/2+4}" text-anchor="middle" fill="${textCol}" font-size="${bw>20?8.5:7}" font-family="Arial,sans-serif">${Math.round(v)}</text>`;
+  });
+  const pIdx=(percentileP/100)*(n-1),pX=startX+pIdx*bw+bw/2;
+  const col=percentileP===50?'#16a34a':'#d97706';
+  svg+=`<line x1="${pX}" y1="${by-3}" x2="${pX}" y2="${by+bh+4}" stroke="${col}" stroke-width="2.5"/>`;
+  svg+=`<text x="${pX}" y="${by-6}" text-anchor="middle" fill="${col}" font-size="9" font-family="Arial,sans-serif" font-weight="700">P${percentileP}</text>`;
+  return svg+'</svg>';
+}
+
+function attachMedianControls(){
+  const slider=document.getElementById('pct-slider');
+  if(!slider)return;
+  slider.addEventListener('input',()=>{
+    percentileP=parseInt(slider.value);
+    const pVal=sPct(data,percentileP);
+    document.getElementById('pct-display').textContent='P'+percentileP+' = '+fmt(pVal);
+    const oldSvg=document.querySelector('.sub-viz svg');
+    if(oldSvg){const tmp=document.createElement('div');tmp.innerHTML=sortedArraySVG(srt(data),sMedian(data),pVal);oldSvg.replaceWith(tmp.firstChild);}
+  });
+}
+
+// ---- SPREAD -----------------------------------------------
+function tabSpread(){
+  const d=data,m=sMean(d),sd=sStd(d),iq=sIQR(d);
+  const rng=Math.max(...d)-Math.min(...d),ma=sMAD(d);
+  const q1=sPct(d,25),q3=sPct(d,75);
+  const within1sd=d.filter(v=>v>=m-sd&&v<=m+sd).length;
+  return `
+  <div class="concept-intro">
+    <h3>Measuring Spread</h3>
+    <p>Two datasets can have identical means but look completely different. One tightly clustered, the other wildly dispersed. Spread measures tell us how much variability exists around the center, and each measure has its own strengths and blind spots.</p>
+  </div>
+  <div class="sub-viz">
+    <div class="sub-viz-title">The SD band and IQR box on your current data</div>
+    ${spreadVizSVG(d,m,sd,q1,q3)}
+    <div style="padding:6px 12px 10px;font-size:.78rem;color:var(--muted)">
+      <span style="color:var(--amber);font-weight:700">Amber band</span>: plus and minus one standard deviation from the mean.
+      <span style="color:var(--blue);font-weight:700">Blue box</span>: IQR (Q1 to Q3).
+    </div>
+  </div>
+  <div class="cgrid">
+    <div class="ccard">
+      <h4>Range = ${fmt(rng,0)}</h4>
+      <p>Max minus Min. Immediate and intuitive, but determined by exactly two values. A single data entry error can destroy it.</p>
+      <div class="formula">${fmt(Math.max(...d),0)} - ${fmt(Math.min(...d),0)} = ${fmt(rng,0)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Best for: quick sanity checks and data validation.</p>
+    </div>
+    <div class="ccard">
+      <h4>IQR = ${fmt(iq)}</h4>
+      <p>Q3 minus Q1. The spread of the middle 50% of data. Completely ignores the extremes, making it resistant to outliers. The box in a box plot represents the IQR.</p>
+      <div class="formula">IQR = ${fmt(q3)} - ${fmt(q1)} = ${fmt(iq)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Best for: skewed data and outlier detection.</p>
+    </div>
+    <div class="ccard">
+      <h4>Std Dev = ${fmt(sd)}</h4>
+      <p>Average squared distance from the mean, square-rooted. Squaring penalizes outliers disproportionately. Required by most formal statistical tests.</p>
+      <div class="formula">s = sqrt(sum((xi - x)^2) / n) = ${fmt(sd)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Best for: symmetric data and formal inference.</p>
+    </div>
+    <div class="ccard">
+      <h4>MAD = ${fmt(ma)}</h4>
+      <p>Median of all absolute distances from the median. Far more resistant to outliers than standard deviation because it never squares anything.</p>
+      <div class="formula">MAD = median(|xi - M|) = ${fmt(ma)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Best for: outlier-prone or skewed data.</p>
+    </div>
+  </div>
+  <div class="ccard" style="margin-top:10px;border-left:4px solid var(--blue);background:#eff6ff">
+    <h4 style="color:#1e40af">The 68-95-99.7 Rule (for normal data)</h4>
+    <p style="color:#1e40af">For a bell-shaped distribution, about <strong>68%</strong> of values fall within plus or minus one SD, <strong>95%</strong> within two, and <strong>99.7%</strong> within three. For this dataset, plus or minus one SD covers ${fmt(m-sd)} to ${fmt(m+sd)}, containing ${within1sd} of ${d.length} values (${Math.round(within1sd/d.length*100)}%).</p>
+  </div>`;
+}
+
+function spreadVizSVG(d,m,sd,q1,q3){
+  const w=620,h=92,sc=xScale(d);
+  const to=v=>30+(v-sc.dMin)/(sc.dMax-sc.dMin)*(w-46);
+  const baseY=58,xm=to(m),xSdLo=to(m-sd),xSdHi=to(m+sd);
+  let s=`<svg viewBox="0 0 ${w} ${h}" style="display:block;width:100%;height:auto">`;
+  s+=`<rect x="${xSdLo}" y="${baseY-26}" width="${xSdHi-xSdLo}" height="52" fill="rgba(217,119,6,0.06)" stroke="rgba(217,119,6,0.25)" stroke-width="1" rx="2"/>`;
+  s+=`<text x="${(xSdLo+xm)/2}" y="${baseY-28}" text-anchor="middle" fill="rgba(217,119,6,0.7)" font-size="8" font-family="Arial,sans-serif">-1s</text>`;
+  s+=`<text x="${(xSdHi+xm)/2}" y="${baseY-28}" text-anchor="middle" fill="rgba(217,119,6,0.7)" font-size="8" font-family="Arial,sans-serif">+1s</text>`;
+  const xq1=to(q1),xq3=to(q3);
+  s+=`<rect x="${xq1}" y="${baseY+8}" width="${xq3-xq1}" height="18" fill="rgba(37,99,235,0.08)" stroke="#93c5fd" stroke-width="1" rx="2"/>`;
+  s+=`<text x="${(xq1+xq3)/2}" y="${baseY+21}" text-anchor="middle" fill="#3b82f6" font-size="7.5" font-family="Arial,sans-serif">IQR</text>`;
+  s+=`<line x1="28" y1="${baseY}" x2="${w-14}" y2="${baseY}" stroke="#e5e7eb" stroke-width="1"/>`;
+  stackDots(d,{to}).forEach(p=>{
+    const cy=baseY-DOT_R-(p.stack*(DOT_R*2+1.5));
+    s+=`<circle cx="${p.x}" cy="${cy}" r="5" fill="#2563eb" fill-opacity="0.45" stroke="#93c5fd" stroke-width="1.5"/>`;
+  });
+  s+=`<line x1="${xm}" y1="6" x2="${xm}" y2="${baseY}" stroke="#2563eb" stroke-width="2"/>`;
+  s+=`<text x="${xm}" y="4" text-anchor="middle" fill="#1d4ed8" font-size="9" font-family="Arial,sans-serif" font-weight="700">x</text>`;
+  return s+'</svg>';
+}
+
+// ---- OUTLIERS -----------------------------------------------
+function tabOutliers(){
+  const d=data,m=sMean(d),med=sMedian(d);
+  const iq=sIQR(d),q1=sPct(d,25),q3=sPct(d,75);
+  const fLo=q1-1.5*iq,fHi=q3+1.5*iq;
+  const outliers=d.filter(v=>v<fLo||v>fHi);
+  const diff=m-med,absDiff=Math.abs(diff),sd=sStd(d),sigGap=absDiff>sd*0.25;
+
+  const hasBaseline=baselineStats!==null;
+  const baHtml=hasBaseline?`
+  <div class="before-after">
+    <div class="ba-box">
+      <div class="ba-label">Before Outlier(s)</div>
+      <div class="ba-row"><span>Mean</span><span style="color:var(--blue)">${fmt(baselineStats.mean)}</span></div>
+      <div class="ba-row"><span>Median</span><span style="color:var(--green)">${fmt(baselineStats.median)}</span></div>
+      <div class="ba-row"><span>Std Dev</span><span>${fmt(baselineStats.sd)}</span></div>
+      <div class="ba-row"><span>Range</span><span>${fmt(baselineStats.range,0)}</span></div>
+    </div>
+    <div class="ba-box">
+      <div class="ba-label">After Outlier(s)</div>
+      <div class="ba-row"><span>Mean</span><span style="color:${Math.abs(m-baselineStats.mean)>0.5?'var(--red)':'var(--blue)'}">
+        ${fmt(m)} ${Math.abs(m-baselineStats.mean)>0.05?'('+( m>baselineStats.mean?'+':'')+fmt(m-baselineStats.mean)+')':''}</span></div>
+      <div class="ba-row"><span>Median</span><span style="color:var(--green)">
+        ${fmt(med)} ${Math.abs(med-baselineStats.median)>0.05?'('+fmt(med-baselineStats.median)+')':''}</span></div>
+      <div class="ba-row"><span>Std Dev</span><span style="color:${sd>baselineStats.sd*1.1?'var(--red)':'inherit'}">
+        ${fmt(sd)} ${sd>baselineStats.sd*1.1?'(+'+fmt(sd-baselineStats.sd)+')':''}</span></div>
+      <div class="ba-row"><span>Range</span><span>${fmt(Math.max(...d)-Math.min(...d),0)}</span></div>
+    </div>
+  </div>`:'';
+
+  return `
+  <div class="concept-intro">
+    <h3>Outliers and Their Effects</h3>
+    <p>Outliers are values that sit far from the rest of the data. They can be real extremes, measurement errors, or data entry mistakes. Different statistics respond to them very differently. Use the buttons below to add outliers and watch the before/after readout update.</p>
+  </div>
+  <div class="oc-row">
+    <button class="oc-btn-red" onclick="addHiOutlier()">Add High Outlier</button>
+    <button class="oc-btn-red" onclick="addLoOutlier()">Add Low Outlier</button>
+    <button onclick="resetScen()">Reset Scenario</button>
+    <span style="font-size:.8rem;color:var(--muted)">
+      ${outliers.length>0
+        ? outliers.length+' outlier'+(outliers.length>1?'s':'')+' detected (beyond 1.5 x IQR fences)'
+        : 'No statistical outliers in current data'}
+    </span>
+  </div>
+  ${hasBaseline?baHtml:'<div class="small" style="color:var(--gray);margin-bottom:12px">Click "Add High Outlier" or "Add Low Outlier" to see a before/after comparison.</div>'}
+  <div class="cgrid">
+    <div class="ccard" style="${sigGap?'border-left:3px solid var(--red)':'border-left:3px solid var(--green)'}">
+      <h4>Mean vs. Median Right Now</h4>
+      <p>Mean: <strong style="color:var(--blue)">${fmt(m)}</strong><br>
+         Median: <strong style="color:var(--green)">${fmt(med)}</strong><br>
+         Gap: <strong style="color:${sigGap?'var(--red)':'var(--green)'}">${fmt(absDiff)}</strong></p>
+      <p>${sigGap
+        ? 'Significant gap. The mean is being pulled '+(diff>0?'upward by large values':'downward by small values')+'.'
+        : 'Mean and median are close. No strong outlier effect is present.'}</p>
+    </div>
+    <div class="ccard">
+      <h4>The 1.5 x IQR Rule</h4>
+      <p>Tukey's rule: a value is flagged as an outlier if it falls more than 1.5 times the IQR beyond Q1 or Q3. These are the whisker fence endpoints on the box plot.</p>
+      <div class="formula">Lower fence: ${fmt(fLo)}<br>Upper fence: ${fmt(fHi)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Red dots on the chart exceed these fences.</p>
+    </div>
+    <div class="ccard">
+      <h4>What Outliers Affect</h4>
+      <p><strong style="color:var(--red)">Heavily affected:</strong> Mean, Standard Deviation, Range</p>
+      <p><strong style="color:var(--green)">Resistant to outliers:</strong> Median, IQR, MAD, Mode, Percentiles</p>
+    </div>
+    <div class="ccard">
+      <h4>Should You Remove Them?</h4>
+      <p>Not automatically. Outliers might be legitimate extremes (a CEO's salary), data errors (a typo), or important signals (an unexpected drug response). Always investigate first and report what you did and why.</p>
+    </div>
+  </div>`;
+}
+
+function addHiOutlier(){
+  if(!baselineStats) baselineStats={mean:sMean(data),median:sMedian(data),sd:sStd(data),range:Math.max(...data)-Math.min(...data)};
+  data.push(Math.round(sMean(data)+sStd(data)*4));update();
+}
+function addLoOutlier(){
+  if(!baselineStats) baselineStats={mean:sMean(data),median:sMedian(data),sd:sStd(data),range:Math.max(...data)-Math.min(...data)};
+  data.push(Math.round(sMean(data)-sStd(data)*4));update();
+}
+function resetScen(){
+  if(SCENARIOS[activeScenario]){data=[...SCENARIOS[activeScenario].data];baselineStats=null;equalSharesMode=false;update();}
+}
+
+// ---- ROBUST -----------------------------------------------
+function tabRobust(){
+  const d=data,m=sMean(d),med=sMedian(d);
+  const w10=sWinsor(d,0.1),w20=sWinsor(d,0.2),t10=sTrim(d,0.1),t20=sTrim(d,0.2);
+  const hm=sHarmonic(d),ma=sMAD(d),iq=sIQR(d);
+  const n=d.length,k10=Math.floor(n*0.1),k20=Math.floor(n*0.2);
+  const measures=[
+    {label:'Mean',val:m,color:'#2563eb'},{label:'Median',val:med,color:'#16a34a'},
+    {label:'Trim 10%',val:t10,color:'#7c3aed'},{label:'Winsor 10%',val:w10,color:'#d97706'},
+    ...(hm!==null?[{label:'Harmonic',val:hm,color:'#0891b2'}]:[])
+  ];
+  const allVals=measures.map(x=>x.val);
+  const cMin=Math.min(...allVals)*0.97,cMax=Math.max(...allVals)*1.03;
+  const compBars=measures.map(x=>{
+    const pct=cMax===cMin?50:Math.round((x.val-cMin)/(cMax-cMin)*100);
+    return `<div class="comp-row"><div class="comp-label">${x.label}</div><div class="comp-bar-wrap"><div class="comp-bar" style="width:${pct}%;background:${x.color};opacity:0.45"></div></div><div class="comp-val" style="color:${x.color}">${fmt(x.val)}</div></div>`;
+  }).join('');
+  return `
+  <div class="concept-intro">
+    <h3>Robust and Specialized Measures</h3>
+    <p>When the standard mean fails due to outliers or skewness, statisticians reach for robust alternatives. Each one trades some information for resistance to extremes. The comparison bars below show how much the measures diverge on your current dataset.</p>
+  </div>
+  <div class="sub-viz">
+    <div class="sub-viz-title">How measures compare on this dataset</div>
+    <div style="padding:14px 14px 10px">${compBars}</div>
+  </div>
+  <div class="cgrid3">
+    <div class="ccard">
+      <h4>Trimmed Mean</h4>
+      <p>Remove the top and bottom p% of values, then average the rest. Olympic judging has used this for decades: drop the highest and lowest scores to prevent any single judge from dominating.</p>
+      <div class="formula">10% trim (drop ${k10} each end): ${fmt(t10)}<br>20% trim (drop ${k20} each end): ${fmt(t20)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Regular mean: ${fmt(m)}</p>
+    </div>
+    <div class="ccard">
+      <h4>Winsorized Mean</h4>
+      <p>Replace extremes with the nearest non-extreme value, then average. Preserves the same sample size while limiting distortion. Preferred over trimming when n is small.</p>
+      <div class="formula">10% winsor: ${fmt(w10)}<br>20% winsor: ${fmt(w20)}</div>
+    </div>
+    <div class="ccard">
+      <h4>Harmonic Mean</h4>
+      <p>Better for rates and ratios. Driving 60 mph for one hour then 40 mph for one hour: the average speed is not 50 mph. The harmonic mean gives the correct result.</p>
+      <div class="formula">${hm!==null?'H = n / sum(1/xi) = '+fmt(hm):'Undefined (data has zeros or negative values)'}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Use for: speeds, P/E ratios, efficiency rates.</p>
+    </div>
+    <div class="ccard">
+      <h4>Weighted Average</h4>
+      <p>Some observations count more than others. GPA, portfolio returns, and polls all weight observations differently.</p>
+      <div class="formula">w-bar = sum(wi * xi) / sum(wi)</div>
+      <p style="font-size:.78rem;color:var(--muted)">Example: Exam 90 (70%) + HW 70 (30%) = 84.0<br>vs plain mean: 80.0</p>
+    </div>
+    <div class="ccard">
+      <h4>MAD = ${fmt(ma)}</h4>
+      <p>Median Absolute Deviation. Like standard deviation but uses the median and absolute values instead of squaring. Dramatically more resistant to outliers.</p>
+      <div class="formula">MAD = median(|xi - M|) = ${fmt(ma)}</div>
+    </div>
+    <div class="ccard">
+      <h4>IQR = ${fmt(iq)}</h4>
+      <p>The robust version of the range. Spread of the middle 50%, unaffected by the top and bottom 25%. Foundation of Tukey's outlier detection rule.</p>
+      <div class="formula">IQR = Q3 - Q1 = ${fmt(sPct(d,75))} - ${fmt(sPct(d,25))} = ${fmt(iq)}</div>
+    </div>
+  </div>`;
+}
+
+// ---- GUIDE -----------------------------------------------
+function tabGuide(){
+  const d=data,m=sMean(d),med=sMedian(d);
+  const diff=m-med,relDiff=Math.abs(diff)/Math.max(Math.abs(m),1);
+  const skewCls=relDiff>0.05?(diff>0?'skew-right':'skew-left'):'skew-sym';
+  const skewLbl=relDiff>0.05?(diff>0?'right-skewed':'left-skewed'):'symmetric';
+  const skewRec=relDiff>0.05?'the <strong>median</strong> is the better summary of center':'the <strong>mean</strong> works well';
+  return `
+  <div class="concept-intro">
+    <h3>When to Use Which Measure</h3>
+    <p>Picking the right summary statistic depends on the shape of your data, your audience, and the question you are actually answering. Here is a practical decision guide applied to your current dataset.</p>
+  </div>
+  <div class="info-note">
+    <strong>Your current data:</strong> Mean = ${fmt(m)}, Median = ${fmt(med)}, Gap = ${fmt(Math.abs(diff))}.
+    Your data appears <span class="skew-pill ${skewCls}" style="font-size:.75rem;vertical-align:middle">${skewLbl}</span>
+    so ${skewRec}.
+  </div>
+  <div class="sub-viz">
+    <table class="use-table">
+      <thead><tr><th>Situation</th><th>Use</th><th>Because</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Symmetric numeric data</strong><br><span style="font-size:.8rem">Heights, IQ scores, measurement error</span></td><td><span class="badge bblue">Mean</span></td><td>Most efficient. Uses all data and powers formal statistical tests.</td></tr>
+        <tr><td><strong>Skewed or asymmetric data</strong><br><span style="font-size:.8rem">Income, house prices, reaction times</span></td><td><span class="badge bgreen">Median</span></td><td>A long tail pulls the mean from the typical value. The median stays anchored.</td></tr>
+        <tr><td><strong>Categorical or ordinal data</strong><br><span style="font-size:.8rem">Colors, ratings, survey options</span></td><td><span class="badge bamber">Mode</span></td><td>Mean and median require numeric ordering that may not exist.</td></tr>
+        <tr><td><strong>Rates and ratios</strong><br><span style="font-size:.8rem">Speeds, P/E ratios, conversion rates</span></td><td><span class="badge bblue">Harmonic Mean</span></td><td>Arithmetic averaging of rates produces incorrect results.</td></tr>
+        <tr><td><strong>Data with known outliers</strong><br><span style="font-size:.8rem">Financial returns, survey responses</span></td><td><span class="badge bgray">Trimmed or Winsorized Mean</span></td><td>Reduces outlier influence while retaining more information than the median.</td></tr>
+        <tr><td><strong>Spread of clean symmetric data</strong></td><td><span class="badge bgray">Std Dev</span></td><td>Required by most tests; natural probabilistic interpretation for normal data.</td></tr>
+        <tr><td><strong>Spread of skewed or outlier-prone data</strong></td><td><span class="badge bgray">IQR</span> <span class="badge bgray">MAD</span></td><td>Std Dev squares outliers. IQR and MAD are immune to extreme values.</td></tr>
+        <tr><td><strong>Bimodal or multimodal data</strong><br><span style="font-size:.8rem">Polarizing products, mixed groups</span></td><td><span class="badge bamber">Modes</span> + Shape</td><td>No single number captures two distinct groups. Show the full distribution.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="cgrid" style="margin-top:12px">
+    <div class="ccard" style="border-left:3px solid var(--blue)">
+      <h4>The Sensitivity Spectrum</h4>
+      <p>From most to least sensitive to outliers:<br><br>
+      <strong>Range:</strong> most sensitive. One value changes everything.<br>
+      <strong>Mean and Std Dev:</strong> strongly affected (squaring amplifies).<br>
+      <strong>Trimmed and Winsorized Mean:</strong> moderately affected.<br>
+      <strong>IQR and MAD:</strong> resistant by construction.<br>
+      <strong>Median and Mode:</strong> most resistant of all.</p>
+    </div>
+    <div class="ccard" style="border-left:3px solid var(--green)">
+      <h4>What the News Gets Wrong</h4>
+      <p>Headlines saying "average salary rose 5%" often use the mean, which is easily inflated by executive pay increases. "Median household income" is the standard in economic reporting precisely because it resists that distortion.</p>
+      <p>Whenever you read a summary statistic, ask: is this the mean or the median, and does the difference matter here?</p>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// MAIN UPDATE
+// ============================================================
+function update(){
+  if(data.length<2)return;
+  renderMainViz();updateStats();renderConceptPanel();
+}
+
+// ============================================================
+// DATASET BUTTONS
+// ============================================================
+function buildScenarioBtns(){
+  const grid=document.getElementById('scenario-btns');
+  const descs=document.getElementById('scenario-descs');
+  grid.innerHTML='';descs.innerHTML='';
+  Object.entries(SCENARIOS).forEach(([key,sc])=>{
+    const btn=document.createElement('button');
+    btn.className='preset-btn'+(key===activeScenario?' active-btn':'');
+    btn.textContent=sc.name;
+    btn.addEventListener('click',()=>{
+      activeScenario=key;data=[...sc.data];baselineStats=null;equalSharesMode=false;
+      document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active-btn'));
+      btn.classList.add('active-btn');
+      document.getElementById('active-desc').textContent=sc.desc;
+      update();
+    });
+    grid.appendChild(btn);
+  });
+  const descEl=document.createElement('p');
+  descEl.id='active-desc';
+  descEl.className='preset-desc';
+  descEl.textContent=SCENARIOS[activeScenario]?.desc||'';
+  descs.appendChild(descEl);
+}
+
+// ============================================================
+// TOGGLE BUTTONS
+// ============================================================
+document.getElementById('toggleGuide').addEventListener('click',()=>{
+  const g=document.getElementById('guideSection'),btn=document.getElementById('toggleGuide');
+  const open=g.classList.toggle('open');
+  btn.textContent=open?'▲ Hide Guide':'▼ Quick-Start Guide';
+});
+
+document.getElementById('toggleHelp').addEventListener('click',()=>{
+  const h=document.getElementById('helpCard'),btn=document.getElementById('toggleHelp');
+  const open=h.classList.toggle('open');
+  btn.textContent=open?'▲ Hide Reference':'📖 Full Reference';
+  if(open)h.scrollIntoView({behavior:'smooth',block:'start'});
+});
+
+// ============================================================
+// TAB NAV
+// ============================================================
+document.querySelectorAll('.ctab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    activeTab=tab.dataset.tab;equalSharesMode=false;
+    document.querySelectorAll('.ctab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');renderConceptPanel();
+  });
+});
+
+// ============================================================
+// INIT
+// ============================================================
+buildScenarioBtns();
+update();
+</script>
+
+
+</body></html>

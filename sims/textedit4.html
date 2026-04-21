@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AmberDOS Editor</title>
+  <style>
+    :root{
+      --bg:#050402;
+      --amber:#ffb347;
+      --amber-dim:#b9771b;
+      --amber-soft:rgba(255,179,71,.18);
+      --amber-glow:rgba(255,179,71,.42);
+      --border:#7a4a09;
+      --menu-bg:#120d06;
+      --menu-hover:rgba(255,179,71,.16);
+      --select-bg:rgba(255,179,71,.85);
+      --select-fg:#221607;
+      --modal-bg:rgba(5,4,2,.96);
+      --cols:80;
+      --rows:25;
+      --char-w:12px;
+      --line-h:28px;
+      --pad-x:18px;
+      --pad-y:16px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    html, body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      color:var(--amber);
+      font-family:"Lucida Console","Courier New",Courier,monospace;
+      overflow:hidden;
+      text-rendering:geometricPrecision;
+    }
+
+    body{
+      position:relative;
+      background:
+        radial-gradient(circle at center, rgba(255,179,71,.05) 0%, rgba(0,0,0,0) 55%),
+        linear-gradient(180deg, rgba(255,179,71,.03), rgba(0,0,0,.02));
+    }
+
+    .crt::before,
+    .crt::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:50;
+    }
+
+    .crt::before{
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,179,71,.045) 0px,
+          rgba(255,179,71,.045) 1px,
+          rgba(0,0,0,.12) 2px,
+          rgba(0,0,0,.12) 4px
+        );
+      opacity:.52;
+      mix-blend-mode:screen;
+    }
+
+    .crt::after{
+      background:
+        radial-gradient(circle at center, rgba(0,0,0,0) 58%, rgba(0,0,0,.36) 100%),
+        linear-gradient(180deg, rgba(255,255,255,.025), rgba(0,0,0,.08));
+      animation:flicker .12s infinite alternate;
+      opacity:.24;
+    }
+
+    @keyframes flicker{
+      from{ opacity:.19; }
+      to{ opacity:.28; }
+    }
+
+    .shell{
+      position:relative;
+      height:100vh;
+      padding:12px;
+      display:grid;
+      grid-template-rows:auto auto 1fr auto;
+      gap:8px;
+    }
+
+    .titlebar,.menubar,.statusbar{
+      border:2px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,179,71,.08), rgba(255,179,71,.02));
+      box-shadow:0 0 0 1px rgba(255,179,71,.08) inset, 0 0 18px rgba(255,179,71,.08);
+      padding:8px 12px;
+      letter-spacing:.04em;
+      text-shadow:0 0 8px var(--amber-glow);
+      user-select:none;
+    }
+
+    .titlebar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-weight:bold;
+    }
+
+    .menubar{
+      display:flex;
+      gap:0;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:20;
+      padding:0;
+    }
+
+    .menu{ position:relative; }
+
+    .menu-button{
+      appearance:none;
+      border:0;
+      background:transparent;
+      color:var(--amber);
+      padding:8px 14px;
+      font:16px/1.2 "Lucida Console","Courier New",Courier,monospace;
+      letter-spacing:.05em;
+      cursor:pointer;
+      text-shadow:0 0 8px var(--amber-glow);
+    }
+
+    .menu-button:hover,
+    .menu-button:focus,
+    .menu.open>.menu-button{
+      background:var(--menu-hover);
+      outline:none;
+    }
+
+    .menu-button u{
+      text-decoration-thickness:1px;
+      text-underline-offset:2px;
+    }
+
+    .dropdown{
+      position:absolute;
+      top:calc(100% + 2px);
+      left:0;
+      min-width:280px;
+      border:2px solid var(--border);
+      background:var(--menu-bg);
+      box-shadow:0 0 20px rgba(255,179,71,.12);
+      padding:4px 0;
+      display:none;
+      max-height:min(70vh, 520px);
+      overflow:auto;
+    }
+
+    .menu.open .dropdown{ display:block; }
+
+    .menu-item{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:18px;
+      width:100%;
+      padding:8px 12px;
+      background:transparent;
+      border:0;
+      color:var(--amber);
+      text-align:left;
+      cursor:pointer;
+      font:15px/1.2 "Lucida Console","Courier New",Courier,monospace;
+      letter-spacing:.04em;
+    }
+
+    .menu-item:hover,
+    .menu-item:focus{
+      background:var(--select-bg);
+      color:var(--select-fg);
+      outline:none;
+      text-shadow:none;
+    }
+
+    .menu-sep{
+      height:0;
+      border-top:1px solid rgba(255,179,71,.28);
+      margin:4px 10px;
+    }
+
+    .editor-wrap{
+      position:relative;
+      border:2px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,179,71,.03), rgba(0,0,0,.02));
+      box-shadow:inset 0 0 30px rgba(255,179,71,.05), 0 0 24px rgba(255,179,71,.08);
+      min-height:0;
+      overflow:hidden;
+    }
+
+    .editor-shell{
+      width:100%;
+      height:100%;
+      overflow:auto;
+      position:relative;
+      padding:0;
+    }
+
+    .editor-grid{
+      min-width:100%;
+      min-height:100%;
+      position:relative;
+      margin:0 auto;
+    }
+
+    .editor-grid.mode-nowrap{
+      width:calc(var(--char-w) * var(--cols) + var(--pad-x) * 2);
+      min-width:calc(var(--char-w) * var(--cols) + var(--pad-x) * 2);
+      height:calc(var(--line-h) * var(--rows) + var(--pad-y) * 2);
+      min-height:calc(var(--line-h) * var(--rows) + var(--pad-y) * 2);
+      background:
+        linear-gradient(rgba(255,179,71,.02), rgba(255,179,71,.02)) padding-box,
+        repeating-linear-gradient(
+          to right,
+          rgba(255,179,71,.04) 0,
+          rgba(255,179,71,.04) 1px,
+          transparent 1px,
+          transparent var(--char-w)
+        ),
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,179,71,.03) 0,
+          rgba(255,179,71,.03) 1px,
+          transparent 1px,
+          transparent var(--line-h)
+        );
+      box-shadow: inset 0 0 0 1px rgba(255,179,71,.12);
+    }
+
+    .editor{
+      width:100%;
+      min-height:100%;
+      padding:var(--pad-y) var(--pad-x);
+      border:0;
+      outline:none;
+      resize:none;
+      background:transparent;
+      color:var(--amber);
+      font-family:"Lucida Console","Courier New",Courier,monospace;
+      font-size:21px;
+      line-height:1.34;
+      letter-spacing:0;
+      word-spacing:0;
+      font-weight:normal;
+      caret-color:transparent;
+      text-shadow:0 0 6px var(--amber-soft);
+      white-space:pre-wrap;
+      overflow:hidden;
+      tab-size:4;
+      overflow-wrap:break-word;
+      word-break:break-word;
+      font-variant-ligatures:none;
+      display:block;
+    }
+
+    .editor.mode-nowrap{
+      white-space:pre;
+      overflow-wrap:normal;
+      word-break:normal;
+      width:calc(var(--char-w) * var(--cols) + var(--pad-x) * 2);
+      min-width:calc(var(--char-w) * var(--cols) + var(--pad-x) * 2);
+      height:calc(var(--line-h) * var(--rows) + var(--pad-y) * 2);
+      min-height:calc(var(--line-h) * var(--rows) + var(--pad-y) * 2);
+    }
+
+    .editor::selection{
+      background:rgba(255,179,71,.28);
+      color:#1e1406;
+      text-shadow:none;
+    }
+
+    .editor-wrap::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      box-shadow:inset 0 0 90px rgba(255,179,71,.06);
+    }
+
+    .block-caret{
+      position:absolute;
+      width:calc(var(--char-w) * .72);
+      height:var(--line-h);
+      background:rgba(255,179,71,.9);
+      mix-blend-mode:screen;
+      box-shadow:0 0 8px rgba(255,179,71,.35);
+      pointer-events:none;
+      display:none;
+      animation:blink 1s steps(1, end) infinite;
+      z-index:4;
+    }
+
+    .editor-wrap.focused .block-caret{ display:block; }
+
+    @keyframes blink{
+      50%{ opacity:0; }
+    }
+
+    .statusbar{
+      display:grid;
+      grid-template-columns:1fr auto auto auto auto;
+      gap:16px;
+      align-items:center;
+      font-size:14px;
+    }
+
+    .hint{ opacity:.92; }
+    .boot{ color:var(--amber-dim); }
+    .mono{ font-family:"Lucida Console","Courier New",Courier,monospace; }
+    input[type="file"]{ display:none; }
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.4);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:40;
+      padding:20px;
+    }
+
+    .modal-backdrop.show{ display:flex; }
+
+    .modal{
+      width:min(980px, 100%);
+      max-height:85vh;
+      overflow:auto;
+      border:2px solid var(--border);
+      background:var(--modal-bg);
+      box-shadow:0 0 30px rgba(255,179,71,.12);
+      padding:14px;
+      text-shadow:0 0 8px var(--amber-glow);
+    }
+
+    .modal-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+      gap:12px;
+    }
+
+    .modal-title{
+      font-weight:bold;
+      letter-spacing:.05em;
+    }
+
+    .modal-close,.action-btn,.char-btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--amber);
+      font:inherit;
+      cursor:pointer;
+    }
+
+    .modal-close,.action-btn{ padding:6px 10px; }
+
+    .modal-close:hover,.action-btn:hover,.char-btn:hover,
+    .modal-close:focus,.action-btn:focus,.char-btn:focus{
+      background:var(--menu-hover);
+      outline:none;
+    }
+
+    .char-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(54px, 1fr));
+      gap:8px;
+      margin-bottom:14px;
+    }
+
+    .char-btn{
+      min-height:50px;
+      padding:6px;
+      display:grid;
+      place-items:center;
+      font-size:24px;
+      line-height:1;
+      text-shadow:0 0 6px var(--amber-soft);
+    }
+
+    .builder-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+      gap:10px;
+      margin:12px 0;
+    }
+
+    .field label{
+      display:block;
+      margin-bottom:4px;
+      font-size:14px;
+    }
+
+    .field input,.field select,.field textarea{
+      width:100%;
+      padding:8px;
+      border:1px solid var(--border);
+      background:#0b0703;
+      color:var(--amber);
+      font:inherit;
+    }
+
+    .field textarea{
+      min-height:90px;
+      resize:vertical;
+      white-space:pre-wrap;
+    }
+
+    .preview{
+      border:1px solid rgba(255,179,71,.28);
+      padding:10px;
+      min-height:140px;
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+      margin-top:10px;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    .small-note{
+      font-size:13px;
+      opacity:.9;
+      margin:8px 0 0;
+    }
+
+    @media (max-width: 720px){
+      .shell{ padding:8px; gap:8px; }
+      .editor{ font-size:18px; }
+      .statusbar{ grid-template-columns:1fr; }
+      .dropdown{ min-width:210px; }
+    }
+  </style>
+</head>
+<body class="crt">
+  <div class="shell">
+    <div class="titlebar">
+      <div>AMBERDOS TEXT EDITOR v1.4</div>
+      <div class="boot" id="pathDisplay">C:\TEXT\UNTITLED.TXT</div>
+    </div>
+
+    <div class="menubar" id="menubar">
+      <div class="menu">
+        <button class="menu-button" type="button"><u>F</u>ile</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="new"><span>New</span><span>Ctrl+N</span></button>
+          <button class="menu-item" type="button" data-action="open"><span>Open...</span><span>Ctrl+O</span></button>
+          <button class="menu-item" type="button" data-action="save"><span>Save</span><span>Ctrl+S</span></button>
+          <button class="menu-item" type="button" data-action="saveas"><span>Save As...</span><span>Ctrl+Shift+S</span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-action="insertdate"><span>Insert Date/Time</span><span>F5</span></button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>E</u>dit</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="undo"><span>Undo</span><span>Ctrl+Z</span></button>
+          <button class="menu-item" type="button" data-action="redo"><span>Redo</span><span>Ctrl+Y</span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-action="cut"><span>Cut</span><span>Ctrl+X</span></button>
+          <button class="menu-item" type="button" data-action="copy"><span>Copy</span><span>Ctrl+C</span></button>
+          <button class="menu-item" type="button" data-action="paste"><span>Paste</span><span>Ctrl+V</span></button>
+          <button class="menu-item" type="button" data-action="selectall"><span>Select All</span><span>Ctrl+A</span></button>
+          <button class="menu-item" type="button" data-action="clear"><span>Clear</span><span>Del</span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-action="comment-dashes"><span>Comment Selection</span><span>Ctrl+/</span></button>
+          <button class="menu-item" type="button" data-action="uncomment-dashes"><span>Uncomment Selection</span><span>Ctrl+Shift+/</span></button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>S</u>earch</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="find"><span>Find...</span><span>Ctrl+F</span></button>
+          <button class="menu-item" type="button" data-action="findnext"><span>Find Next</span><span>F3</span></button>
+          <button class="menu-item" type="button" data-action="goto"><span>Go To Line...</span><span>Ctrl+G</span></button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>V</u>iew</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="toggle-wrap"><span>Toggle Wrap / 80-Column</span><span>Alt+Z</span></button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>A</u>SCII</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="charmap"><span>Character Map...</span><span>Alt+A</span></button>
+          <button class="menu-item" type="button" data-action="windowbuilder"><span>Window Builder...</span><span>Alt+W</span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-action="insert-single-box"><span>Insert Single Box</span><span></span></button>
+          <button class="menu-item" type="button" data-action="insert-double-box"><span>Insert Double Box</span><span></span></button>
+          <button class="menu-item" type="button" data-action="insert-single-rule"><span>Insert Single Rule</span><span></span></button>
+          <button class="menu-item" type="button" data-action="insert-double-rule"><span>Insert Double Rule</span><span></span></button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>H</u>elp</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="about"><span>About</span><span></span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-wrap" id="editorWrap">
+      <div class="editor-shell" id="editorShell">
+        <div class="editor-grid" id="editorGrid">
+          <textarea id="editor" class="editor" spellcheck="false" wrap="soft" aria-label="Amber DOS style text editor">AMBERDOS TEXT EDITOR
+====================
+
+New in this version:
+- fixed Return behavior with no auto-indent
+- true 80x25 viewport feel in 80-column mode
+- wrap mode still available
+
+Try Alt+Z to switch modes.
+</textarea>
+          <div id="caret" class="block-caret" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="statusbar">
+      <div id="message" class="hint">READY</div>
+      <div id="position">Ln 1, Col 1</div>
+      <div id="stats">0 chars</div>
+      <div id="modeStatus">WRAP</div>
+      <div>C:\ <span class="mono">_</span></div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept=".txt,.md,.csv,.log,.json,.html,.js,.css" />
+
+  <div class="modal-backdrop" id="asciiModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="asciiModalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="asciiModalTitle">ASCII CHARACTER MAP</div>
+        <button class="modal-close" type="button" id="closeAsciiModal">Close</button>
+      </div>
+      <div class="char-grid" id="charGrid"></div>
+      <div class="small-note">Click a character to insert it at the cursor. Uses common DOS-style extended box-drawing characters.</div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="builderModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="builderModalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="builderModalTitle">ASCII WINDOW BUILDER</div>
+        <button class="modal-close" type="button" id="closeBuilderModal">Close</button>
+      </div>
+
+      <div class="builder-grid">
+        <div class="field">
+          <label for="boxWidth">Width</label>
+          <input id="boxWidth" type="number" min="8" max="120" value="36" />
+        </div>
+        <div class="field">
+          <label for="boxHeight">Height</label>
+          <input id="boxHeight" type="number" min="3" max="40" value="8" />
+        </div>
+        <div class="field">
+          <label for="boxStyle">Border Style</label>
+          <select id="boxStyle">
+            <option value="single">Single Line</option>
+            <option value="double">Double Line</option>
+            <option value="mixed1">Double Outer / Single Vertical</option>
+            <option value="mixed2">Single Outer / Double Vertical</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="boxTitle">Title</label>
+          <input id="boxTitle" type="text" maxlength="60" value="WINDOW" />
+        </div>
+        <div class="field">
+          <label for="headerStyle">Header Style</label>
+          <select id="headerStyle">
+            <option value="none">None</option>
+            <option value="rule">Header Rule</option>
+            <option value="banner">Centered Banner</option>
+            <option value="tab">Left Tab</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="bodyText">Body Text</label>
+          <textarea id="bodyText">Status: ONLINE
+Drive : A:\
+Mode  : WRAP</textarea>
+        </div>
+      </div>
+
+      <div class="preview" id="boxPreview"></div>
+
+      <div class="actions">
+        <button class="action-btn" type="button" id="insertBoxBtn">Insert Window</button>
+        <button class="action-btn" type="button" id="copyBoxBtn">Copy Preview</button>
+      </div>
+      <div class="small-note">The builder adds headings, rules, and body text inside the box using extended ASCII characters.</div>
+    </div>
+  </div>
+
+  <script>
+    const editor = document.getElementById('editor');
+    const editorShell = document.getElementById('editorShell');
+    const editorGrid = document.getElementById('editorGrid');
+    const editorWrap = document.getElementById('editorWrap');
+    const caret = document.getElementById('caret');
+    const fileInput = document.getElementById('fileInput');
+    const message = document.getElementById('message');
+    const position = document.getElementById('position');
+    const stats = document.getElementById('stats');
+    const pathDisplay = document.getElementById('pathDisplay');
+    const modeStatus = document.getElementById('modeStatus');
+    const menus = Array.from(document.querySelectorAll('.menu'));
+    const menubar = document.getElementById('menubar');
+
+    const asciiModalBackdrop = document.getElementById('asciiModalBackdrop');
+    const builderModalBackdrop = document.getElementById('builderModalBackdrop');
+    const closeAsciiModal = document.getElementById('closeAsciiModal');
+    const closeBuilderModal = document.getElementById('closeBuilderModal');
+    const charGrid = document.getElementById('charGrid');
+    const boxWidth = document.getElementById('boxWidth');
+    const boxHeight = document.getElementById('boxHeight');
+    const boxStyle = document.getElementById('boxStyle');
+    const boxTitle = document.getElementById('boxTitle');
+    const headerStyle = document.getElementById('headerStyle');
+    const bodyText = document.getElementById('bodyText');
+    const boxPreview = document.getElementById('boxPreview');
+    const insertBoxBtn = document.getElementById('insertBoxBtn');
+    const copyBoxBtn = document.getElementById('copyBoxBtn');
+
+    let currentFileName = 'untitled.txt';
+    let dirty = false;
+    let lastSearch = '';
+    let wrapMode = true;
+
+    const BOX_SETS = {
+      single: { tl:'┌', tr:'┐', bl:'└', br:'┘', h:'─', v:'│', t:'┬', b:'┴', l:'├', r:'┤', c:'┼' },
+      double: { tl:'╔', tr:'╗', bl:'╚', br:'╝', h:'═', v:'║', t:'╦', b:'╩', l:'╠', r:'╣', c:'╬' },
+      mixed1: { tl:'╒', tr:'╕', bl:'╘', br:'╛', h:'═', v:'│', t:'╤', b:'╧', l:'╞', r:'╡', c:'╪' },
+      mixed2: { tl:'┌', tr:'┐', bl:'└', br:'┘', h:'─', v:'║', t:'╥', b:'╨', l:'╟', r:'╢', c:'╫' }
+    };
+
+    const CHAR_MAP = [
+      '─','│','┌','┐','└','┘','├','┤','┬','┴','┼',
+      '═','║','╔','╗','╚','╝','╠','╣','╦','╩','╬',
+      '╒','╕','╘','╛','╓','╖','╙','╜','╞','╡','╟','╢','╤','╧','╥','╨','╪','╫',
+      '█','▓','▒','░','■','·'
+    ];
+
+    const measure = document.createElement('div');
+    measure.style.position = 'absolute';
+    measure.style.visibility = 'hidden';
+    measure.style.whiteSpace = 'pre';
+    measure.style.pointerEvents = 'none';
+    document.body.appendChild(measure);
+
+    function syncMeasureStyle(){
+      const s = getComputedStyle(editor);
+      measure.style.fontFamily = s.fontFamily;
+      measure.style.fontSize = s.fontSize;
+      measure.style.lineHeight = s.lineHeight;
+      measure.style.letterSpacing = s.letterSpacing;
+    }
+
+    function sync80ColumnMetrics(){
+      const probe = document.createElement('span');
+      probe.style.position = 'absolute';
+      probe.style.visibility = 'hidden';
+      probe.style.whiteSpace = 'pre';
+      probe.style.fontFamily = getComputedStyle(editor).fontFamily;
+      probe.style.fontSize = getComputedStyle(editor).fontSize;
+      probe.style.lineHeight = getComputedStyle(editor).lineHeight;
+      probe.style.letterSpacing = getComputedStyle(editor).letterSpacing;
+      probe.textContent = '0'.repeat(80);
+      document.body.appendChild(probe);
+      const width80 = probe.getBoundingClientRect().width;
+      probe.textContent = '0';
+      const width1 = probe.getBoundingClientRect().width;
+      document.body.removeChild(probe);
+
+      if (width1 > 0) {
+        document.documentElement.style.setProperty('--char-w', `${width80 / 80}px`);
+      }
+      document.documentElement.style.setProperty('--line-h', getComputedStyle(editor).lineHeight);
+    }
+
+    function setMessage(text){ message.textContent = text; }
+    function fullPath(name){ return `C:\\TEXT\\${name.toUpperCase()}`; }
+
+    function updateModeStatus(){
+      modeStatus.textContent = wrapMode ? 'WRAP' : '80-COL';
+    }
+
+    function updateStats(){
+      const value = editor.value;
+      const caretPos = editor.selectionStart;
+      const before = value.slice(0, caretPos);
+      const lines = before.split('\n');
+      const line = lines.length;
+      const col = lines[lines.length - 1].length + 1;
+      position.textContent = `Ln ${line}, Col ${col}`;
+      stats.textContent = `${value.length} chars`;
+      pathDisplay.textContent = fullPath(currentFileName);
+      document.title = `${dirty ? '*' : ''}${currentFileName} - AmberDOS Editor`;
+      updateModeStatus();
+      updateCaret();
+    }
+
+    function insertAtSelection(text, selectMode='end'){
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      editor.setRangeText(text, start, end, selectMode);
+      dirty = true;
+      updateStats();
+      editor.focus();
+    }
+
+    function handleHardReturn(){
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      editor.setRangeText('\n', start, end, 'end');
+      dirty = true;
+      updateStats();
+      editor.focus();
+    }
+
+    function getSelectedLineRange(){
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      const value = editor.value;
+      const lineStart = value.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+      let lineEnd = value.indexOf('\n', end);
+      if (lineEnd === -1) lineEnd = value.length;
+      return { lineStart, lineEnd };
+    }
+
+    function commentSelectionWithDashes(){
+      const { lineStart, lineEnd } = getSelectedLineRange();
+      const block = editor.value.slice(lineStart, lineEnd);
+      const commented = block.split('\n').map(line => `--${line}`).join('\n');
+      editor.setRangeText(commented, lineStart, lineEnd, 'select');
+      dirty = true;
+      updateStats();
+      setMessage('COMMENTED');
+      editor.focus();
+    }
+
+    function uncommentSelectionWithDashes(){
+      const { lineStart, lineEnd } = getSelectedLineRange();
+      const block = editor.value.slice(lineStart, lineEnd);
+      const uncommented = block.split('\n').map(line => line.replace(/^--/, '')).join('\n');
+      editor.setRangeText(uncommented, lineStart, lineEnd, 'select');
+      dirty = true;
+      updateStats();
+      setMessage('UNCOMMENTED');
+      editor.focus();
+    }
+
+    function toggleWrapMode(){
+      wrapMode = !wrapMode;
+      editor.classList.toggle('mode-nowrap', !wrapMode);
+      editorGrid.classList.toggle('mode-nowrap', !wrapMode);
+      editor.setAttribute('wrap', wrapMode ? 'soft' : 'off');
+      sync80ColumnMetrics();
+      setMessage(wrapMode ? 'WRAP MODE' : '80-COLUMN MODE');
+      updateStats();
+      editor.focus();
+    }
+
+    function downloadFile(forcePrompt=false){
+      let fileName = currentFileName;
+      if (forcePrompt || currentFileName === 'untitled.txt') {
+        const proposed = prompt('Save file as:', currentFileName);
+        if (!proposed) {
+          setMessage('SAVE CANCELLED');
+          return;
+        }
+        fileName = proposed.trim() || 'untitled.txt';
+        currentFileName = fileName;
+      }
+      const blob = new Blob([editor.value], { type:'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      dirty = false;
+      updateStats();
+      setMessage(`SAVED ${currentFileName.toUpperCase()}`);
+    }
+
+    function newDocument(){
+      if (dirty) {
+        const proceed = confirm('Discard current unsaved changes?');
+        if (!proceed) return;
+      }
+      editor.value = '';
+      currentFileName = 'untitled.txt';
+      dirty = false;
+      editor.focus();
+      updateStats();
+      setMessage('NEW DOCUMENT');
+    }
+
+    function openDocument(){
+      fileInput.value = '';
+      fileInput.click();
+    }
+
+    function insertDateTime(){
+      insertAtSelection(new Date().toLocaleString());
+      setMessage('DATE/TIME INSERTED');
+    }
+
+    function clearSelectionOrAll(){
+      if (editor.selectionStart !== editor.selectionEnd) {
+        editor.setRangeText('', editor.selectionStart, editor.selectionEnd, 'start');
+      } else {
+        editor.value = '';
+      }
+      dirty = true;
+      updateStats();
+      setMessage('CLEARED');
+      editor.focus();
+    }
+
+    function doFind(next=false){
+      let term = lastSearch;
+      if (!next || !term) {
+        const input = prompt('Find:', lastSearch || '');
+        if (input === null) {
+          setMessage('FIND CANCELLED');
+          return;
+        }
+        term = input;
+        lastSearch = term;
+      }
+      if (!term) {
+        setMessage('NO SEARCH TEXT');
+        return;
+      }
+      const haystack = editor.value;
+      const startFrom = next ? editor.selectionEnd : editor.selectionStart;
+      let idx = haystack.indexOf(term, startFrom);
+      if (idx === -1 && startFrom > 0) idx = haystack.indexOf(term, 0);
+      if (idx === -1) {
+        setMessage('TEXT NOT FOUND');
+        return;
+      }
+      editor.focus();
+      editor.setSelectionRange(idx, idx + term.length);
+      updateStats();
+      setMessage(`FOUND "${term.toUpperCase()}"`);
+    }
+
+    function gotoLine(){
+      const input = prompt('Go to line:');
+      if (input === null) {
+        setMessage('GO TO CANCELLED');
+        return;
+      }
+      const target = Math.max(1, parseInt(input, 10) || 1);
+      const lines = editor.value.split('\n');
+      let pos = 0;
+      for (let i = 0; i < Math.min(target - 1, lines.length - 1); i++) pos += lines[i].length + 1;
+      editor.focus();
+      editor.setSelectionRange(pos, pos);
+      updateStats();
+      setMessage(`LINE ${target}`);
+    }
+
+    function showAbout(){
+      alert('AMBERDOS TEXT EDITOR v1.4\n\nAdds a true 80x25 viewport feel in 80-column mode and forces Enter to insert a plain newline with no auto-indent.');
+      setMessage('ABOUT');
+      editor.focus();
+    }
+
+    function doClipboard(action){
+      editor.focus();
+      try {
+        if (action === 'cut') document.execCommand('cut');
+        if (action === 'copy') document.execCommand('copy');
+        if (action === 'paste') document.execCommand('paste');
+        setMessage(action.toUpperCase());
+      } catch {
+        setMessage(`${action.toUpperCase()} NOT AVAILABLE`);
+      }
+    }
+
+    function closeMenus(){ menus.forEach(m => m.classList.remove('open')); }
+    function toggleMenu(menu){
+      const open = menu.classList.contains('open');
+      closeMenus();
+      if (!open) menu.classList.add('open');
+    }
+
+    function openAsciiModal(){
+      asciiModalBackdrop.classList.add('show');
+      closeMenus();
+      setMessage('CHARACTER MAP');
+    }
+
+    function closeAsciiDialog(){
+      asciiModalBackdrop.classList.remove('show');
+      editor.focus();
+    }
+
+    function openBuilderModal(){
+      builderModalBackdrop.classList.add('show');
+      renderBoxPreview();
+      closeMenus();
+      setMessage('WINDOW BUILDER');
+    }
+
+    function closeBuilderDialog(){
+      builderModalBackdrop.classList.remove('show');
+      editor.focus();
+    }
+
+    function clipText(text, max){
+      return String(text || '').replace(/[\r]/g, '').slice(0, max);
+    }
+
+    function wrapTextToWidth(text, width){
+      const rawLines = String(text || '').split('\n');
+      const out = [];
+      for (const raw of rawLines) {
+        if (raw === '') {
+          out.push('');
+          continue;
+        }
+        let line = raw;
+        while (line.length > width) {
+          out.push(line.slice(0, width));
+          line = line.slice(width);
+        }
+        out.push(line);
+      }
+      return out;
+    }
+
+    function buildAsciiWindow(width, height, style, title='', header='none', body=''){
+      const w = Math.max(8, Math.min(120, Number(width) || 8));
+      const h = Math.max(3, Math.min(40, Number(height) || 3));
+      const box = BOX_SETS[style] || BOX_SETS.single;
+      const innerW = w - 2;
+      const titleText = clipText(title.trim(), Math.max(0, innerW - 2));
+
+      let top;
+      if (titleText) {
+        const decorated = ` ${titleText} `;
+        const remaining = Math.max(0, innerW - decorated.length);
+        const leftFill = Math.floor(remaining / 2);
+        const rightFill = remaining - leftFill;
+        top = box.tl + box.h.repeat(leftFill) + decorated + box.h.repeat(rightFill) + box.tr;
+      } else {
+        top = box.tl + box.h.repeat(innerW) + box.tr;
+      }
+
+      const contentLines = [];
+      const bodyLines = wrapTextToWidth(body, innerW).map(line => line.padEnd(innerW, ' '));
+
+      if (header === 'rule' && titleText) {
+        contentLines.push(titleText.padEnd(innerW, ' '));
+        contentLines.push(box.h.repeat(innerW));
+      } else if (header === 'banner' && titleText) {
+        const banner = `[ ${clipText(titleText, Math.max(0, innerW - 4))} ]`;
+        const padLeft = Math.max(0, Math.floor((innerW - banner.length) / 2));
+        const bannerLine = ' '.repeat(padLeft) + banner;
+        contentLines.push(bannerLine.slice(0, innerW).padEnd(innerW, ' '));
+      } else if (header === 'tab' && titleText) {
+        const tab = `${box.v} ${clipText(titleText, Math.max(0, innerW - 2))}`;
+        contentLines.push(tab.slice(0, innerW).padEnd(innerW, ' '));
+      }
+
+      contentLines.push(...bodyLines);
+
+      const usableInnerRows = h - 2;
+      const shown = contentLines.slice(0, usableInnerRows);
+      while (shown.length < usableInnerRows) shown.push(' '.repeat(innerW));
+
+      const middle = shown.map(line => box.v + line.slice(0, innerW).padEnd(innerW, ' ') + box.v);
+      const bottom = box.bl + box.h.repeat(innerW) + box.br;
+      return [top, ...middle, bottom].join('\n');
+    }
+
+    function renderBoxPreview(){
+      boxPreview.textContent = buildAsciiWindow(
+        boxWidth.value,
+        boxHeight.value,
+        boxStyle.value,
+        boxTitle.value,
+        headerStyle.value,
+        bodyText.value
+      );
+    }
+
+    function populateCharMap(){
+      charGrid.innerHTML = '';
+      CHAR_MAP.forEach(ch => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'char-btn';
+        btn.textContent = ch;
+        btn.title = `Insert ${ch}`;
+        btn.addEventListener('click', () => {
+          insertAtSelection(ch);
+          setMessage(`INSERTED ${ch}`);
+          closeAsciiDialog();
+        });
+        charGrid.appendChild(btn);
+      });
+    }
+
+    function handleAction(action){
+      closeMenus();
+      switch (action) {
+        case 'new': return newDocument();
+        case 'open': return openDocument();
+        case 'save': return downloadFile(false);
+        case 'saveas': return downloadFile(true);
+        case 'insertdate': return insertDateTime();
+        case 'undo': editor.focus(); document.execCommand('undo'); setMessage('UNDO'); return;
+        case 'redo': editor.focus(); document.execCommand('redo'); setMessage('REDO'); return;
+        case 'cut': return doClipboard('cut');
+        case 'copy': return doClipboard('copy');
+        case 'paste': return doClipboard('paste');
+        case 'selectall': editor.focus(); editor.select(); updateStats(); setMessage('SELECT ALL'); return;
+        case 'clear': return clearSelectionOrAll();
+        case 'comment-dashes': return commentSelectionWithDashes();
+        case 'uncomment-dashes': return uncommentSelectionWithDashes();
+        case 'find': return doFind(false);
+        case 'findnext': return doFind(true);
+        case 'goto': return gotoLine();
+        case 'toggle-wrap': return toggleWrapMode();
+        case 'about': return showAbout();
+        case 'charmap': return openAsciiModal();
+        case 'windowbuilder': return openBuilderModal();
+        case 'insert-single-box': return insertAtSelection(buildAsciiWindow(36, 8, 'single', 'WINDOW', 'none', ''));
+        case 'insert-double-box': return insertAtSelection(buildAsciiWindow(36, 8, 'double', 'WINDOW', 'none', ''));
+        case 'insert-single-rule': return insertAtSelection('─'.repeat(40));
+        case 'insert-double-rule': return insertAtSelection('═'.repeat(40));
+      }
+    }
+
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        editor.value = String(reader.result || '');
+        currentFileName = file.name || 'untitled.txt';
+        dirty = false;
+        updateStats();
+        setMessage(`OPENED ${currentFileName.toUpperCase()}`);
+        editor.focus();
+      };
+      reader.onerror = () => setMessage('READ ERROR');
+      reader.readAsText(file);
+    });
+
+    menus.forEach(menu => {
+      const btn = menu.querySelector('.menu-button');
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMenu(menu);
+      });
+    });
+
+    menubar.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-action]');
+      if (!item) return;
+      handleAction(item.dataset.action);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.menu') && !e.target.closest('.modal')) closeMenus();
+    });
+
+    editor.addEventListener('input', () => {
+      dirty = true;
+      updateStats();
+      setMessage('EDITING');
+    });
+
+    ['click','keyup','select'].forEach(evt => editor.addEventListener(evt, updateStats));
+    editorShell.addEventListener('scroll', updateStats);
+    editor.addEventListener('focus', () => { editorWrap.classList.add('focused'); updateCaret(); });
+    editor.addEventListener('blur', () => { editorWrap.classList.remove('focused'); });
+
+    editor.addEventListener('keydown', (event) => {
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        insertAtSelection('    ');
+        return;
+      }
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        handleHardReturn();
+        return;
+      }
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 's') {
+        event.preventDefault(); downloadFile(false); return;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 's') {
+        event.preventDefault(); downloadFile(true); return;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'o') {
+        event.preventDefault(); openDocument(); return;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'n') {
+        event.preventDefault(); newDocument(); return;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
+        event.preventDefault(); doFind(false); return;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'g') {
+        event.preventDefault(); gotoLine(); return;
+      }
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key === '/') {
+        event.preventDefault(); commentSelectionWithDashes(); return;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === '?') {
+        event.preventDefault(); uncommentSelectionWithDashes(); return;
+      }
+      if (event.altKey && event.key.toLowerCase() === 'a') {
+        event.preventDefault(); openAsciiModal(); return;
+      }
+      if (event.altKey && event.key.toLowerCase() === 'w') {
+        event.preventDefault(); openBuilderModal(); return;
+      }
+      if (event.altKey && event.key.toLowerCase() === 'z') {
+        event.preventDefault(); toggleWrapMode(); return;
+      }
+      if (event.key === 'F3') {
+        event.preventDefault(); doFind(true); return;
+      }
+      if (event.key === 'F5') {
+        event.preventDefault(); insertDateTime(); return;
+      }
+    });
+
+    function updateCaret(){
+      if (document.activeElement !== editor) return;
+      syncMeasureStyle();
+      const caretPos = editor.selectionStart;
+      const textBefore = editor.value.slice(0, caretPos);
+      const lines = textBefore.split('\n');
+      const currentLine = lines[lines.length - 1];
+      const lineHeight = parseFloat(getComputedStyle(editor).lineHeight);
+      measure.textContent = currentLine || ' ';
+      const width = measure.getBoundingClientRect().width;
+      const padLeft = parseFloat(getComputedStyle(editor).paddingLeft);
+      const padTop = parseFloat(getComputedStyle(editor).paddingTop);
+      const x = padLeft + width - editorShell.scrollLeft;
+      const y = padTop + (lines.length - 1) * lineHeight - editorShell.scrollTop;
+      caret.style.left = `${x}px`;
+      caret.style.top = `${y}px`;
+      caret.style.height = `${lineHeight}px`;
+    }
+
+    closeAsciiModal.addEventListener('click', closeAsciiDialog);
+    closeBuilderModal.addEventListener('click', closeBuilderDialog);
+    asciiModalBackdrop.addEventListener('click', (e) => { if (e.target === asciiModalBackdrop) closeAsciiDialog(); });
+    builderModalBackdrop.addEventListener('click', (e) => { if (e.target === builderModalBackdrop) closeBuilderDialog(); });
+
+    [boxWidth, boxHeight, boxStyle, boxTitle, headerStyle, bodyText].forEach(el => el.addEventListener('input', renderBoxPreview));
+
+    insertBoxBtn.addEventListener('click', () => {
+      insertAtSelection(boxPreview.textContent);
+      setMessage('WINDOW INSERTED');
+      closeBuilderDialog();
+    });
+
+    copyBoxBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(boxPreview.textContent);
+        setMessage('PREVIEW COPIED');
+      } catch {
+        setMessage('COPY FAILED');
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      sync80ColumnMetrics();
+      updateCaret();
+    });
+
+    window.addEventListener('beforeunload', (event) => {
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    });
+
+    populateCharMap();
+    renderBoxPreview();
+    sync80ColumnMetrics();
+    updateStats();
+    editor.focus();
+  </script>
+</body>
+</html>

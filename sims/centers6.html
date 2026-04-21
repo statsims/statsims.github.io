@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Descriptive Statistics Lab</title>
+<style>
+  :root {
+    --bg:#f6f7f9;
+    --card:#ffffff;
+    --border:#d9dde3;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --soft:#f3f4f6;
+    --blue:#2563eb;
+    --red:#dc2626;
+    --green:#16a34a;
+    --amber:#d97706;
+    --gray:#9ca3af;
+  }
+  *{box-sizing:border-box}
+  body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+  .container{max-width:1380px;margin:auto}
+
+  /* ── CARDS ── */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+  .card>h3{margin:0 0 10px;font-size:1rem}
+
+  /* ── LAYOUT ── */
+  .app-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+  .left-col,.right-col{display:grid;gap:16px}
+  @media(max-width:980px){.app-grid{grid-template-columns:1fr}}
+
+  /* ── HEADER ── */
+  .intro-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+  .intro-title-block{flex:1 1 400px;min-width:260px}
+  .intro-title-block h2{margin:0 0 6px;font-size:1.25rem}
+  .intro-subtitle{font-size:.93rem;color:var(--muted);margin:0;line-height:1.5}
+  .guide-toggle-btn{white-space:nowrap;align-self:flex-start;margin-top:4px;padding:7px 12px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;font-family:Arial,sans-serif;font-size:.84rem;color:var(--text)}
+  .guide-toggle-btn:hover{background:#f8fafc}
+
+  /* ── QUICK-START GUIDE ── */
+  .guide-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px;display:none}
+  .guide-section.open{display:block}
+  .guide-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+  @media(max-width:700px){.guide-cols{grid-template-columns:1fr}}
+  .guide-col h4{margin:0 0 8px;font-size:.92rem;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px}
+  .guide-col ol,.guide-col ul{margin:0;padding-left:18px}
+  .guide-col li{font-size:.84rem;color:var(--muted);line-height:1.5;margin-bottom:4px}
+  .guide-col li strong{color:var(--text)}
+
+  /* ── DATASET SELECTOR (right panel) ── */
+  .preset-stack{display:grid;gap:6px;margin-top:8px}
+  .preset-item{margin:0}
+  .preset-btn{width:100%;text-align:left;padding:7px 10px;border:1px solid #bfc6d1;border-radius:8px;background:white;cursor:pointer;font-family:Arial,sans-serif;font-size:.84rem;color:var(--text);display:block}
+  .preset-btn:hover{background:#f8fafc}
+  .preset-btn.active-btn{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;font-weight:700}
+  .preset-desc{font-size:.76rem;color:var(--muted);margin:2px 0 0 2px;line-height:1.3}
+
+  /* ── FULL REFERENCE (right panel, collapsible) ── */
+  .ref-section{margin-top:12px;border-top:1px solid var(--border);padding-top:12px;display:none}
+  .ref-section.open{display:block}
+  .ref-group{margin-bottom:12px}
+  .ref-group:last-child{margin-bottom:0}
+  .ref-group-title{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:0 0 6px}
+  .ref-row{display:flex;gap:6px;margin-bottom:4px;align-items:baseline}
+  .ref-term{font-size:.8rem;color:var(--text);font-weight:700;min-width:90px;flex-shrink:0}
+  .ref-def{font-size:.78rem;color:var(--muted);line-height:1.4}
+  .ref-formula{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.74rem;color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe;border-radius:4px;padding:2px 6px;display:inline-block;margin-top:2px}
+
+  /* ── VIZ ── */
+  .viz-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .viz-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--soft)}
+  .viz-legend{display:flex;gap:14px;align-items:center}
+  .leg{display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--muted)}
+  .leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .viz-meta{font-size:.78rem;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  #main-svg{display:block;width:100%;background:#fff}
+  .viz-hint{text-align:center;padding:5px;font-size:.74rem;color:var(--gray);border-top:1px solid var(--border);background:var(--soft)}
+
+  /* ── STATS PANEL ── */
+  .stats-panel{display:flex;flex-direction:column;gap:7px}
+  .stats-group-label{font-size:.72rem;text-transform:uppercase;letter-spacing:1.4px;color:var(--gray);padding:2px 0}
+  .metric{border:1px solid var(--border);background:var(--soft);border-radius:10px;padding:10px;border-left:3px solid transparent}
+  .metric.m-blue{border-left-color:var(--blue)}
+  .metric.m-green{border-left-color:var(--green)}
+  .metric.m-amber{border-left-color:var(--amber)}
+  .metric.m-gray{border-left-color:var(--gray)}
+  .metric-label{font-size:.76rem;color:var(--muted)}
+  .metric-value{font-weight:700;font-size:1.1rem;line-height:1.3;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .metric.m-blue .metric-value{color:var(--blue)}
+  .metric.m-green .metric-value{color:var(--green)}
+  .metric.m-amber .metric-value{color:var(--amber)}
+  .metric.m-gray .metric-value{color:#374151}
+  .metric-sub{font-size:.72rem;color:var(--gray);margin-top:1px}
+
+  /* ── NOTES ── */
+  .context-note{margin:0;padding:11px 13px;border:1px solid var(--border);border-left:4px solid var(--amber);background:#fffbeb;border-radius:10px;font-size:.88rem;line-height:1.45;color:var(--muted)}
+  .context-note strong{color:#92400e}
+  .info-note{padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid var(--blue);border-radius:8px;font-size:.84rem;color:#1e40af;line-height:1.45;margin-bottom:12px}
+  .info-note strong{color:#1e3a8a}
+
+  /* ── CONCEPT TABS ── */
+  .tab-bar{display:flex;border-bottom:2px solid var(--border);overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+  .tab-bar::-webkit-scrollbar{display:none}
+  .ctab{background:none;border:none;border-bottom:2px solid transparent;border-radius:0;color:var(--muted);padding:9px 13px;font-family:Arial,sans-serif;font-size:.82rem;cursor:pointer;white-space:nowrap;margin-bottom:-2px;font-weight:600;flex-shrink:0}
+  .ctab:hover{color:var(--text);background:var(--soft)}
+  .ctab.active{color:var(--blue);border-bottom-color:var(--blue);background:none}
+
+  /* ── CONCEPT PANEL ── */
+  .concept-panel{padding:16px;animation:fadeUp .2s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  .concept-intro{margin-bottom:14px;max-width:680px}
+  .concept-intro h3{margin:0 0 5px;font-size:1.05rem}
+  .concept-intro p{font-size:.88rem;color:var(--muted);margin:0}
+
+  /* ── CONCEPT CARDS ── */
+  .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .cgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+  @media(max-width:700px){.cgrid,.cgrid3{grid-template-columns:1fr}}
+  .ccard{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--soft)}
+  .ccard h4{margin:0 0 6px;font-size:.92rem;color:var(--text)}
+  .ccard p{font-size:.83rem;color:var(--muted);line-height:1.55;margin:0}
+  .ccard p+p{margin-top:6px}
+
+  /* ── SUB VIZ ── */
+  .sub-viz{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .sub-viz-title{padding:7px 12px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);border-bottom:1px solid var(--border);background:var(--soft)}
+  .sub-viz svg{display:block;width:100%;height:auto;overflow:visible}
+
+  /* ── FORMULA ── */
+  .formula{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.8rem;color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:7px 10px;margin:7px 0;display:inline-block;line-height:1.55}
+
+  /* ── PERCENTILE CONTROL ── */
+  .pctl-bar{display:flex;align-items:center;gap:12px;padding:8px 12px;border-top:1px solid var(--border);background:var(--soft)}
+  .pctl-bar label{font-size:.8rem;color:var(--muted);white-space:nowrap}
+  .pctl-bar input[type=range]{flex:1;accent-color:var(--green);min-width:0}
+  .pctl-val{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88rem;color:var(--green);min-width:90px;text-align:right;font-weight:700}
+
+  /* ── OUTLIER CONTROLS ── */
+  .oc-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .oc-btn-red{background:#fef2f2;border:1px solid #fca5a5;color:#991b1b;padding:7px 12px;border-radius:10px;font-family:Arial,sans-serif;font-size:.84rem;cursor:pointer}
+  .oc-btn-red:hover{background:#fee2e2}
+  button{padding:7px 12px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;font-family:Arial,sans-serif;font-size:.84rem;color:var(--text)}
+  button:hover{background:#f8fafc}
+
+  /* ── BADGES ── */
+  .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:.76rem;font-weight:700;margin-right:3px}
+  .bblue{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe}
+  .bgreen{background:#dcfce7;color:#166534;border:1px solid #86efac}
+  .bamber{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+  .bgray{background:var(--soft);color:var(--muted);border:1px solid var(--border)}
+
+  /* ── SKEW PILLS ── */
+  .skew-pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:.78rem;font-weight:700}
+  .skew-right{background:#fff7ed;color:#9a3412;border:1px solid #fdba74}
+  .skew-left{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe}
+  .skew-sym{background:#ecfdf5;color:#166534;border:1px solid #86efac}
+
+  /* ── USE TABLE ── */
+  .use-table{width:100%;border-collapse:collapse;font-size:.84rem}
+  .use-table th{background:var(--soft);padding:9px 12px;text-align:left;font-size:.74rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);border-bottom:2px solid var(--border);font-weight:700}
+  .use-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top;line-height:1.5}
+  .use-table tr:last-child td{border-bottom:none}
+  .use-table tr:hover td{background:#fafafa}
+
+  /* ── EQUAL SHARES ── */
+  .es-toggle-btn{display:block;margin:0 auto 6px;background:var(--soft);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:10px;font-family:Arial,sans-serif;font-size:.82rem;cursor:pointer}
+  .es-toggle-btn:hover{background:#e5e7eb}
+
+  /* ── COMPARISON BARS ── */
+  .comp-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .comp-label{font-size:.78rem;color:var(--muted);width:95px;text-align:right;flex-shrink:0}
+  .comp-bar-wrap{flex:1;background:var(--soft);border-radius:4px;height:20px;border:1px solid var(--border);min-width:0}
+  .comp-bar{height:100%;border-radius:3px}
+  .comp-val{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.78rem;width:44px;text-align:left;flex-shrink:0;font-weight:700}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ── HEADER ── -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="intro-header">
+      <div class="intro-title-block">
+        <h2>Descriptive Statistics Lab</h2>
+        <p class="intro-subtitle">
+          An interactive exploration of center, spread, and distribution shape.
+          Click the chart to add your own values, or choose a preset dataset on the right.
+          Use the concept tabs to connect the live numbers to the underlying ideas.
+        </p>
+      </div>
+      <button class="guide-toggle-btn" id="toggleGuide">&#9660; Quick-Start Guide</button>
+    </div>
+
+    <div class="guide-section" id="guideSection">
+      <div class="guide-cols">
+        <div class="guide-col">
+          <h4>Getting Started</h4>
+          <ol>
+            <li>Choose a <strong>preset dataset</strong> from the right panel. Each one illustrates a different statistical story.</li>
+            <li><strong>Click the chart</strong> to add your own values; click any dot to remove it.</li>
+            <li>Use the <strong>concept tabs</strong> below the chart to explore each idea in depth.</li>
+            <li>The <strong>live stats panel</strong> on the right always reflects the current data.</li>
+            <li>Try the <strong>Outliers tab</strong> to add extreme values and watch the mean get pulled while the median holds steady.</li>
+          </ol>
+        </div>
+        <div class="guide-col">
+          <h4>Key Concepts</h4>
+          <ul>
+            <li><strong>Mean:</strong> The balance point. Sensitive to every value, especially outliers.</li>
+            <li><strong>Median:</strong> The middle position. Resistant to outliers and skew.</li>
+            <li><strong>Mode:</strong> The most frequent value. Works on any data type.</li>
+            <li><strong>Spread:</strong> How dispersed data is around the center. Range, IQR, and Std Dev each tell a different part of the story.</li>
+            <li><strong>Skew:</strong> When mean and median diverge, the data has a long tail in one direction.</li>
+          </ul>
+        </div>
+        <div class="guide-col">
+          <h4>Reading the Chart</h4>
+          <ul>
+            <li><strong>Blue dashed line:</strong> The mean (x-bar)</li>
+            <li><strong>Green solid line:</strong> The median</li>
+            <li><strong>Shaded box:</strong> The IQR, the middle 50% of data (Q1 to Q3)</li>
+            <li><strong>Dashed whiskers:</strong> Extend to min and max</li>
+            <li><strong>Blue dots:</strong> Typical data values</li>
+            <li><strong>Red dots:</strong> Statistical outliers (beyond 1.5 x IQR from the box)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-grid">
+    <div class="left-col">
+
+      <!-- VISUALIZATION -->
+      <div class="viz-wrap">
+        <div class="viz-header">
+          <div class="viz-legend">
+            <div class="leg"><div class="leg-dot" style="background:var(--blue)"></div>Mean</div>
+            <div class="leg"><div class="leg-dot" style="background:var(--green)"></div>Median</div>
+            <div class="leg"><div class="leg-dot" style="background:rgba(37,99,235,0.25);border:1px solid #93c5fd"></div>IQR box</div>
+            <div class="leg"><div class="leg-dot" style="background:var(--red)"></div>Outlier</div>
+          </div>
+          <div class="viz-meta" id="viz-meta">n = 0</div>
+        </div>
+        <svg id="main-svg" viewBox="0 0 720 195" height="195"></svg>
+        <div class="viz-hint">Click the chart to add a value &bull; Click a dot to remove it</div>
+      </div>
+
+      <!-- INSIGHT -->
+      <div id="insight-box" style="display:none">
+        <div class="context-note"><strong>Insight:</strong> <span id="insight-text"></span></div>
+      </div>
+
+      <!-- TABS + CONCEPT PANEL -->
+      <div class="card" style="padding:0">
+        <div class="tab-bar">
+          <button class="ctab active" data-tab="mean">The Mean</button>
+          <button class="ctab" data-tab="median">Median &amp; Percentiles</button>
+          <button class="ctab" data-tab="spread">Spread</button>
+          <button class="ctab" data-tab="outliers">Outliers</button>
+          <button class="ctab" data-tab="robust">Robust Measures</button>
+          <button class="ctab" data-tab="guide">When to Use</button>
+        </div>
+        <div class="concept-panel" id="concept-panel"></div>
+      </div>
+
+    </div>
+
+    <!-- ── RIGHT COLUMN ── -->
+    <div class="right-col">
+
+      <!-- DATASET SELECTOR -->
+      <div class="card">
+        <h3 style="margin-bottom:4px">Choose a Dataset</h3>
+        <p style="font-size:.82rem;color:var(--muted);margin:0 0 2px">Each preset illustrates a different statistical story. Notice how center and spread behave differently across distribution shapes.</p>
+        <div class="preset-stack" id="scenario-btns"></div>
+      </div>
+
+      <!-- LIVE STATS -->
+      <div class="card">
+        <div class="stats-panel">
+          <div class="stats-group-label">Center</div>
+          <div class="metric m-blue">
+            <div class="metric-label">Mean (x-bar)</div>
+            <div class="metric-value" id="sv-mean">--</div>
+            <div class="metric-sub">arithmetic average</div>
+          </div>
+          <div class="metric m-green">
+            <div class="metric-label">Median</div>
+            <div class="metric-value" id="sv-median">--</div>
+            <div class="metric-sub">middle value (P50)</div>
+          </div>
+          <div class="metric m-amber">
+            <div class="metric-label">Mode</div>
+            <div class="metric-value" id="sv-mode" style="font-size:.9rem">--</div>
+            <div class="metric-sub">most frequent value</div>
+          </div>
+          <div class="stats-group-label" style="margin-top:6px">Spread</div>
+          <div class="metric m-gray">
+            <div class="metric-label">Std Dev</div>
+            <div class="metric-value" id="sv-std">--</div>
+            <div class="metric-sub">avg distance from mean</div>
+          </div>
+          <div class="metric m-gray">
+            <div class="metric-label">IQR</div>
+            <div class="metric-value" id="sv-iqr">--</div>
+            <div class="metric-sub">Q3 minus Q1</div>
+          </div>
+          <div class="metric m-gray">
+            <div class="metric-label">Range</div>
+            <div class="metric-value" id="sv-range">--</div>
+            <div class="metric-sub" id="sv-range-sub">max minus min</div>
+          </div>
+          <div class="stats-group-label" style="margin-top:6px">Shape</div>
+          <div class="metric" style="border-left:3px solid var(--gray)">
+            <div class="metric-label">Skew</div>
+            <div id="sv-skew" style="margin-top:4px">--</div>
+            <div class="metric-sub" id="sv-skew-sub"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FULL REFERENCE -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:700;font-size:.92rem;color:var(--text)">Full Reference</span>
+          <button id="toggleRef" style="padding:4px 10px;font-size:.8rem">&#9660; Show</button>
+        </div>
+        <p style="font-size:.8rem;color:var(--muted);margin:4px 0 0">Formulas and definitions for all measures.</p>
+
+        <div class="ref-section" id="refSection">
+
+          <div class="ref-group">
+            <div class="ref-group-title">Measures of Center</div>
+            <div class="ref-row"><span class="ref-term">Mean</span><span class="ref-def">Sum of all values divided by n. The arithmetic average and balance point.<br><span class="ref-formula">x-bar = (sum of xi) / n</span></span></div>
+            <div class="ref-row"><span class="ref-term">Median</span><span class="ref-def">Middle value when sorted. Resistant to outliers.<br><span class="ref-formula">P50 = middle of sorted data</span></span></div>
+            <div class="ref-row"><span class="ref-term">Mode</span><span class="ref-def">Most frequently occurring value(s). Only measure that works for categorical data.</span></div>
+            <div class="ref-row"><span class="ref-term">Harmonic Mean</span><span class="ref-def">Best for rates and ratios (speeds, efficiencies).<br><span class="ref-formula">H = n / sum(1/xi)</span></span></div>
+          </div>
+
+          <div class="ref-group">
+            <div class="ref-group-title">Measures of Spread</div>
+            <div class="ref-row"><span class="ref-term">Range</span><span class="ref-def">Max minus min. Simple but sensitive to outliers.<br><span class="ref-formula">Range = max - min</span></span></div>
+            <div class="ref-row"><span class="ref-term">IQR</span><span class="ref-def">Spread of the middle 50%. Robust to outliers.<br><span class="ref-formula">IQR = Q3 - Q1</span></span></div>
+            <div class="ref-row"><span class="ref-term">Std Dev</span><span class="ref-def">Average squared distance from the mean, square-rooted.<br><span class="ref-formula">s = sqrt(sum((xi - x-bar)^2) / n)</span></span></div>
+            <div class="ref-row"><span class="ref-term">MAD</span><span class="ref-def">Median of all absolute distances from the median. Robust to outliers.<br><span class="ref-formula">MAD = median(|xi - M|)</span></span></div>
+          </div>
+
+          <div class="ref-group">
+            <div class="ref-group-title">Robust Alternatives</div>
+            <div class="ref-row"><span class="ref-term">Trimmed Mean</span><span class="ref-def">Drop the top and bottom p%, then average the rest. Used in Olympic judging.<br><span class="ref-formula">mean of middle (1-2p)% of values</span></span></div>
+            <div class="ref-row"><span class="ref-term">Winsorized Mean</span><span class="ref-def">Replace extremes with the nearest non-extreme value, then average.<br><span class="ref-formula">clip at Q[p] and Q[1-p], then mean</span></span></div>
+            <div class="ref-row"><span class="ref-term">Weighted Mean</span><span class="ref-def">Each value has a weight reflecting its importance (GPA, polls).<br><span class="ref-formula">w-bar = sum(wi * xi) / sum(wi)</span></span></div>
+          </div>
+
+          <div class="ref-group">
+            <div class="ref-group-title">Key Rules</div>
+            <div class="ref-row"><span class="ref-term">Outlier fence</span><span class="ref-def"><span class="ref-formula">Q1 - 1.5*IQR</span> to <span class="ref-formula">Q3 + 1.5*IQR</span></span></div>
+            <div class="ref-row"><span class="ref-term">Normal rule</span><span class="ref-def">68% within +/-1s, 95% within +/-2s, 99.7% within +/-3s</span></div>
+            <div class="ref-row"><span class="ref-term">Skew signal</span><span class="ref-def">mean &gt; median = right-skewed tail; mean &lt; median = left-skewed tail</span></div>
+            <div class="ref-row"><span class="ref-term">MAD to sigma</span><span class="ref-def">For normal data: <span class="ref-formula">s ≈ 1.4826 * MAD</span></span></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /right-col -->
+  </div><!-- /app-grid -->
+</div><!-- /container -->
+
+<script>
+// ============================================================
+// SCENARIOS
+// ============================================================
+const SCENARIOS = {
+  test: {
+    name: 'Test Scores',
+    desc: 'Roughly symmetric. Mean and median land in the same place.',
+    data: [62,68,71,72,74,75,76,77,78,78,79,80,81,82,83,84,85,87,91,95],
+    insight: 'Mean and median are nearly equal here, a sign of roughly symmetric data. The mean is a reliable summary and both measures agree closely.'
+  },
+  housing: {
+    name: 'House Prices',
+    desc: 'Right-skewed. A few luxury homes inflate the mean.',
+    data: [185,195,210,220,225,230,240,245,250,255,260,270,280,295,310,320,350,420,580,1200],
+    insight: 'The mean is pulled up by luxury homes. The median better represents a typical purchase. This is why news reports cite median home prices rather than the mean.'
+  },
+  income: {
+    name: 'Incomes',
+    desc: 'Extreme right skew. One high earner dominates the mean.',
+    data: [32,38,42,45,48,50,52,55,58,60,62,65,70,75,80,90,110,145,220,850],
+    insight: 'One high earner inflates the mean dramatically. Economists nearly always report median income for exactly this reason.'
+  },
+  ratings: {
+    name: 'Product Ratings',
+    desc: 'Bimodal (love it or hate it). No single number tells the story.',
+    data: [1,1,1,1,2,2,3,4,5,5,5,5,5,5,5,5,5,5,5,5],
+    insight: 'Bimodal: people love it or hate it. The mean and median both mislead here. Neither captures the polarization. Always look at the full distribution.'
+  },
+  symmetric: {
+    name: 'Normal Distribution',
+    desc: 'Symmetric. Mean, median, and mode all agree.',
+    data: [55,60,63,65,67,68,70,71,72,73,74,75,76,77,79,80,83,85,88,95],
+    insight: 'Symmetric data: mean, median, and mode nearly coincide. This is when the mean is at its most powerful and all three measures of center agree.'
+  },
+  outlier: {
+    name: 'Outlier Effect',
+    desc: 'One extreme value. Watch the mean get dragged while the median holds.',
+    data: [70,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,90,200],
+    insight: 'The outlier (200) drags the mean to about 85, five points above the median (80). That five-point gap comes from just one of twenty values.'
+  }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let data = [...SCENARIOS.test.data];
+let activeScenario = 'test';
+let activeTab = 'mean';
+let percentileP = 50;
+let userModified = false;
+let equalSharesMode = false;
+let svgClickBound = false;
+
+// ============================================================
+// STATISTICS
+// ============================================================
+const srt = a => [...a].sort((x,y)=>x-y);
+function sMean(a){ return a.reduce((s,v)=>s+v,0)/a.length; }
+function sMedian(a){
+  const s=srt(a),n=s.length;
+  return n%2===0?(s[n/2-1]+s[n/2])/2:s[Math.floor(n/2)];
+}
+function sMode(a){
+  const f={};a.forEach(v=>f[v]=(f[v]||0)+1);
+  const mx=Math.max(...Object.values(f));
+  if(mx===1)return null;
+  return Object.keys(f).filter(k=>f[k]===mx).map(Number).sort((a,b)=>a-b);
+}
+function sStd(a){
+  const m=sMean(a);
+  return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/a.length);
+}
+function sPct(a,p){
+  const s=srt(a),n=s.length,i=(p/100)*(n-1),lo=Math.floor(i),hi=Math.ceil(i);
+  return s[lo]+(i-lo)*(s[hi]-s[lo]);
+}
+function sIQR(a){ return sPct(a,75)-sPct(a,25); }
+function sMAD(a){ const m=sMedian(a); return sMedian(a.map(v=>Math.abs(v-m))); }
+function sWinsor(a,p=0.1){
+  const s=srt(a),n=s.length,k=Math.floor(n*p);
+  if(k===0)return sMean(a);
+  return sMean(s.map(v=>Math.max(s[k],Math.min(s[n-1-k],v))));
+}
+function sTrim(a,p=0.1){
+  const s=srt(a),n=s.length,k=Math.floor(n*p);
+  return sMean(s.slice(k,n-k));
+}
+function sHarmonic(a){
+  if(a.some(v=>v<=0))return null;
+  return a.length/a.reduce((s,v)=>s+1/v,0);
+}
+const fmt=(v,d=1)=>(v===null||v===undefined||isNaN(v))?'--':Number(v).toFixed(d);
+
+// ============================================================
+// SCALE + STACKING
+// ============================================================
+const VW=720, DOT_R=6, ML=36, MR=28, MT=22;
+
+function xScale(d){
+  const s=srt(d),mn=s[0],mx=s[s.length-1];
+  const pad=Math.max((mx-mn)*0.13,10);
+  const dMin=mn-pad,dMax=mx+pad,rMin=ML,rMax=VW-MR;
+  return{
+    dMin,dMax,
+    to:v=>rMin+(v-dMin)/(dMax-dMin)*(rMax-rMin),
+    from:x=>dMin+(x-rMin)/(rMax-rMin)*(dMax-dMin)
+  };
+}
+
+function stackDots(d,sc){
+  const bw=DOT_R*2.4,bins={};
+  return d.map((v,i)=>{
+    const bx=Math.round(sc.to(v)/bw);
+    if(!bins[bx])bins[bx]=0;
+    const stack=bins[bx]++;
+    return{v,i,x:sc.to(v),stack};
+  });
+}
+
+// ============================================================
+// MAIN VISUALIZATION
+// ============================================================
+const DOT_BASE_Y=140, BOX_Y=158, BOX_H=22;
+
+function renderMainViz(){
+  if(data.length<2)return;
+  const svg=document.getElementById('main-svg');
+  const sc=xScale(data);
+  const pts=stackDots(data,sc);
+  const m=sMean(data),med=sMedian(data);
+  const q1=sPct(data,25),q3=sPct(data,75),iq=sIQR(data);
+  const mn=Math.min(...data),mx=Math.max(...data);
+  const fLo=q1-1.5*iq,fHi=q3+1.5*iq;
+  const xm=sc.to(m),xmed=sc.to(med);
+  const xq1=sc.to(q1),xq3=sc.to(q3);
+  const xmn=sc.to(mn),xmx=sc.to(mx);
+  const bMid=BOX_Y+BOX_H/2;
+
+  let ticks='';
+  for(let i=0;i<=7;i++){
+    const v=sc.dMin+(sc.dMax-sc.dMin)*i/7,x=sc.to(v);
+    ticks+=`<line x1="${x}" y1="${DOT_BASE_Y}" x2="${x}" y2="${DOT_BASE_Y+4}" stroke="#e5e7eb" stroke-width="1"/>`;
+    ticks+=`<text x="${x}" y="${DOT_BASE_Y+13}" text-anchor="middle" fill="#9ca3af" font-size="8.5" font-family="Arial,sans-serif">${Math.round(v)}</text>`;
+  }
+
+  let box='';
+  box+=`<line x1="${xmn}" y1="${bMid}" x2="${xq1}" y2="${bMid}" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+  box+=`<line x1="${xq3}" y1="${bMid}" x2="${xmx}" y2="${bMid}" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+  box+=`<line x1="${xmn}" y1="${BOX_Y+4}" x2="${xmn}" y2="${BOX_Y+BOX_H-4}" stroke="#93c5fd" stroke-width="1.5"/>`;
+  box+=`<line x1="${xmx}" y1="${BOX_Y+4}" x2="${xmx}" y2="${BOX_Y+BOX_H-4}" stroke="#93c5fd" stroke-width="1.5"/>`;
+  box+=`<rect x="${xq1}" y="${BOX_Y}" width="${xq3-xq1}" height="${BOX_H}" fill="rgba(37,99,235,0.07)" stroke="#93c5fd" stroke-width="1.5" rx="2"/>`;
+  box+=`<line x1="${xmed}" y1="${BOX_Y}" x2="${xmed}" y2="${BOX_Y+BOX_H}" stroke="#16a34a" stroke-width="2.5"/>`;
+  box+=`<text x="${xq1}" y="${BOX_Y+BOX_H+11}" text-anchor="middle" fill="#93c5fd" font-size="7.5" font-family="Arial,sans-serif">Q1</text>`;
+  box+=`<text x="${xq3}" y="${BOX_Y+BOX_H+11}" text-anchor="middle" fill="#93c5fd" font-size="7.5" font-family="Arial,sans-serif">Q3</text>`;
+
+  let lines='';
+  lines+=`<line x1="${xm}" y1="${MT}" x2="${xm}" y2="${DOT_BASE_Y+2}" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="4,2.5"/>`;
+  const mLX=Math.min(Math.max(xm,ML+22),VW-MR-22);
+  lines+=`<text x="${mLX}" y="${MT-3}" text-anchor="middle" fill="#1d4ed8" font-size="9.5" font-family="Arial,sans-serif" font-weight="700">x=${fmt(m)}</text>`;
+  if(Math.abs(xm-xmed)>8){
+    lines+=`<line x1="${xmed}" y1="${MT+10}" x2="${xmed}" y2="${DOT_BASE_Y+2}" stroke="#16a34a" stroke-width="1.5"/>`;
+    const medLX=Math.min(Math.max(xmed,ML+22),VW-MR-22);
+    lines+=`<text x="${medLX}" y="${MT+7}" text-anchor="middle" fill="#15803d" font-size="9.5" font-family="Arial,sans-serif" font-weight="700">M=${fmt(med)}</text>`;
+  }
+
+  const axis=`<line x1="${ML}" y1="${DOT_BASE_Y}" x2="${VW-MR}" y2="${DOT_BASE_Y}" stroke="#e5e7eb" stroke-width="1"/>`;
+
+  let dots='';
+  pts.forEach(p=>{
+    const cy=DOT_BASE_Y-DOT_R-1-(p.stack*(DOT_R*2+2));
+    const isOut=p.v>fHi||p.v<fLo;
+    const fill=isOut?'#dc2626':'#2563eb';
+    const strokeC=isOut?'#fca5a5':'#93c5fd';
+    dots+=`<circle cx="${p.x}" cy="${cy}" r="${DOT_R}" fill="${fill}" fill-opacity="0.6" stroke="${strokeC}" stroke-width="1.8" class="dot" data-v="${p.v}" style="cursor:pointer"/>`;
+  });
+
+  svg.innerHTML=`${axis}${ticks}${box}${lines}${dots}`;
+
+  svg.querySelectorAll('.dot').forEach(d=>{
+    d.addEventListener('click',e=>{
+      e.stopPropagation();
+      const v=parseFloat(d.getAttribute('data-v'));
+      const idx=data.indexOf(v);
+      if(idx!==-1){data.splice(idx,1);userModified=true;update();}
+    });
+    d.addEventListener('mouseenter',()=>{d.setAttribute('r',DOT_R+2);d.setAttribute('fill-opacity','1');});
+    d.addEventListener('mouseleave',()=>{d.setAttribute('r',DOT_R);d.setAttribute('fill-opacity','0.6');});
+  });
+
+  if(!svgClickBound){
+    svgClickBound=true;
+    svg.addEventListener('click',e=>{
+      const rect=svg.getBoundingClientRect();
+      const px=(e.clientX-rect.left)/rect.width*VW;
+      const sc2=xScale(data);
+      const v=sc2.from(px);
+      if(v>=sc2.dMin+2&&v<=sc2.dMax-2){data.push(Math.round(v*10)/10);userModified=true;update();}
+    });
+  }
+}
+
+// ============================================================
+// STATS UPDATE
+// ============================================================
+function updateStats(){
+  if(data.length<2)return;
+  const m=sMean(data),med=sMedian(data),mo=sMode(data);
+  const sd=sStd(data),iq=sIQR(data);
+  const rng=Math.max(...data)-Math.min(...data);
+  const diff=m-med,relDiff=Math.abs(diff)/Math.max(Math.abs(m),Math.abs(med),1);
+
+  set('sv-mean',fmt(m));
+  set('sv-median',fmt(med));
+  set('sv-mode',mo?mo.slice(0,3).join(', ')+(mo.length>3?'...':''):'none');
+  set('sv-std',fmt(sd));
+  set('sv-iqr',fmt(iq));
+  set('sv-range',fmt(rng,0));
+  document.getElementById('sv-range-sub').textContent=fmt(Math.max(...data),0)+' minus '+fmt(Math.min(...data),0);
+
+  const skewEl=document.getElementById('sv-skew');
+  const skewSubEl=document.getElementById('sv-skew-sub');
+  if(relDiff>0.05){
+    const dir=diff>0?'right':'left',cls=diff>0?'skew-right':'skew-left';
+    skewEl.innerHTML=`<span class="skew-pill ${cls}">${dir}-skewed</span>`;
+    skewSubEl.textContent='mean '+(diff>0?'>':'<')+' median by '+fmt(Math.abs(diff));
+  } else {
+    skewEl.innerHTML='<span class="skew-pill skew-sym">symmetric</span>';
+    skewSubEl.textContent='mean equals median';
+  }
+
+  document.getElementById('viz-meta').textContent='n = '+data.length;
+
+  const ib=document.getElementById('insight-box');
+  if(!userModified&&SCENARIOS[activeScenario]){
+    ib.style.display='block';
+    document.getElementById('insight-text').textContent=SCENARIOS[activeScenario].insight;
+  } else {
+    ib.style.display='none';
+  }
+}
+
+function set(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+
+// ============================================================
+// TAB RENDERING
+// ============================================================
+function renderConceptPanel(){
+  const panel=document.getElementById('concept-panel');
+  switch(activeTab){
+    case 'mean':    panel.innerHTML=tabMean();break;
+    case 'median':  panel.innerHTML=tabMedian();attachMedianControls();break;
+    case 'spread':  panel.innerHTML=tabSpread();break;
+    case 'outliers':panel.innerHTML=tabOutliers();break;
+    case 'robust':  panel.innerHTML=tabRobust();break;
+    case 'guide':   panel.innerHTML=tabGuide();break;
+  }
+}
+
+// ---- MEAN -----------------------------------------------
+function tabMean(){
+  const d=data,m=sMean(d),n=d.length;
+  const total=fmt(d.reduce((a,b)=>a+b,0),0);
+  const sumDev=fmt(d.reduce((s,v)=>s+(v-m),0),2);
+  return `
+  <div class="concept-intro">
+    <h3>What is the Mean?</h3>
+    <p>The mean (arithmetic average) is what you get if you spread all values out equally across every observation. Think of pouring water into containers of different heights: the mean is the level the water reaches if you connect them all. It is also the <strong>balance point</strong> of the data: values above pull right, values below pull left, and they cancel out exactly.</p>
+  </div>
+  <div class="formula">x-bar = (x1 + x2 + ... + xn) / n = ${total} / ${n} = <strong>${fmt(m)}</strong></div>
+  <div class="sub-viz" style="margin-top:12px">
+    <div class="sub-viz-title">Equal Shares - what if every value was the same?</div>
+    <div style="text-align:center;padding:8px 0 4px">
+      <button class="es-toggle-btn" onclick="toggleEqualShares()">${equalSharesMode?'Show Original Values':'Level to the Mean'}</button>
+    </div>
+    ${equalSharesSVG(d,m)}
+    <div style="padding:4px 12px 10px;font-size:.78rem;color:var(--muted);text-align:center">
+      ${equalSharesMode
+        ? `All ${n} values leveled to the mean <strong style="color:var(--blue)">${fmt(m)}</strong>. Total preserved, distributed equally.`
+        : `Each bar is one value. The dashed line marks the mean <strong style="color:var(--blue)">${fmt(m)}</strong>.`}
+    </div>
+  </div>
+  <div class="sub-viz">
+    <div class="sub-viz-title">Deviations from the Mean - they always sum to zero</div>
+    ${deviationsSVG(d,m)}
+    <div style="padding:6px 12px 10px;font-size:.78rem;color:var(--muted)">
+      <span style="color:var(--blue)">Blue</span>: values above the mean.
+      <span style="color:var(--red)">Red</span>: values below.
+      Sum of all deviations: <span style="font-family:ui-monospace,monospace;color:var(--green);font-weight:700">${sumDev}</span>
+    </div>
+  </div>
+  <div class="cgrid">
+    <div class="ccard">
+      <h4>Equal Shares</h4>
+      <p>If you added up all values and split them equally among all ${n} observations, each would receive <strong style="color:var(--blue)">${fmt(m)}</strong>. That is what the mean represents: total divided by count.</p>
+    </div>
+    <div class="ccard">
+      <h4>The Balance Point</h4>
+      <p>The mean is the fulcrum where a number-line seesaw balances. Every value above pulls right, every value below pulls left. They cancel out exactly, which is why the sum of deviations is always zero.</p>
+    </div>
+    <div class="ccard">
+      <h4>When It Works Best</h4>
+      <p>The mean is most informative when data is roughly symmetric with no extreme outliers. It uses every data point, making it statistically efficient, and it is required by most formal tests such as the t-test, ANOVA, and regression.</p>
+    </div>
+    <div class="ccard">
+      <h4>When It Misleads</h4>
+      <p>One extreme value can make the mean completely unrepresentative. A single billionaire walks into a coffee shop and the mean income of everyone inside jumps to hundreds of millions, yet no one there earns anything close to that.</p>
+    </div>
+  </div>`;
+}
+
+function deviationsSVG(d,m){
+  const w=620,h=68,sc=xScale(d);
+  const to=v=>30+(v-sc.dMin)/(sc.dMax-sc.dMin)*(w-46);
+  const baseY=50,xm=to(m);
+  let s=`<svg viewBox="0 0 ${w} ${h}" style="display:block;width:100%;height:auto">`;
+  s+=`<line x1="28" y1="${baseY}" x2="${w-14}" y2="${baseY}" stroke="#e5e7eb" stroke-width="1"/>`;
+  srt(d).forEach(v=>{
+    const xv=to(v),col=v>=m?'#2563eb':'#dc2626';
+    s+=`<line x1="${xm}" y1="${baseY-14}" x2="${xv}" y2="${baseY-14}" stroke="${col}" stroke-width="1.5" opacity="0.55"/>`;
+    s+=`<circle cx="${xv}" cy="${baseY}" r="4.5" fill="${col}" fill-opacity="0.6"/>`;
+  });
+  s+=`<line x1="${xm}" y1="6" x2="${xm}" y2="${baseY}" stroke="#2563eb" stroke-width="2.5"/>`;
+  s+=`<text x="${xm}" y="4" text-anchor="middle" fill="#1d4ed8" font-size="9" font-family="Arial,sans-serif" font-weight="700">x=${fmt(m)}</text>`;
+  return s+'</svg>';
+}
+
+function equalSharesSVG(d,m){
+  const sorted=srt(d),w=620,h=88,n=sorted.length;
+  const bw=Math.min(22,(w-36)/n),startX=18+(w-36-bw*n)/2;
+  const maxH=62,mx=Math.max(...sorted);
+  let s=`<svg viewBox="0 0 ${w} ${h}" style="display:block;width:100%;height:auto">`;
+  s+=`<line x1="8" y1="${h-10}" x2="${w-8}" y2="${h-10}" stroke="#e5e7eb" stroke-width="1"/>`;
+  const meanY=(h-10)-maxH*(m/mx);
+  s+=`<line x1="8" y1="${meanY}" x2="${w-8}" y2="${meanY}" stroke="#2563eb" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>`;
+  sorted.forEach((v,i)=>{
+    const x=startX+i*bw,frac=(equalSharesMode?m:v)/mx,barH=maxH*frac,barY=(h-10)-barH;
+    const fill=equalSharesMode?'rgba(37,99,235,0.3)':'rgba(37,99,235,0.18)';
+    const stroke=equalSharesMode?'#2563eb':'#93c5fd';
+    s+=`<rect x="${x+1}" y="${barY}" width="${bw-2}" height="${barH}" fill="${fill}" stroke="${stroke}" stroke-width="1" rx="2"/>`;
+  });
+  return s+'</svg>';
+}
+
+function toggleEqualShares(){
+  equalSharesMode=!equalSharesMode;renderConceptPanel();
+}
+
+// ---- MEDIAN -----------------------------------------------
+function tabMedian(){
+  const d=data,med=sMedian(d),q1=sPct(d,25),q3=sPct(d,75),pVal=sPct(d,percentileP);
+  return `
+  <div class="concept-intro">
+    <h3>Median and Percentiles</h3>
+    <p>The median is the middle value when data is sorted. Half the values lie below it, half above. Percentiles generalize this idea: the 25th percentile has 25% of values below it, the 75th has 75% below, and so on. Together they describe where any value sits within the whole distribution.</p>
+  </div>
+  <div class="sub-viz">
+    <div class="sub-viz-title">Sorted Data - the median is always the middle position</div>
+    ${sortedArraySVG(srt(d),med,pVal)}
+    <div class="pctl-bar">
+      <label>Explore percentile:</label>
+      <input type="range" id="pct-slider" min="1" max="99" value="${percentileP}">
+      <div class="pctl-val" id="pct-display">P${percentileP} = ${fmt(pVal)}</div>
+    </div>
+  </div>
+  <div class="cgrid">
+    <div class="ccard">
+      <h4>Finding the Median</h4>
+      <p>Sort all ${d.length} values. If n is odd, take the middle. If n is even, average the two middle values. Current median: <strong style="color:var(--green)">${fmt(med)}</strong>. Exactly ${d.filter(v=>v<med).length} values lie below and ${d.filter(v=>v>med).length} above.</p>
+    </div>
+    <div class="ccard">
+      <h4>Quartiles and the Box</h4>
+      <p>Q1 (P25) = <strong style="color:var(--blue)">${fmt(q1)}</strong><br>
+         Q2 (P50) = <strong style="color:var(--green)">${fmt(med)}</strong> (the median)<br>
+         Q3 (P75) = <strong style="color:var(--blue)">${fmt(q3)}</strong><br>
+         IQR = Q3 minus Q1 = <strong>${fmt(q3-q1)}</strong></p>
+    </div>
+    <div class="ccard">
+      <h4>Real-World Percentiles</h4>
+      <p>Standardized test scores are reported as percentiles. Scoring at P85 means you outperformed 85% of test-takers. Growth charts, blood pressure norms, and income brackets all use the same principle.</p>
+    </div>
+    <div class="ccard">
+      <h4>Why the Median is Robust</h4>
+      <p>The median only cares about position, not magnitude. Change the highest value in this dataset to 10,000,000 and the median stays at <strong style="color:var(--green)">${fmt(med)}</strong>. The mean would jump enormously.</p>
+    </div>
+  </div>`;
+}
+
+function sortedArraySVG(s,med,pVal){
+  const n=s.length,w=620,h=56,bw=Math.min(26,(w-36)/n),startX=(w-bw*n)/2;
+  const bh=30,by=10;
+  let svg=`<svg viewBox="0 0 ${w} ${h}" style="display:block;width:100%;height:auto">`;
+  s.forEach((v,i)=>{
+    const x=startX+i*bw,isM=Math.abs(v-med)<0.001;
+    const isP=!isM&&Math.abs(v-pVal)<0.1&&percentileP!==50;
+    let fill='rgba(37,99,235,0.07)',stroke='#bfdbfe',textCol='#9ca3af';
+    if(isM){fill='rgba(22,163,74,0.18)';stroke='#16a34a';textCol='#15803d';}
+    if(isP){fill='rgba(217,119,6,0.13)';stroke='#d97706';textCol='#92400e';}
+    svg+=`<rect x="${x+1}" y="${by}" width="${bw-2}" height="${bh}" fill="${fill}" stroke="${stroke}" stroke-width="1.2" rx="2"/>`;
+    if(bw>14)svg+=`<text x="${x+bw/2}" y="${by+bh/2+4}" text-anchor="middle" fill="${textCol}" font-size="${bw>20?8.5:7}" font-family="Arial,sans-serif">${Math.round(v)}</text>`;
+  });
+  const pIdx=(percentileP/100)*(n-1),pX=startX+pIdx*bw+bw/2;
+  const col=percentileP===50?'#16a34a':'#d97706';
+  svg+=`<line x1="${pX}" y1="${by-3}" x2="${pX}" y2="${by+bh+4}" stroke="${col}" stroke-width="2.5"/>`;
+  svg+=`<text x="${pX}" y="${by-6}" text-anchor="middle" fill="${col}" font-size="9" font-family="Arial,sans-serif" font-weight="700">P${percentileP}</text>`;
+  return svg+'</svg>';
+}
+
+function attachMedianControls(){
+  const slider=document.getElementById('pct-slider');
+  if(!slider)return;
+  slider.addEventListener('input',()=>{
+    percentileP=parseInt(slider.value);
+    const pVal=sPct(data,percentileP);
+    document.getElementById('pct-display').textContent='P'+percentileP+' = '+fmt(pVal);
+    const oldSvg=document.querySelector('.sub-viz svg');
+    if(oldSvg){
+      const tmp=document.createElement('div');
+      tmp.innerHTML=sortedArraySVG(srt(data),sMedian(data),pVal);
+      oldSvg.replaceWith(tmp.firstChild);
+    }
+  });
+}
+
+// ---- SPREAD -----------------------------------------------
+function tabSpread(){
+  const d=data,m=sMean(d),sd=sStd(d),iq=sIQR(d);
+  const rng=Math.max(...d)-Math.min(...d),ma=sMAD(d);
+  const q1=sPct(d,25),q3=sPct(d,75);
+  const within1sd=d.filter(v=>v>=m-sd&&v<=m+sd).length;
+  return `
+  <div class="concept-intro">
+    <h3>Measuring Spread</h3>
+    <p>Two datasets can have identical means but look completely different. One tightly clustered, the other wildly dispersed. Spread measures tell us how much variability exists around the center, and each measure has its own strengths and blind spots.</p>
+  </div>
+  <div class="sub-viz">
+    <div class="sub-viz-title">Spread Visualized - the SD band and IQR box on your data</div>
+    ${spreadVizSVG(d,m,sd,q1,q3)}
+    <div style="padding:6px 12px 10px;font-size:.78rem;color:var(--muted)">
+      <span style="color:var(--amber);font-weight:700">Amber band</span>: plus and minus one standard deviation from the mean.
+      <span style="color:var(--blue);font-weight:700">Blue box</span>: IQR (Q1 to Q3).
+    </div>
+  </div>
+  <div class="cgrid">
+    <div class="ccard">
+      <h4>Range = ${fmt(rng,0)}</h4>
+      <p>The simplest measure: Max minus Min. Immediate and intuitive, but it depends entirely on just two values. A single data entry error can destroy it completely.</p>
+      <div class="formula">${fmt(Math.max(...d),0)} - ${fmt(Math.min(...d),0)} = ${fmt(rng,0)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Best for: quick sanity checks, data validation</p>
+    </div>
+    <div class="ccard">
+      <h4>IQR = ${fmt(iq)}</h4>
+      <p>Interquartile Range: Q3 minus Q1. The spread of the middle 50% of data. Ignores the extremes entirely, making it resistant to outliers. The box in a box plot represents the IQR.</p>
+      <div class="formula">IQR = ${fmt(q3)} - ${fmt(q1)} = ${fmt(iq)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Best for: skewed data, outlier detection</p>
+    </div>
+    <div class="ccard">
+      <h4>Std Dev = ${fmt(sd)}</h4>
+      <p>The average distance from the mean, squared then square-rooted. Squaring means outliers are penalized disproportionately. It is the most widely used spread measure in formal statistics.</p>
+      <div class="formula">s = sqrt(sum((xi - x)^2) / n) = ${fmt(sd)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Best for: symmetric data, formal tests</p>
+    </div>
+    <div class="ccard">
+      <h4>MAD = ${fmt(ma)}</h4>
+      <p>Median Absolute Deviation: the median of all distances from the median. Uses absolute values instead of squaring, making it far more resistant to outliers. Multiplied by 1.4826, it estimates the standard deviation for normal data.</p>
+      <div class="formula">MAD = median(|xi - M|) = ${fmt(ma)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Best for: skewed data, outlier-prone data</p>
+    </div>
+  </div>
+  <div class="ccard" style="margin-top:10px;border-left:4px solid var(--blue);background:#eff6ff">
+    <h4 style="color:#1e40af">The 68-95-99.7 Rule (for normal data)</h4>
+    <p style="color:#1e40af">For a bell-shaped distribution, about <strong>68%</strong> of values fall within plus or minus one standard deviation of the mean, <strong>95%</strong> within two, and <strong>99.7%</strong> within three. For this dataset, plus or minus one SD covers ${fmt(m-sd)} to ${fmt(m+sd)}, containing ${within1sd} of ${d.length} values (${Math.round(within1sd/d.length*100)}%).</p>
+  </div>`;
+}
+
+function spreadVizSVG(d,m,sd,q1,q3){
+  const w=620,h=92,sc=xScale(d);
+  const to=v=>30+(v-sc.dMin)/(sc.dMax-sc.dMin)*(w-46);
+  const baseY=58,xm=to(m),xSdLo=to(m-sd),xSdHi=to(m+sd);
+  let s=`<svg viewBox="0 0 ${w} ${h}" style="display:block;width:100%;height:auto">`;
+  s+=`<rect x="${xSdLo}" y="${baseY-26}" width="${xSdHi-xSdLo}" height="52" fill="rgba(217,119,6,0.06)" stroke="rgba(217,119,6,0.25)" stroke-width="1" rx="2"/>`;
+  s+=`<text x="${(xSdLo+xm)/2}" y="${baseY-28}" text-anchor="middle" fill="rgba(217,119,6,0.7)" font-size="8" font-family="Arial,sans-serif">-1s</text>`;
+  s+=`<text x="${(xSdHi+xm)/2}" y="${baseY-28}" text-anchor="middle" fill="rgba(217,119,6,0.7)" font-size="8" font-family="Arial,sans-serif">+1s</text>`;
+  const xq1=to(q1),xq3=to(q3);
+  s+=`<rect x="${xq1}" y="${baseY+8}" width="${xq3-xq1}" height="18" fill="rgba(37,99,235,0.08)" stroke="#93c5fd" stroke-width="1" rx="2"/>`;
+  s+=`<text x="${(xq1+xq3)/2}" y="${baseY+21}" text-anchor="middle" fill="#3b82f6" font-size="7.5" font-family="Arial,sans-serif">IQR</text>`;
+  s+=`<line x1="28" y1="${baseY}" x2="${w-14}" y2="${baseY}" stroke="#e5e7eb" stroke-width="1"/>`;
+  stackDots(d,{to}).forEach(p=>{
+    const cy=baseY-DOT_R-(p.stack*(DOT_R*2+1.5));
+    s+=`<circle cx="${p.x}" cy="${cy}" r="5" fill="#2563eb" fill-opacity="0.45" stroke="#93c5fd" stroke-width="1.5"/>`;
+  });
+  s+=`<line x1="${xm}" y1="6" x2="${xm}" y2="${baseY}" stroke="#2563eb" stroke-width="2"/>`;
+  s+=`<text x="${xm}" y="4" text-anchor="middle" fill="#1d4ed8" font-size="9" font-family="Arial,sans-serif" font-weight="700">x</text>`;
+  return s+'</svg>';
+}
+
+// ---- OUTLIERS -----------------------------------------------
+function tabOutliers(){
+  const d=data,m=sMean(d),med=sMedian(d);
+  const iq=sIQR(d),q1=sPct(d,25),q3=sPct(d,75);
+  const fLo=q1-1.5*iq,fHi=q3+1.5*iq;
+  const outliers=d.filter(v=>v<fLo||v>fHi);
+  const diff=m-med,absDiff=Math.abs(diff),sd=sStd(d),sigGap=absDiff>sd*0.25;
+  return `
+  <div class="concept-intro">
+    <h3>Outliers and Their Effects</h3>
+    <p>Outliers are values that sit far from the rest of the data. They can be real extremes, measurement errors, or data entry mistakes, and they have very different impacts on different statistics. Use the buttons below to experiment.</p>
+  </div>
+  <div class="oc-row">
+    <button class="oc-btn-red" onclick="addHiOutlier()">Add High Outlier</button>
+    <button class="oc-btn-red" onclick="addLoOutlier()">Add Low Outlier</button>
+    <button onclick="resetScen()">Reset Scenario</button>
+    <span style="font-size:.8rem;color:var(--muted)">
+      ${outliers.length>0
+        ? outliers.length+' statistical outlier'+(outliers.length>1?'s':'')+' detected (beyond 1.5 x IQR fences)'
+        : 'No statistical outliers in current data'}
+    </span>
+  </div>
+  <div class="cgrid">
+    <div class="ccard" style="${sigGap?'border-left:3px solid var(--red)':'border-left:3px solid var(--green)'}">
+      <h4>Mean vs. Median Right Now</h4>
+      <p>Mean: <strong style="color:var(--blue)">${fmt(m)}</strong><br>
+         Median: <strong style="color:var(--green)">${fmt(med)}</strong><br>
+         Gap: <strong style="color:${sigGap?'var(--red)':'var(--green)'}">${fmt(absDiff)}</strong></p>
+      <p>${sigGap
+        ? 'Significant gap. The mean is being pulled '+(diff>0?'upward by large values':'downward by small values')+'.'
+        : 'Mean and median are close. The data is roughly symmetric with no strong outlier effect.'}</p>
+    </div>
+    <div class="ccard">
+      <h4>The 1.5 x IQR Rule</h4>
+      <p>Tukey's rule: a value is flagged as an outlier if it falls more than 1.5 times the IQR beyond Q1 or Q3. These are the fence endpoints of the box plot whiskers.</p>
+      <div class="formula">Lower fence: ${fmt(fLo)}<br>Upper fence: ${fmt(fHi)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Red dots on the chart exceed these fences.</p>
+    </div>
+    <div class="ccard">
+      <h4>What Outliers Affect</h4>
+      <p><strong style="color:var(--red)">Heavily affected:</strong> Mean, Standard Deviation, Range</p>
+      <p><strong style="color:var(--green)">Resistant to outliers:</strong> Median, IQR, MAD, Mode, Percentiles</p>
+    </div>
+    <div class="ccard">
+      <h4>Should You Remove Them?</h4>
+      <p>Not automatically. Outliers might be legitimate extremes (the CEO's salary), data errors (a typo), or important signals (an unusual treatment response).</p>
+      <p>Always investigate first. Report what you did and why.</p>
+    </div>
+  </div>
+  <div class="ccard" style="margin-top:10px;border-left:4px solid var(--blue);background:#eff6ff">
+    <h4 style="color:#1e40af">A Concrete Example</h4>
+    <p style="color:#1e40af">Imagine 19 students score between 70 and 90, and one student scores 0 (was absent). The mean drops to about ${fmt(sMean([...Array(19).fill(80),0]))}, which does not represent anyone's actual performance. The median stays at 80. The zero is real data, but context matters enormously.</p>
+  </div>`;
+}
+
+function addHiOutlier(){
+  const m=sMean(data),sd=sStd(data);
+  data.push(Math.round(m+sd*4));userModified=true;update();
+}
+function addLoOutlier(){
+  const m=sMean(data),sd=sStd(data);
+  data.push(Math.round(m-sd*4));userModified=true;update();
+}
+function resetScen(){
+  if(SCENARIOS[activeScenario]){data=[...SCENARIOS[activeScenario].data];userModified=false;update();}
+}
+
+// ---- ROBUST -----------------------------------------------
+function tabRobust(){
+  const d=data,m=sMean(d),med=sMedian(d);
+  const w10=sWinsor(d,0.1),w20=sWinsor(d,0.2),t10=sTrim(d,0.1),t20=sTrim(d,0.2);
+  const hm=sHarmonic(d),ma=sMAD(d),iq=sIQR(d);
+  const n=d.length,k10=Math.floor(n*0.1),k20=Math.floor(n*0.2);
+  const measures=[
+    {label:'Mean',val:m,color:'#2563eb'},
+    {label:'Median',val:med,color:'#16a34a'},
+    {label:'Trim 10%',val:t10,color:'#7c3aed'},
+    {label:'Winsor 10%',val:w10,color:'#d97706'},
+    ...(hm!==null?[{label:'Harmonic',val:hm,color:'#0891b2'}]:[])
+  ];
+  const allVals=measures.map(x=>x.val);
+  const cMin=Math.min(...allVals)*0.97,cMax=Math.max(...allVals)*1.03;
+  const compBars=measures.map(x=>{
+    const pct=cMax===cMin?50:Math.round((x.val-cMin)/(cMax-cMin)*100);
+    return `<div class="comp-row">
+      <div class="comp-label">${x.label}</div>
+      <div class="comp-bar-wrap"><div class="comp-bar" style="width:${pct}%;background:${x.color};opacity:0.45"></div></div>
+      <div class="comp-val" style="color:${x.color}">${fmt(x.val)}</div>
+    </div>`;
+  }).join('');
+  return `
+  <div class="concept-intro">
+    <h3>Robust and Specialized Measures</h3>
+    <p>When the standard mean fails due to outliers or skewness, statisticians reach for robust alternatives. Each one trades some information for resistance to extremes, and knowing which to use depends on your data and your question.</p>
+  </div>
+  <div class="sub-viz">
+    <div class="sub-viz-title">Comparison - how measures diverge with this dataset</div>
+    <div style="padding:14px 14px 10px">${compBars}</div>
+  </div>
+  <div class="cgrid3">
+    <div class="ccard">
+      <h4>Trimmed Mean</h4>
+      <p>Remove the top and bottom p% of values, then average what remains. Olympic judging drops the highest and lowest scores. That is this principle in practice.</p>
+      <div class="formula">10% trim (drop ${k10} each end): ${fmt(t10)}<br>20% trim (drop ${k20} each end): ${fmt(t20)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Regular mean: ${fmt(m)}</p>
+    </div>
+    <div class="ccard">
+      <h4>Winsorized Mean</h4>
+      <p>Instead of removing extremes, replace them with the nearest non-extreme value. Retains the same sample size while reducing distortion from outliers.</p>
+      <div class="formula">10% winsor: ${fmt(w10)}<br>20% winsor: ${fmt(w20)}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Preferred over trimming when n is small.</p>
+    </div>
+    <div class="ccard">
+      <h4>Harmonic Mean</h4>
+      <p>Better for rates and ratios. Driving 60 mph for one hour then 40 mph for one hour, the average speed is not 50. The harmonic mean gives the correct answer.</p>
+      <div class="formula">${hm!==null?'H = n / sum(1/xi) = '+fmt(hm):'Undefined (data has zeros or negative values)'}</div>
+      <p style="font-size:.78rem;color:var(--gray)">Use for: speeds, P/E ratios, efficiency.</p>
+    </div>
+    <div class="ccard">
+      <h4>Weighted Average</h4>
+      <p>Some observations count more than others. GPA, portfolio returns, and polls all weight observations differently. The final exam matters more than homework.</p>
+      <div class="formula">w-bar = sum(wi * xi) / sum(wi)</div>
+      <p style="font-size:.78rem;color:var(--muted)">Example: Exam 90 (50%) + HW 70 (50%) = 80.0<br>Exam 90 (70%) + HW 70 (30%) = 84.0</p>
+    </div>
+    <div class="ccard">
+      <h4>MAD = ${fmt(ma)}</h4>
+      <p>Median Absolute Deviation. Like standard deviation but uses the median and absolute values instead of squaring. Far more resistant to outliers.</p>
+      <div class="formula">MAD = median(|xi - M|) = ${fmt(ma)}</div>
+    </div>
+    <div class="ccard">
+      <h4>IQR = ${fmt(iq)}</h4>
+      <p>The robust version of the range. The spread of the middle 50% of values, completely unaffected by the top and bottom 25%. Used in box plots and Tukey's outlier detection rule.</p>
+      <div class="formula">IQR = Q3 - Q1 = ${fmt(sPct(d,75))} - ${fmt(sPct(d,25))} = ${fmt(iq)}</div>
+    </div>
+  </div>`;
+}
+
+// ---- GUIDE -----------------------------------------------
+function tabGuide(){
+  const d=data,m=sMean(d),med=sMedian(d);
+  const diff=m-med,relDiff=Math.abs(diff)/Math.max(Math.abs(m),1);
+  const skewCls=relDiff>0.05?(diff>0?'skew-right':'skew-left'):'skew-sym';
+  const skewLbl=relDiff>0.05?(diff>0?'right-skewed':'left-skewed'):'symmetric';
+  const skewRec=relDiff>0.05?'the <strong>median</strong> is the better summary':'the <strong>mean</strong> works well';
+  return `
+  <div class="concept-intro">
+    <h3>When to Use Which Measure</h3>
+    <p>Picking the right summary statistic depends on the shape of your data, your audience, and the question you are actually answering. Here is a practical decision guide.</p>
+  </div>
+  <div class="info-note">
+    <strong>Your current data:</strong> Mean = ${fmt(m)}, Median = ${fmt(med)}, Gap = ${fmt(Math.abs(diff))}.
+    Your data appears <span class="skew-pill ${skewCls}" style="font-size:.75rem;vertical-align:middle">${skewLbl}</span>
+    so ${skewRec}.
+  </div>
+  <div class="sub-viz">
+    <table class="use-table">
+      <thead>
+        <tr><th>Situation</th><th>Use</th><th>Because</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Symmetric numeric data</strong><br><span style="font-size:.8rem">Heights, IQ scores, measurement error</span></td>
+          <td><span class="badge bblue">Mean</span></td>
+          <td>Most efficient. Uses all data, works with statistical tests, and gives the most information when data behaves well.</td>
+        </tr>
+        <tr>
+          <td><strong>Skewed or asymmetric data</strong><br><span style="font-size:.8rem">Income, house prices, reaction times</span></td>
+          <td><span class="badge bgreen">Median</span></td>
+          <td>A long tail pulls the mean away from the typical value. The median stays anchored to where most data actually is.</td>
+        </tr>
+        <tr>
+          <td><strong>Categorical or ordinal data</strong><br><span style="font-size:.8rem">Colors, ratings, survey options</span></td>
+          <td><span class="badge bamber">Mode</span></td>
+          <td>Mean and median require numeric ordering that may not exist. Only the mode works for non-numeric categories.</td>
+        </tr>
+        <tr>
+          <td><strong>Rates and ratios</strong><br><span style="font-size:.8rem">Speeds, P/E ratios, conversion rates</span></td>
+          <td><span class="badge bblue">Harmonic Mean</span></td>
+          <td>The arithmetic mean overcounts fast rates. The harmonic mean gives the correct average over equal distances or units.</td>
+        </tr>
+        <tr>
+          <td><strong>Data with known outliers</strong><br><span style="font-size:.8rem">Financial returns, survey responses</span></td>
+          <td><span class="badge bgray">Trimmed or Winsorized Mean</span></td>
+          <td>Reduces outlier influence while retaining more information than the median. Standard practice in robust statistics.</td>
+        </tr>
+        <tr>
+          <td><strong>Spread of clean symmetric data</strong></td>
+          <td><span class="badge bgray">Std Dev</span></td>
+          <td>Uses all data, required by most statistical tests, and has a natural probabilistic interpretation via the normal distribution.</td>
+        </tr>
+        <tr>
+          <td><strong>Spread of skewed or outlier-prone data</strong></td>
+          <td><span class="badge bgray">IQR</span> <span class="badge bgray">MAD</span></td>
+          <td>Standard deviation squares outliers, amplifying their effect. IQR and MAD are completely immune to extreme values.</td>
+        </tr>
+        <tr>
+          <td><strong>Bimodal or multimodal data</strong><br><span style="font-size:.8rem">Polarizing products, mixed populations</span></td>
+          <td><span class="badge bamber">Modes</span> + Shape</td>
+          <td>No single number captures two distinct groups. Report both modes and show the full distribution.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="cgrid" style="margin-top:12px">
+    <div class="ccard" style="border-left:3px solid var(--blue)">
+      <h4>The Sensitivity Spectrum</h4>
+      <p>From most to least sensitive to outliers:<br><br>
+      <strong>Range:</strong> most sensitive. One value changes everything.<br>
+      <strong>Mean and Std Dev:</strong> strongly affected.<br>
+      <strong>Trimmed and Winsorized Mean:</strong> moderately affected.<br>
+      <strong>IQR and MAD:</strong> resistant.<br>
+      <strong>Median and Mode:</strong> most resistant.</p>
+    </div>
+    <div class="ccard" style="border-left:3px solid var(--green)">
+      <h4>What the News Gets Wrong</h4>
+      <p>Headlines saying "average salary rose 5%" often use the mean, which is easily inflated by executive pay increases. "Median household income" is the standard in economic reporting precisely because it resists that distortion.</p>
+      <p>When you read a statistic, ask: is this the mean or median, and does the difference matter here?</p>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// MAIN UPDATE
+// ============================================================
+function update(){
+  if(data.length<2)return;
+  renderMainViz();updateStats();renderConceptPanel();
+}
+
+// ============================================================
+// DATASET SELECTOR (right panel)
+// ============================================================
+function buildScenarioBtns(){
+  const container=document.getElementById('scenario-btns');
+  container.innerHTML='';
+  Object.entries(SCENARIOS).forEach(([key,sc])=>{
+    const item=document.createElement('div');
+    item.className='preset-item';
+    const btn=document.createElement('button');
+    btn.className='preset-btn'+(key===activeScenario?' active-btn':'');
+    btn.textContent=sc.name;
+    btn.addEventListener('click',()=>{
+      activeScenario=key;data=[...sc.data];userModified=false;equalSharesMode=false;
+      document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active-btn'));
+      btn.classList.add('active-btn');update();
+    });
+    const desc=document.createElement('p');
+    desc.className='preset-desc';
+    desc.textContent=sc.desc;
+    item.appendChild(btn);
+    item.appendChild(desc);
+    container.appendChild(item);
+  });
+}
+
+// ============================================================
+// TAB NAV
+// ============================================================
+document.querySelectorAll('.ctab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    activeTab=tab.dataset.tab;equalSharesMode=false;
+    document.querySelectorAll('.ctab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');renderConceptPanel();
+  });
+});
+
+// ============================================================
+// TOGGLE BUTTONS
+// ============================================================
+document.getElementById('toggleGuide').addEventListener('click',()=>{
+  const g=document.getElementById('guideSection');
+  const btn=document.getElementById('toggleGuide');
+  const open=g.classList.toggle('open');
+  btn.textContent=open?'▲ Hide Guide':'▼ Quick-Start Guide';
+});
+
+document.getElementById('toggleRef').addEventListener('click',()=>{
+  const r=document.getElementById('refSection');
+  const btn=document.getElementById('toggleRef');
+  const open=r.classList.toggle('open');
+  btn.textContent=open?'▲ Hide':'▼ Show';
+});
+
+// ============================================================
+// INIT
+// ============================================================
+buildScenarioBtns();
+update();
+</script>
+</body>
+</html>

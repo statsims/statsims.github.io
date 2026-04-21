@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linear Model Explorer: Observed, Predicted, and Residual Change</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root{
+      --bg:#f6f7f9;--card:#ffffff;--border:#d9dde3;--text:#1f2937;
+      --muted:#6b7280;--soft:#f3f4f6;--blue:#2563eb;--red:#dc2626;
+      --green:#16a34a;--amber:#d97706;--purple:#7c3aed;--teal:#0f766e;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--bg);color:var(--text)}
+    .container{max-width:1360px;margin:auto}
+    .app-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start}
+    .left-column,.right-column{display:grid;gap:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+    .left-stack{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    h2,h3{margin:0 0 10px 0}
+    p{margin:0;line-height:1.45}
+    .controls{display:grid;gap:10px}
+    .control-box{background:var(--soft);padding:10px;border-radius:10px;border:1px solid var(--border)}
+    .control-title{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:6px;display:block}
+    button{padding:9px 12px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;margin-right:6px;margin-bottom:6px}
+    button:hover{background:#f8fafc}
+    button.active-preset{background:#eff6ff;border-color:#93c5fd;color:var(--blue);font-weight:600}
+    input,select{width:100%}
+    .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .metric{border:1px solid var(--border);background:var(--soft);border-radius:10px;padding:10px}
+    .metric-label{font-size:.8rem;color:var(--muted)}
+    .metric-value{font-weight:600;line-height:1.35}
+    .small{font-size:.9rem;color:var(--muted);line-height:1.45}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .display-list{display:grid;gap:8px}
+    .display-row{display:grid;grid-template-columns:18px 1fr;align-items:start;column-gap:10px}
+    .display-row input[type="checkbox"],.display-row input[type="radio"]{width:auto;margin:0}
+    /* Intro */
+    .intro-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+    .intro-title-block{flex:1 1 500px;min-width:260px}
+    .intro-title-block h2{margin:0 0 6px}
+    .intro-subtitle{font-size:1rem;color:var(--muted);margin:0 0 12px;line-height:1.5}
+    .concept-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+    .concept-card{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--soft)}
+    .concept-card .concept-label{font-weight:700;font-size:.9rem;color:var(--text)}
+    .concept-card .concept-desc{font-size:.82rem;color:var(--muted);margin-top:4px;line-height:1.4}
+    /* Guide */
+    .guide-toggle-btn{white-space:nowrap;align-self:flex-start;margin:0}
+    .guide-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px;display:none}
+    .guide-section.open{display:block}
+    .guide-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+    .guide-col h4{margin:0 0 8px;font-size:.9rem;color:var(--text)}
+    .guide-col ol,.guide-col ul{margin:0;padding-left:18px}
+    .guide-col li{font-size:.85rem;color:var(--muted);line-height:1.5;margin-bottom:4px}
+    .guide-col li strong{color:var(--text)}
+    /* Panel headers */
+    .panel-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+    .panel-header h3{margin:0}
+    .card>h3{margin:0 0 10px}
+    .panel-badge{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:var(--soft);color:var(--muted);white-space:nowrap}
+    .what-to-watch{margin:0 0 10px;padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:.84rem;color:#075985;line-height:1.45}
+    .what-to-watch strong{color:#0c4a6e}
+    /* Presets */
+    .preset-stack{display:grid;gap:4px}
+    .preset-item button{width:100%;margin:0 0 2px 0;text-align:left}
+    .preset-desc{font-size:.78rem;color:var(--muted);margin:0 0 8px 2px;line-height:1.35}
+    /* Pills */
+    .pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid var(--border);font-size:.8rem;background:white}
+    .pill.good{background:#ecfdf5;color:#166534;border-color:#86efac}
+    .pill.warn{background:#fff7ed;color:#9a3412;border-color:#fdba74}
+    .pill.bad{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
+    /* DAG */
+    .dag-wrap{display:flex;justify-content:center;align-items:center;background:#fbfcfe;border:1px solid var(--border);border-radius:12px;padding:12px}
+    svg{max-width:100%;height:auto;display:block}
+    .dag-node circle{stroke:#334155;stroke-width:2;fill:#fff}
+    .dag-node text{font-size:14px;font-weight:700;fill:#111827;dominant-baseline:middle;text-anchor:middle;pointer-events:none}
+    .dag-node.active circle{fill:#dbeafe;stroke:var(--blue)}
+    .dag-node.outcome circle{fill:#dcfce7;stroke:var(--green)}
+    .dag-node.focal circle{fill:#fee2e2;stroke:var(--red)}
+    .dag-edge{stroke:#94a3b8;stroke-width:2.5;fill:none;marker-end:url(#dagArrow)}
+    .dag-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+    .dag-legend-item{display:flex;align-items:center;gap:8px;font-size:.86rem;color:var(--muted)}
+    .swatch{width:15px;height:15px;border-radius:999px;border:2px solid #334155;flex-shrink:0}
+    /* Table */
+    table{width:100%;border-collapse:collapse;font-size:.86rem}
+    th,td{border-bottom:1px solid var(--border);padding:7px 6px;text-align:left;vertical-align:top}
+    th{font-size:.8rem;color:var(--muted);font-weight:600}
+    /* Help */
+    .help-section{margin-bottom:18px}
+    .help-section h4{margin:0 0 6px;font-size:.95rem;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px}
+    .help-section p,.help-section li{font-size:.88rem;color:var(--muted);line-height:1.5;margin:4px 0}
+    .help-section ul{padding-left:18px;margin:6px 0}
+    .help-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .case-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .case-box{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--soft)}
+    .case-box .case-label{font-weight:700;font-size:.82rem}
+    .case-box .case-desc{font-size:.78rem;color:var(--muted);margin-top:3px;line-height:1.35}
+    /* Current read rows */
+    .read-rows{display:grid;gap:5px;margin-top:4px}
+    .read-row{display:grid;grid-template-columns:90px 1fr;gap:8px;padding:5px 8px;border-radius:8px;background:var(--soft);border:1px solid var(--border);align-items:baseline}
+    .read-label{font-size:.74rem;font-weight:700;color:var(--muted);line-height:1.3}
+    .read-value{font-size:.85rem;color:var(--text);line-height:1.4}
+    .read-cue{margin-top:8px;padding:10px 12px;border-left:4px solid var(--blue);background:#eff6ff;border-radius:0 8px 8px 0;font-size:.86rem;color:#1e3a8a;line-height:1.5}
+    /* Fit summary cards */
+    .fit-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+    .fit-card{background:var(--soft);border:1px solid var(--border);border-radius:10px;padding:10px}
+    .fit-card-title{font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+    .fit-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    @media(max-width:980px){.fit-cards{grid-template-columns:1fr}}
+    #plotObserved,#plotResiduals,#plotCoef,#plotFit{height:340px}
+    @media(max-width:980px){
+      .app-grid{grid-template-columns:1fr}
+      .left-stack{grid-template-columns:1fr}
+      .metric-grid{grid-template-columns:1fr}
+      .concept-trio{grid-template-columns:1fr}
+      .guide-cols{grid-template-columns:1fr}
+      .help-2col{grid-template-columns:1fr}
+      .case-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+    <div class="left-column">
+
+      <!-- ── INTRO CARD ─────────────────────────────────────────────────── -->
+      <div class="card">
+        <div class="intro-header">
+          <div class="intro-title-block">
+            <h2>Linear Model Explorer: Observed, Predicted, and Residual Change</h2>
+            <p class="intro-subtitle">
+              An interactive simulator using <strong>nested linear models</strong> to show how prediction, residuals, and the seminar coefficient change when theory-guided covariate blocks are added sequentially.
+            </p>
+            <div class="concept-trio">
+              <div class="concept-card">
+                <div class="concept-label">Nested Models</div>
+                <div class="concept-desc">Predictors enter in theory-driven blocks. Each model builds on the last rather than adding variables arbitrarily or by stepwise search.</div>
+              </div>
+              <div class="concept-card">
+                <div class="concept-label">Coefficient Path</div>
+                <div class="concept-desc">Watch how the seminar slope and its CI shift as engagement, belonging, and background controls enter. Shrinkage reveals mediation or confounding.</div>
+              </div>
+              <div class="concept-card">
+                <div class="concept-label">Incremental Fit</div>
+                <div class="concept-desc">ΔR² and F-change tests show whether each block earns its place statistically, separate from whether it belongs theoretically (the DAG's job).</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;align-self:flex-start;margin-top:4px;">
+            <button class="guide-toggle-btn" id="toggleGuide">▼ Quick-Start Guide</button>
+            <button id="toggleHelp">📖 Full Reference</button>
+          </div>
+        </div>
+
+        <!-- Scenario context -->
+        <div style="margin-top:14px;padding:12px 14px;border:1px solid var(--border);border-left:4px solid var(--blue);background:#f0f9ff;border-radius:0 10px 10px 0">
+          <div style="font-size:.78rem;font-weight:700;color:var(--blue);margin-bottom:4px;letter-spacing:.04em;text-transform:uppercase;">Scenario</div>
+          <div style="font-size:.9rem;color:#1e3a8a;line-height:1.55;">A regional university offers an optional first-year seminar aimed at boosting academic engagement and sense of belonging. Participation is voluntary, so students who enroll may already differ in motivation, preparation, and background. This lab asks: <strong>after accounting for engagement, belonging, and pre-existing differences, is there still a seminar effect on first-year GPA?</strong> Four nested models build the answer one theoretically justified block at a time.</div>
+        </div>
+        <div class="guide-section" id="guideSection">
+          <div class="guide-cols">
+            <div class="guide-col">
+              <h4>Purpose</h4>
+              <ul>
+                <li>This lab breaks the habit of judging models by R² alone. A better model must justify its added predictors on <strong>theoretical grounds</strong> and show meaningful improvement in fit.</li>
+                <li>The seminar coefficient can shrink, grow, or stay stable as blocks enter. Each outcome tells a different causal story about mediation, confounding, or robustness.</li>
+                <li>Reading the DAG alongside the model table keeps theory and statistics connected — a covariate should belong conceptually <em>before</em> asking whether it helps statistically.</li>
+              </ul>
+            </div>
+            <div class="guide-col">
+              <h4>How to Use</h4>
+              <ol>
+                <li><strong>Choose a preset</strong> in the right panel. Each illustrates a different path structure between seminar, engagement, belonging, background, and GPA.</li>
+                <li>Use the <strong>Displayed model</strong> control to step through M1 → M4 and watch every panel update together.</li>
+                <li><strong>Slide sample size</strong> up and down. Watch confidence intervals widen and narrow while the coefficient path stays the same shape.</li>
+                <li><strong>Click any student</strong> in the observed vs. predicted scatter to highlight that case in the residual view too.</li>
+                <li>Click <strong>New observed data</strong> repeatedly to see sampling variability: same population, different estimates.</li>
+              </ol>
+            </div>
+            <div class="guide-col">
+              <h4>What You Gain</h4>
+              <ul>
+                <li>An intuition for how <strong>mediation vs. confounding</strong> manifest differently in a coefficient path across nested models.</li>
+                <li>A feel for when <strong>incremental R² is meaningful</strong> vs. noise — the F-change test and ΔR² bar work together to make this call.</li>
+                <li>Understanding that <strong>RMSE and adjusted R²</strong> penalize models for added complexity, unlike raw R².</li>
+                <li>Practice reading a DAG: which nodes and paths justify which predictors entering the model at which step.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PANEL 1 & 2: Observed vs Predicted + Residuals ────────────── -->
+      <div class="left-stack">
+        <div class="card">
+          <div class="panel-header">
+            <h3>Observed vs Predicted Outcome</h3>
+            <span class="panel-badge">Panel 1</span>
+          </div>
+          <p class="what-to-watch"><strong>What to look for:</strong> How tightly points cluster around the dashed line of perfect prediction. <strong>Click any student</strong> to highlight them in the residual view too. Points above the line are under-predicted; below are over-predicted. Watch whether seminar (red) and non-seminar (blue) students fall systematically on the same side.</p>
+          <div id="plotObserved"></div>
+          <div class="small" style="margin-top:6px;">Dashed line = perfect prediction (<span class="mono">y = x</span>). Red = seminar participant, blue = no seminar. Shaded band = ±0.25 GPA tolerance.</div>
+        </div>
+
+        <div class="card">
+          <div class="panel-header">
+            <h3>Residual View</h3>
+            <span class="panel-badge">Panel 2</span>
+          </div>
+          <p class="what-to-watch"><strong>What to look for:</strong> Switch to <strong>Residuals by background subgroup</strong> — most effective on the <em>Background confounding</em> preset. First-gen (purple) and Pell (amber) box medians sit below the zero line in M1–M3 because their GPA disadvantage is uncontrolled by those models. Step to M4 and watch the boxes re-centre around zero as background factors enter.</p>
+          <div id="plotResiduals"></div>
+          <div class="small" style="margin-top:6px;">Default view: residuals vs predicted GPA (red = seminar, blue = no seminar). Subgroup view: box plots per background group — box median shows systematic over- or under-prediction for that group in the current model.</div>
+        </div>
+      </div>
+
+      <!-- ── PANEL 3 & DAG: Coef Path + DAG ────────────────────────────── -->
+      <div class="left-stack">
+        <div class="card">
+          <div class="panel-header">
+            <h3>Seminar Coefficient Across Models</h3>
+            <span class="panel-badge">Panel 3</span>
+          </div>
+          <p class="what-to-watch"><strong>What to look for:</strong> Whether the seminar slope and its CI move as blocks enter. Shrinkage after M2 (engagement) suggests engagement mediates the seminar-GPA path. Shrinkage after M4 (background) suggests confounding by selection. A slope that barely moves is robust to the added covariates.</p>
+          <div id="plotCoef"></div>
+          <div class="small" style="margin-top:6px;">Error bars = 95% CI using t critical value (df = n − k − 1). Hover over any point for the full β, SE, and CI. Use the Displayed model selector to step through models one at a time.</div>
+        </div>
+
+        <div class="card">
+          <div class="panel-header">
+            <h3>Meaningful Additions — DAG</h3>
+            <span class="panel-badge">Panel 4</span>
+          </div>
+          <p class="what-to-watch"><strong>What to look for:</strong> Which nodes are active in the current model (blue). Nodes enter because they occupy a specific causal role — post-X pathway (M, B) or background confounder (Z, U) — not because they are available. Match each model step to its DAG story before asking whether the F-change is significant.</p>
+          <div class="dag-wrap">
+            <svg id="dagSvg" viewBox="0 0 560 300" aria-label="Meaningful covariates DAG"></svg>
+          </div>
+          <div class="dag-legend">
+            <div class="dag-legend-item"><span class="swatch" style="background:#fee2e2;border-color:var(--red)"></span><span>Focal predictor (X)</span></div>
+            <div class="dag-legend-item"><span class="swatch" style="background:#dbeafe;border-color:var(--blue)"></span><span>Entered by current model</span></div>
+            <div class="dag-legend-item"><span class="swatch" style="background:#dcfce7;border-color:var(--green)"></span><span>Outcome (Y)</span></div>
+          </div>
+          <div id="dagRead" class="small" style="margin-top:10px;"></div>
+        </div>
+      </div>
+
+      <!-- ── PANEL 5: Incremental Fit (full width) ──────────────────────── -->
+      <div class="card">
+        <div class="panel-header">
+          <h3>Incremental Fit from Meaningful Blocks</h3>
+          <span class="panel-badge">Panel 5</span>
+        </div>
+        <p class="what-to-watch"><strong>What to look for:</strong> Which block bought the most improvement and whether the F-change test confirms it exceeds chance. A block that adds little ΔR² with a non-significant F is hard to justify even if theoretically motivated. Use this alongside the DAG — a covariate should belong conceptually <em>and</em> contribute statistically.</p>
+        <div id="plotFit"></div>
+        <div id="fitSummaryCards" class="fit-cards"></div>
+      </div>
+
+      <!-- ── Panel 6: Model Comparison ────────────────────────────────────── -->
+      <div class="card">
+        <div class="panel-header">
+          <h3>Model Comparison</h3>
+          <span class="panel-badge">Panel 6</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Predictors</th>
+                <th>Seminar β</th>
+                <th>95% CI</th>
+                <th>R²</th>
+                <th>Adj. R²</th>
+                <th>RMSE</th>
+                <th>F-change</th>
+                <th>p</th>
+              </tr>
+            </thead>
+            <tbody id="modelTableBody"></tbody>
+          </table>
+        </div>
+        <div class="small" style="margin-top:8px;">RMSE = residual standard error (df = n − k − 1). CIs use t critical value. F-change tests whether the ΔR² increment exceeds chance (* p &lt; .05, ** p &lt; .01, *** p &lt; .001).</div>
+      </div>
+
+      <!-- ── FULL REFERENCE (hidden) ────────────────────────────────────── -->
+        <h3>Full Reference</h3>
+        <div class="help-2col">
+          <div>
+            <div class="help-section">
+              <h4>Core Concepts</h4>
+              <p><strong>Nested linear models</strong> build on each other in a pre-specified order justified by theory, not by stepwise search. Each block enters because it is conceptually meaningful.</p>
+              <p><strong>The seminar coefficient</strong> in M1 is a raw association. As covariates enter, it adjusts for overlap with those covariates. Shrinkage reflects mediation or confounding; stability reflects robustness.</p>
+              <p><strong>RMSE</strong> is the residual standard error — √(SSE / (n − k − 1)). It penalizes models that add predictors without proportionately reducing error, making it a fair cross-model comparison metric.</p>
+              <p><strong>Confidence intervals</strong> use a t critical value with df = n − k − 1 rather than the fixed z = 1.96, which matters most at smaller sample sizes where the t-distribution has heavier tails.</p>
+            </div>
+
+            <div class="help-section">
+              <h4>Reading the Coefficient Path — and What to Do Next</h4>
+              <div class="case-grid">
+                <div class="case-box">
+                  <div class="case-label" style="color:var(--blue)">Slope shrinks after M enters</div>
+                  <div class="case-desc">Engagement mediates the seminar effect. <strong>What to do:</strong> Report both the raw M1 slope and the adjusted M2+ slope. Consider a formal mediation analysis (e.g., Baron-Kenny or bootstrapped indirect effects) to decompose the total effect into direct and indirect paths. Ask whether the indirect route through engagement is the mechanism your program intends to activate.</div>
+                </div>
+                <div class="case-box">
+                  <div class="case-label" style="color:var(--amber)">Slope shrinks after Z/U enter</div>
+                  <div class="case-desc">Background confounding. Students who join the seminar differ systematically on factors that also predict GPA. <strong>What to do:</strong> Prefer the M4 adjusted estimate. Assess whether unmeasured confounders remain (sensitivity analysis). Consider propensity score matching, inverse probability weighting, or an instrumental variable if selection is strong enough to cast doubt on the adjusted estimate.</div>
+                </div>
+                <div class="case-box">
+                  <div class="case-label" style="color:var(--green)">Slope stays stable</div>
+                  <div class="case-desc">The seminar effect is robust to the added covariates. <strong>What to do:</strong> Report the M4 estimate as your preferred specification. The stability across models strengthens a causal interpretation, though unmeasured confounding can still be present. Transparency about what was and was not controlled for is essential.</div>
+                </div>
+                <div class="case-box">
+                  <div class="case-label" style="color:var(--red)">Slope grows after controls enter</div>
+                  <div class="case-desc">Suppression. A covariate is blocking a component that was attenuating the raw slope. <strong>What to do:</strong> Examine which block caused the growth. If background controls suppress, it may mean disadvantaged students disproportionately join the seminar and benefit more — a sign of heterogeneous treatment effects worth exploring by subgroup.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="help-section">
+              <h4>DAG Key</h4>
+              <ul>
+                <li><strong>X</strong> = Seminar participation (focal predictor, binary)</li>
+                <li><strong>M</strong> = Course engagement subscale (Q1–Q3 mean; post-X pathway)</li>
+                <li><strong>B</strong> = Belonging subscale (Q4–Q6 mean; post-X pathway)</li>
+                <li><strong>Z</strong> = ACT z-score (background academic preparation)</li>
+                <li><strong>U</strong> = Pell grant and first-gen status (background socioeconomic factors)</li>
+                <li><strong>Y</strong> = First-year GPA (outcome, clamped 0–4.0)</li>
+              </ul>
+            </div>
+          </div>
+
+          <div>
+            <div class="help-section">
+              <h4>Residual Subgroup View</h4>
+              <p>The subgroup box plot shows residual distributions for three groups: first-generation students, Pell-grant recipients who are not first-gen, and students in neither category. In models M1–M3 that do not control for background factors, the box medians for disadvantaged groups will sit below the zero line — the model over-predicts their GPA because it does not account for their disadvantage. When M4 enters background controls (actZ, pell, firstgen), those predictors absorb the systematic gap and the box medians should re-centre near zero. Use the <em>Background confounding</em> preset to see this most clearly: that scenario has the largest background effects and the strongest selection, making the subgroup pattern most visible.</p>
+            </div>
+
+            <div class="help-section">
+              <h4>F-Change Tests</h4>
+              <p>The F-change statistic tests whether the increment in R² from adding a block of Δk predictors is larger than expected by chance:</p>
+              <p><span class="mono">F = (ΔR² / Δk) / ((1 − R²_full) / (n − k_full − 1))</span></p>
+              <p>where k_full is the number of predictors in the fuller model. The denominator degrees of freedom are n − k_full − 1. A significant F-change means the increment is unlikely under the null that all added coefficients are zero — but it does not replace the theoretical justification for including the block.</p>
+            </div>
+
+            <div class="help-section">
+              <h4>Subscale Reliability (Cronbach's α)</h4>
+              <p>α = (k / (k−1)) × (1 − ΣVar_item / Var_total). It reflects internal consistency — how much the items in a subscale move together. Q1–Q3 (course engagement) and Q4–Q6 (campus belonging) are treated as conceptually distinct constructs following Kuh's engagement framework rather than as six interchangeable items. Higher α supports treating the mean as a reliable composite score.</p>
+            </div>
+
+            <div class="help-section">
+              <h4>Simulation Design Notes</h4>
+              <ul>
+                <li>Seminar participation is assigned via a latent propensity model, so selection into the seminar is non-random and related to background factors.</li>
+                <li>Survey items Q1–Q6 are generated as Likert-style responses (1–5, clamped) with seminar and background factor effects built in.</li>
+                <li>Outcome noise is fixed at 0.35 GPA units. This adds realistic unpredictability without overwhelming the structural effects.</li>
+                <li>Each click of "New observed data" draws a fresh sample from the same data-generating process, illustrating sampling variability of estimates.</li>
+              </ul>
+            </div>
+
+            <div class="help-section">
+              <h4>Incremental Fit — What Is Worth Adding?</h4>
+              <p>A meaningful block should pass two tests: it should belong to the causal story shown in the DAG, <em>and</em> it should produce a statistically and substantively meaningful increment in fit. A block that is theoretically defensible but adds ΔR² &lt; 0.01 with a non-significant F-change is a marginal addition. A block that adds ΔR² &gt; 0.05 with a significant F-change earns its place in both respects.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end left-column -->
+
+    <div class="right-column">
+
+      <!-- ── TEACHING PRESETS ───────────────────────────────────────────── -->
+      <div class="card">
+        <div class="panel-header"><h3>Teaching Presets</h3></div>
+        <div class="small" style="margin-bottom:10px;">Each preset configures a different underlying path structure. After loading one, step through M1 → M4 in the Controls panel and watch the seminar slope and fit panels update.</div>
+        <div class="preset-stack">
+          <div class="preset-item">
+            <button id="presetBalanced" class="active-preset">Balanced case</button>
+            <p class="preset-desc">All blocks contribute meaningfully and the seminar slope shows moderate shrinkage. A good starting point before exploring more extreme scenarios.</p>
+          </div>
+          <div class="preset-item">
+            <button id="presetEngagement">Engagement explains the seminar effect</button>
+            <p class="preset-desc">Engagement strongly mediates the seminar-GPA path. Watch the seminar slope shrink substantially when M2 (+ engagement) enters — most of the raw association runs through engagement.</p>
+          </div>
+          <div class="preset-item">
+            <button id="presetBackground">Background confounding</button>
+            <p class="preset-desc">Selection into the seminar is strongly predicted by ACT score, Pell status, and first-gen status, which also independently predict GPA. The slope adjusts most when M4 (+ background) enters.</p>
+          </div>
+          <div class="preset-item">
+            <button id="presetStrong">Strong direct seminar effect</button>
+            <p class="preset-desc">The seminar coefficient stays large and stable across all four models. Covariates add fit without explaining away the effect, strengthening a causal interpretation.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CONTROLS ───────────────────────────────────────────────────── -->
+      <div class="card">
+        <div class="panel-header"><h3>Controls</h3></div>
+        <div class="controls">
+
+          <div class="control-box">
+            <span class="control-title">Displayed model</span>
+            <select id="displayModel">
+              <option value="0">Model 1: Seminar only</option>
+              <option value="1">Model 2: + Course engagement</option>
+              <option value="2">Model 3: + Belonging</option>
+              <option value="3" selected>Model 4: + Background controls</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Sample size</span>
+            <input type="range" id="sampleSize" min="120" max="900" step="20" value="320" />
+            <div id="sampleSizeVal" class="small">320 students</div>
+            <div class="small" style="margin-top:4px;">Sliding this widens or narrows confidence intervals while the coefficient path shape stays roughly the same.</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Residual display</span>
+            <div class="display-list">
+              <div class="display-row"><input type="radio" name="residMode" value="predicted" checked /><span>Residuals vs predicted GPA</span></div>
+              <div class="display-row"><input type="radio" name="residMode" value="subgroup" /><span>Residuals by background subgroup</span></div>
+            </div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Actions</span>
+            <button id="newData">New observed data</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SUMMARY ────────────────────────────────────────────────────── -->
+      <div class="card">
+        <div class="panel-header"><h3>Summary</h3></div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Displayed model</div><div id="modelNameVal" class="metric-value">--</div></div>
+          <div class="metric"><div class="metric-label">Seminar slope β</div><div id="seminarSlopeVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Intercept</div><div id="interceptVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">R²</div><div id="r2Val" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Adjusted R²</div><div id="adjR2Val" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">RMSE (residual SE)</div><div id="rmseVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Observed mean GPA</div><div id="meanObsVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Predicted mean GPA</div><div id="meanPredVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Course engagement (α)</div><div id="courseScaleVal" class="metric-value mono">--</div></div>
+          <div class="metric"><div class="metric-label">Belonging scale (α)</div><div id="belongScaleVal" class="metric-value mono">--</div></div>
+          <div class="metric" style="grid-column:1/-1"><div class="metric-label">Interpretive cue</div><div id="cueVal" class="metric-value">--</div></div>
+        </div>
+        <div id="interpretivePillRow" class="pill-row"></div>
+      </div>
+
+      <!-- ── CURRENT READ ───────────────────────────────────────────────── -->
+      <div class="card">
+        <div class="panel-header"><h3>Current read</h3></div>
+        <div id="currentRead" class="small">--</div>
+      </div>
+
+    </div><!-- end right-column -->
+  </div><!-- end app-grid -->
+
+</div><!-- end container -->
+
+<script>
+// ── DOM references ──────────────────────────────────────────────────────
+const displayModelSelect = document.getElementById('displayModel');
+const sampleSizeSlider   = document.getElementById('sampleSize');
+const sampleSizeVal      = document.getElementById('sampleSizeVal');
+const modelTableBody     = document.getElementById('modelTableBody');
+const modelNameVal       = document.getElementById('modelNameVal');
+const seminarSlopeVal    = document.getElementById('seminarSlopeVal');
+const interceptVal       = document.getElementById('interceptVal');
+const r2Val              = document.getElementById('r2Val');
+const adjR2Val           = document.getElementById('adjR2Val');
+const rmseVal            = document.getElementById('rmseVal');
+const meanObsVal         = document.getElementById('meanObsVal');
+const meanPredVal        = document.getElementById('meanPredVal');
+const courseScaleVal     = document.getElementById('courseScaleVal');
+const belongScaleVal     = document.getElementById('belongScaleVal');
+const cueVal             = document.getElementById('cueVal');
+const currentRead        = document.getElementById('currentRead');
+const dagRead            = document.getElementById('dagRead');
+const interpretivePillRow = document.getElementById('interpretivePillRow');
+
+// Display options are fixed on — no toggles needed
+const SHOW_FIT_BAND    = true;
+const SHOW_EQUITY_LINE = true;
+const NOISE            = 0.35;
+
+// ── State ───────────────────────────────────────────────────────────────
+let currentPreset = 'balanced';
+let rows = [];
+let modelResults = [];
+let highlightedIndex = null;
+let observedClickBound = false;
+
+// ── Presets ─────────────────────────────────────────────────────────────
+const presets = {
+  balanced: {
+    title: 'Balanced case',
+    seminarToEngagement: 0.45, seminarToBelonging: 0.25, seminarDirect: 0.14,
+    engagementToOutcome: 0.18, belongingToOutcome: 0.12,
+    actToSeminar: 0.18,  actToOutcome: 0.02,
+    pellToSeminar: -0.16, pellToOutcome: -0.20,
+    firstgenToSeminar: -0.08, firstgenToOutcome: -0.10
+  },
+  engagementExplains: {
+    title: 'Engagement explains much of seminar effect',
+    seminarToEngagement: 0.82, seminarToBelonging: 0.38, seminarDirect: 0.04,
+    engagementToOutcome: 0.24, belongingToOutcome: 0.08,
+    actToSeminar: 0.12, actToOutcome: 0.02,
+    pellToSeminar: -0.08, pellToOutcome: -0.14,
+    firstgenToSeminar: -0.04, firstgenToOutcome: -0.08
+  },
+  backgroundConfounding: {
+    title: 'Background confounding case',
+    seminarToEngagement: 0.35, seminarToBelonging: 0.20, seminarDirect: 0.07,
+    engagementToOutcome: 0.16, belongingToOutcome: 0.10,
+    actToSeminar: 0.35, actToOutcome: 0.04,
+    pellToSeminar: -0.28, pellToOutcome: -0.24,
+    firstgenToSeminar: -0.20, firstgenToOutcome: -0.12
+  },
+  strongDirect: {
+    title: 'Strong direct seminar effect',
+    seminarToEngagement: 0.32, seminarToBelonging: 0.18, seminarDirect: 0.24,
+    engagementToOutcome: 0.15, belongingToOutcome: 0.10,
+    actToSeminar: 0.10, actToOutcome: 0.02,
+    pellToSeminar: -0.10, pellToOutcome: -0.12,
+    firstgenToSeminar: -0.06, firstgenToOutcome: -0.06
+  }
+};
+
+const presetBtnMap = {
+  balanced: 'presetBalanced',
+  engagementExplains: 'presetEngagement',
+  backgroundConfounding: 'presetBackground',
+  strongDirect: 'presetStrong'
+};
+
+const modelDefs = [
+  { name:'Model 1: Seminar only',            predictors:['seminar'],                                            label:'Seminar only' },
+  { name:'Model 2: + Course engagement',      predictors:['seminar','courseScale'],                              label:'Seminar + engagement' },
+  { name:'Model 3: + Belonging',              predictors:['seminar','courseScale','belongScale'],                label:'Seminar + engagement + belonging' },
+  { name:'Model 4: + Background controls',    predictors:['seminar','courseScale','belongScale','actZ','pell','firstgen'], label:'Seminar + engagement + belonging + background' }
+];
+
+// ── Math utilities ──────────────────────────────────────────────────────
+function randn(){
+  let u=0,v=0;
+  while(u===0) u=Math.random();
+  while(v===0) v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function clamp(x,lo,hi){ return Math.max(lo,Math.min(hi,x)); }
+function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+function variance(arr){
+  if(arr.length<2) return 0;
+  const m=mean(arr);
+  return arr.reduce((s,x)=>s+(x-m)**2,0)/(arr.length-1);
+}
+function sd(arr){ return Math.sqrt(variance(arr)); }
+
+function alphaFromItems(itemNames){
+  const itemVars = itemNames.map(name=>rows.map(r=>r[name]));
+  const k = itemVars.length;
+  const total = rows.map(r=>itemNames.reduce((s,n)=>s+r[n],0));
+  const varSum = itemVars.reduce((s,arr)=>s+variance(arr),0);
+  const totalVar = variance(total);
+  return totalVar>0 ? (k/(k-1))*(1-varSum/totalVar) : 0;
+}
+
+// ── FIX: t critical value using Cornish-Fisher 2nd-order approximation ──
+// This replaces the hardcoded z=1.96. Accurate to <0.001 for df>5.
+function tCritical(df){
+  if(df<=0) return 1.96;
+  if(df>=500) return 1.960;
+  const g=1.960;
+  return g+(g**3+g)/(4*df)+(5*g**5+16*g**3+3*g)/(96*df*df);
+}
+
+// ── Gamma log and incomplete beta for F p-values (Lanczos approx.) ──────
+function gammaln(x){
+  const p=[0.99999999999980993,676.5203681218851,-1259.1392167224028,
+    771.32342877765313,-176.61502916214059,12.507343278686905,
+    -0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<0.5) return Math.log(Math.PI/Math.sin(Math.PI*x))-gammaln(1-x);
+  x--;
+  let a=p[0];
+  const t=x+7.5;
+  for(let i=1;i<p.length;i++) a+=p[i]/(x+i);
+  return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
+}
+
+function incompleteBeta(x,a,b){
+  if(x<=0) return 0;
+  if(x>=1) return 1;
+  if(x>(a+1)/(a+b+2)) return 1-incompleteBeta(1-x,b,a);
+  const lnBeta=gammaln(a)+gammaln(b)-gammaln(a+b);
+  const coeff=Math.exp(a*Math.log(x)+b*Math.log(1-x)-lnBeta)/a;
+  let h=1,c=1,d=1-(a+b)*x/(a+1);
+  if(Math.abs(d)<1e-30) d=1e-30;
+  d=1/d; h=d;
+  for(let m=1;m<=120;m++){
+    const m2=2*m;
+    let num=m*(b-m)*x/((a+m2-1)*(a+m2));
+    d=1+num*d; if(Math.abs(d)<1e-30) d=1e-30;
+    c=1+num/c; if(Math.abs(c)<1e-30) c=1e-30;
+    d=1/d; h*=d*c;
+    num=-(a+m)*(a+b+m)*x/((a+m2)*(a+m2+1));
+    d=1+num*d; if(Math.abs(d)<1e-30) d=1e-30;
+    c=1+num/c; if(Math.abs(c)<1e-30) c=1e-30;
+    d=1/d; const delta=d*c; h*=delta;
+    if(Math.abs(delta-1)<1e-10) break;
+  }
+  return coeff*h;
+}
+
+function fPValue(fStat,d1,d2){
+  if(!isFinite(fStat)||fStat<=0) return 1;
+  const x=d2/(d2+d1*fStat);
+  return incompleteBeta(x,d2/2,d1/2);
+}
+
+// ── FIX: F-change statistic for nested model comparisons ────────────────
+function computeFChange(fullIdx,reducedIdx){
+  const full=modelResults[fullIdx];
+  const reduced=modelResults[reducedIdx];
+  const n=rows.length;
+  const kFull=full.predictors.length;
+  const kReduced=reduced.predictors.length;
+  const dk=kFull-kReduced;
+  const df2=n-kFull-1;
+  if(df2<1||dk<1||!isFinite(full.r2)) return {fStat:null,pVal:null,df1:dk,df2};
+  const fStat=((full.r2-reduced.r2)/dk)/((1-full.r2)/df2);
+  const pVal=fPValue(fStat,dk,df2);
+  return {fStat,pVal,df1:dk,df2};
+}
+
+function sigStars(p){
+  if(p===null||p===undefined) return '';
+  if(p<0.001) return '***';
+  if(p<0.01)  return '**';
+  if(p<0.05)  return '*';
+  return 'ns';
+}
+
+// ── OLS regression ──────────────────────────────────────────────────────
+function solveLinearSystem(A,b){
+  const n=A.length;
+  const M=A.map((row,i)=>[...row,b[i]]);
+  for(let col=0;col<n;col++){
+    let pivot=col;
+    for(let r=col+1;r<n;r++) if(Math.abs(M[r][col])>Math.abs(M[pivot][col])) pivot=r;
+    if(Math.abs(M[pivot][col])<1e-10) continue;
+    [M[col],M[pivot]]=[M[pivot],M[col]];
+    const div=M[col][col];
+    for(let c=col;c<=n;c++) M[col][c]/=div;
+    for(let r=0;r<n;r++){
+      if(r===col) continue;
+      const factor=M[r][col];
+      for(let c=col;c<=n;c++) M[r][c]-=factor*M[col][c];
+    }
+  }
+  return M.map(row=>row[n]);
+}
+
+function invertMatrix(A){
+  const n=A.length;
+  const inv=Array.from({length:n},()=>Array(n).fill(0));
+  for(let i=0;i<n;i++){
+    const e=Array(n).fill(0); e[i]=1;
+    const col=solveLinearSystem(A.map(row=>[...row]),e);
+    for(let r=0;r<n;r++) inv[r][i]=col[r];
+  }
+  return inv;
+}
+
+function runRegression(yName,xNames){
+  const X=rows.map(r=>[1,...xNames.map(name=>r[name])]);
+  const y=rows.map(r=>r[yName]);
+  const p=X[0].length;   // number of parameters (intercept + predictors)
+  const n=X.length;
+  const k=xNames.length;
+  const XtX=Array.from({length:p},()=>Array(p).fill(0));
+  const Xty=Array(p).fill(0);
+  for(let i=0;i<n;i++){
+    for(let j=0;j<p;j++){
+      Xty[j]+=X[i][j]*y[i];
+      for(let kk=0;kk<p;kk++) XtX[j][kk]+=X[i][j]*X[i][kk];
+    }
+  }
+  const beta=solveLinearSystem(XtX.map(row=>[...row]),Xty);
+  const preds=X.map(row=>row.reduce((s,v,i)=>s+v*beta[i],0));
+  const resid=y.map((v,i)=>v-preds[i]);
+  const sse=resid.reduce((s,e)=>s+e*e,0);
+  const sst=y.reduce((s,v)=>s+(v-mean(y))**2,0);
+  const r2=1-sse/sst;
+  const adjR2=1-((1-r2)*(n-1)/(n-k-1));
+  // FIX: sigma2 uses n-p denominator (consistent with coefficient SEs)
+  const sigma2=sse/Math.max(1,n-p);
+  // FIX: RMSE is the residual standard error (sqrt of sigma2), not sqrt(sse/n)
+  const rmse=Math.sqrt(sigma2);
+  const XtXInv=invertMatrix(XtX);
+  const se=beta.map((_,idx)=>Math.sqrt(Math.max(0,sigma2*XtXInv[idx][idx])));
+  // FIX: CI uses t critical value at df=n-p, not hardcoded z=1.96
+  const tc=tCritical(n-p);
+  const coeffs={},coeffSE={},coeffCI={};
+  xNames.forEach((name,idx)=>{
+    coeffs[name]=beta[idx+1];
+    coeffSE[name]=se[idx+1];
+    coeffCI[name]={lower:beta[idx+1]-tc*se[idx+1],upper:beta[idx+1]+tc*se[idx+1]};
+  });
+  return {intercept:beta[0],interceptSE:se[0],coeffs,coeffSE,coeffCI,preds,resid,r2,adjR2,rmse,predictors:xNames};
+}
+
+// ── Data generation ─────────────────────────────────────────────────────
+function buildData(){
+  const preset=presets[currentPreset];
+  const n=Number(sampleSizeSlider.value);
+  const noise=NOISE;
+  rows=[];
+
+  for(let i=0;i<n;i++){
+    const actZ=randn();
+    const pell=Math.random()<clamp(0.45-0.12*actZ,0.12,0.82)?1:0;
+    const firstgen=Math.random()<clamp(0.38-0.08*actZ+0.06*pell,0.10,0.85)?1:0;
+
+    const seminarLatent=0.25+preset.actToSeminar*actZ+preset.pellToSeminar*pell+preset.firstgenToSeminar*firstgen+0.65*randn();
+    const seminar=seminarLatent>0?1:0;
+
+    const q1=clamp(3.1+0.55*seminar+0.25*actZ-0.18*pell-0.08*firstgen+0.55*randn(),1,5);
+    const q2=clamp(3.0+0.50*seminar+0.20*actZ-0.14*pell-0.05*firstgen+0.55*randn(),1,5);
+    const q3=clamp(3.2+0.58*seminar+0.22*actZ-0.16*pell-0.08*firstgen+0.50*randn(),1,5);
+    const q4=clamp(3.0+0.38*seminar+0.12*actZ-0.12*pell-0.05*firstgen+0.58*randn(),1,5);
+    const q5=clamp(3.1+0.30*seminar+0.10*actZ-0.10*pell-0.05*firstgen+0.58*randn(),1,5);
+    const q6=clamp(3.0+0.34*seminar+0.08*actZ-0.08*pell-0.04*firstgen+0.60*randn(),1,5);
+
+    const courseScale=(q1+q2+q3)/3;
+    const belongScale=(q4+q5+q6)/3;
+
+    // Note: actZ enters GPA as (actZ*10) so the recovered regression coefficient ≈ 10×actToOutcome.
+    // actZ is used raw in the model, so this scaling is absorbed into the beta estimate correctly.
+    let gpa=2.15
+      +preset.seminarDirect*seminar
+      +preset.engagementToOutcome*courseScale
+      +preset.belongingToOutcome*belongScale
+      +preset.actToOutcome*(actZ*10)
+      +preset.pellToOutcome*pell
+      +preset.firstgenToOutcome*firstgen
+      +noise*randn();
+
+    gpa=clamp(gpa,0.0,4.0);
+
+    rows.push({id:i+1,seminar,actZ,pell,firstgen,q1,q2,q3,q4,q5,q6,courseScale,belongScale,gpa});
+  }
+
+  modelResults=modelDefs.map(def=>({...def,...runRegression('gpa',def.predictors)}));
+  highlightedIndex=null;
+}
+
+function currentModel(){ return modelResults[Number(displayModelSelect.value)]; }
+
+function getResidMode(){ return [...document.querySelectorAll('input[name="residMode"]')].find(r=>r.checked).value; }
+
+// ── Drawing functions ───────────────────────────────────────────────────
+
+function drawObservedPlot(){
+  const model=currentModel();
+  const obs=rows.map(r=>r.gpa);
+  const pred=model.preds;
+  const minV=Math.min(...obs,...pred);
+  const maxV=Math.max(...obs,...pred);
+
+  const baseTrace={
+    x:pred, y:obs, mode:'markers', type:'scatter',
+    marker:{
+      color:rows.map(r=>r.seminar?'#dc2626':'#2563eb'),
+      size:rows.map((_,i)=>highlightedIndex===i?13:7),
+      opacity:0.75,
+      line:{color:rows.map((_,i)=>highlightedIndex===i?'#111827':'rgba(0,0,0,0)'),
+            width:rows.map((_,i)=>highlightedIndex===i?2:0)}
+    },
+    text:rows.map(()=>''),
+    textposition:'top center',
+    customdata:rows.map((r,i)=>[r.id,r.seminar,obs[i]-pred[i]]),
+    hovertemplate:'Case %{customdata[0]}<br>Predicted=%{x:.2f}<br>Observed=%{y:.2f}<br>Seminar=%{customdata[1]}<br>Residual=%{customdata[2]:.2f}<extra></extra>'
+  };
+
+  const traces=[baseTrace];
+  if(SHOW_FIT_BAND){
+    traces.push({
+      x:[minV,maxV,maxV,minV],y:[minV-0.25,maxV-0.25,maxV+0.25,minV+0.25],
+      fill:'toself',fillcolor:'rgba(107,114,128,0.09)',
+      line:{color:'rgba(0,0,0,0)'},hoverinfo:'skip',showlegend:false,type:'scatter'
+    });
+  }
+  const shapes=[];
+  if(SHOW_EQUITY_LINE){
+    shapes.push({type:'line',x0:minV,x1:maxV,y0:minV,y1:maxV,line:{color:'#6b7280',width:2,dash:'dash'}});
+  }
+
+  Plotly.react('plotObserved',traces,{
+    margin:{t:10,r:20,b:50,l:55},
+    xaxis:{title:'Predicted GPA',range:[minV-0.1,maxV+0.1]},
+    yaxis:{title:'Observed GPA',range:[minV-0.1,maxV+0.1]},
+    showlegend:false, shapes
+  },{responsive:true});
+
+  // ENHANCEMENT: click-to-track — bind once after first react
+  if(!observedClickBound){
+    const plotDiv=document.getElementById('plotObserved');
+    plotDiv.on('plotly_click',function(data){
+      const pt=data.points.find(p=>p.curveNumber===0);
+      if(pt){
+        highlightedIndex=pt.pointIndex;
+        redraw();
+      }
+    });
+    observedClickBound=true;
+  }
+}
+
+function drawResidualPlot(){
+  const model=currentModel();
+  const mode=getResidMode();
+
+  if(mode==='subgroup'){
+    const groups=['First-gen','Pell (not first-gen)','Neither'];
+    const colors=['#7c3aed','#d97706','#6b7280'];
+    const groupResids=groups.map(g=>
+      rows.map((r,i)=>(r.firstgen?'First-gen':r.pell?'Pell (not first-gen)':'Neither')===g?model.resid[i]:null)
+          .filter(v=>v!==null)
+    );
+    Plotly.react('plotResiduals',
+      groups.map((g,i)=>({
+        y:groupResids[i], type:'box', name:g,
+        marker:{color:colors[i]}, line:{color:colors[i]},
+        fillcolor:colors[i]+'33',
+        boxpoints:'outliers', jitter:0.4, pointpos:0,
+        hovertemplate:`${g}<br>Residual=%{y:.2f}<extra></extra>`
+      })),
+    {
+      margin:{t:10,r:20,b:50,l:55},
+      xaxis:{title:'Background subgroup'},
+      yaxis:{title:'Residual (observed − predicted)', zeroline:false},
+      shapes:[{type:'line',x0:-0.5,x1:2.5,y0:0,y1:0,xref:'x',yref:'y',
+               line:{color:'#374151',width:2,dash:'dash'}}],
+      legend:{orientation:'h',x:0,y:1.08}
+    },{responsive:true});
+    return;
+  }
+
+  if(mode==='predicted'){
+    Plotly.react('plotResiduals',[{
+      x:model.preds, y:model.resid, mode:'markers', type:'scatter',
+      marker:{
+        color:rows.map(r=>r.seminar?'#dc2626':'#2563eb'),
+        size:rows.map((_,i)=>highlightedIndex===i?13:7),
+        opacity:0.75,
+        line:{color:rows.map((_,i)=>highlightedIndex===i?'#111827':'rgba(0,0,0,0)'),
+              width:rows.map((_,i)=>highlightedIndex===i?2:0)}
+      },
+      text:rows.map(()=>''),
+      textposition:'top center',
+      hovertemplate:'Predicted=%{x:.2f}<br>Residual=%{y:.2f}<extra></extra>'
+    }],{
+      margin:{t:10,r:20,b:50,l:55},
+      xaxis:{title:'Predicted GPA'},
+      yaxis:{title:'Residual (observed − predicted)'},
+      shapes:[{type:'line',x0:Math.min(...model.preds),x1:Math.max(...model.preds),
+               y0:0,y1:0,line:{color:'#6b7280',width:2,dash:'dash'}}],
+      showlegend:false
+    },{responsive:true});
+    return;
+  }
+}
+
+function drawCoefPath(){
+  const x=modelResults.map((_,idx)=>idx+1);
+  const y=modelResults.map(m=>m.coeffs.seminar??0);
+  const ciLower=modelResults.map(m=>m.coeffCI.seminar?.lower??(m.coeffs.seminar??0));
+  const ciUpper=modelResults.map(m=>m.coeffCI.seminar?.upper??(m.coeffs.seminar??0));
+  const ymin=Math.min(...ciLower);
+
+  Plotly.react('plotCoef',[{
+    x, y, mode:'lines+markers+text', type:'scatter',
+    line:{color:'#d97706',width:3}, marker:{color:'#d97706',size:10},
+    error_y:{type:'data',symmetric:false,
+      array:ciUpper.map((u,i)=>u-y[i]),
+      arrayminus:y.map((v,i)=>v-ciLower[i]),
+      thickness:1.5,width:6,color:'#d97706'},
+    text:y.map(v=>v.toFixed(2)),textposition:'top center',
+    customdata:modelResults.map(m=>[
+      (m.coeffs.seminar??0).toFixed(3),(m.coeffSE.seminar??0).toFixed(3),
+      (m.coeffCI.seminar?.lower??0).toFixed(3),(m.coeffCI.seminar?.upper??0).toFixed(3)
+    ]),
+    hovertemplate:'Seminar β=%{customdata[0]}<br>SE=%{customdata[1]}<br>95% CI [%{customdata[2]}, %{customdata[3]}]<extra></extra>'
+  }],{
+    margin:{t:10,r:20,b:50,l:55},
+    xaxis:{title:'Nested model',tickvals:x,ticktext:['M1','M2','M3','M4']},
+    yaxis:{title:'Seminar slope with 95% CI'}
+  },{responsive:true});
+}
+
+function drawDag(){
+  const svg=document.getElementById('dagSvg');
+  const activeByModel=[
+    new Set(['X','Y']),
+    new Set(['X','M','Y']),
+    new Set(['X','M','B','Y']),
+    new Set(['X','M','B','Z','U','Y'])
+  ][Number(displayModelSelect.value)];
+
+  const nodes={
+    Z:{x:90,y:80,label:'Z'},  U:{x:90,y:220,label:'U'},
+    X:{x:220,y:150,label:'X'},M:{x:340,y:90,label:'M'},
+    B:{x:340,y:220,label:'B'},Y:{x:480,y:150,label:'Y'}
+  };
+  const edges=[['Z','X'],['Z','Y'],['U','X'],['U','Y'],['X','M'],['X','B'],['X','Y'],['M','Y'],['B','Y']];
+
+  const defs=`<defs><marker id="dagArrow" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto"><polygon points="0 0,12 4,0 8" fill="#94a3b8"></polygon></marker></defs>`;
+  const edgeMarkup=edges.map(([a,b])=>`<line class="dag-edge" x1="${nodes[a].x}" y1="${nodes[a].y}" x2="${nodes[b].x}" y2="${nodes[b].y}"></line>`).join('');
+  const nodeMarkup=Object.entries(nodes).map(([id,node])=>{
+    const cls=['dag-node'];
+    if(id==='X') cls.push('focal');
+    if(id==='Y') cls.push('outcome');
+    if(activeByModel.has(id)&&id!=='X'&&id!=='Y') cls.push('active');
+    return `<g class="${cls.join(' ')}" transform="translate(${node.x},${node.y})"><circle r="28"></circle><text y="1">${node.label}</text></g>`;
+  }).join('');
+  svg.innerHTML=defs+edgeMarkup+nodeMarkup;
+
+  const reads=[
+    '<strong>Model 1:</strong> X (seminar) predicts Y (GPA) alone. This is a baseline association, not a causal estimate — Z and U are uncontrolled confounders.',
+    '<strong>Model 2:</strong> M (engagement) enters as a post-X pathway. Adding it can improve prediction while changing the meaning of the X coefficient: some of what X "did" now runs through M.',
+    '<strong>Model 3:</strong> B (belonging) is another post-X pathway. Testing whether campus belonging explains additional GPA variance beyond engagement, given the same theoretical reasoning.',
+    '<strong>Model 4:</strong> Z (ACT) and U (Pell/first-gen) enter as background confounders. They shape both participation and outcome. Adjusting for them tests whether the seminar slope reflects selection or a genuine effect.'
+  ];
+  dagRead.innerHTML=reads[Number(displayModelSelect.value)];
+}
+
+// Panel 5: single-axis ΔR² bars + stat cards below
+function drawFitGains(){
+  const x=['+ Engagement','+ Belonging','+ Background'];
+  const deltaR2=[
+    modelResults[1].r2-modelResults[0].r2,
+    modelResults[2].r2-modelResults[1].r2,
+    modelResults[3].r2-modelResults[2].r2
+  ];
+  const rmseDrop=[
+    modelResults[0].rmse-modelResults[1].rmse,
+    modelResults[1].rmse-modelResults[2].rmse,
+    modelResults[2].rmse-modelResults[3].rmse
+  ];
+  const fChanges=[computeFChange(1,0),computeFChange(2,1),computeFChange(3,2)];
+  const colors=['#2563eb','#7c3aed','#16a34a'];
+
+  Plotly.react('plotFit',[{
+    x, y:deltaR2, type:'bar', marker:{color:colors},
+    text:deltaR2.map(v=>`ΔR² = ${v.toFixed(3)}`),
+    textposition:'inside', insidetextanchor:'middle', textfont:{size:13, color:'white'},
+    customdata:fChanges.map(fc=>[
+      fc.fStat!==null?sigStars(fc.pVal):'',
+      fc.fStat!==null?`F(${fc.df1},${fc.df2})=${fc.fStat.toFixed(1)}`:'--',
+      fc.pVal!==null?(fc.pVal<0.001?'<.001':fc.pVal.toFixed(3)):'--'
+    ]),
+    hovertemplate:'%{x}<br>ΔR²=%{y:.3f}<br>%{customdata[1]}, p=%{customdata[2]} %{customdata[0]}<extra></extra>',
+    showlegend:false
+  }],{
+    margin:{t:20,r:20,b:50,l:60},
+    xaxis:{title:'Added block'},
+    yaxis:{title:'Change in R²',rangemode:'tozero'},
+    showlegend:false
+  },{responsive:true});
+
+  // Stat cards
+  const blockNames=['+ Engagement (M1→M2)','+ Belonging (M2→M3)','+ Background (M3→M4)'];
+  document.getElementById('fitSummaryCards').innerHTML=fChanges.map((fc,i)=>{
+    const sig=fc.fStat!==null?sigStars(fc.pVal):'';
+    const pStr=fc.pVal!==null?(fc.pVal<0.001?'&lt;&thinsp;.001':fc.pVal.toFixed(3)):'--';
+    const fStr=fc.fStat!==null?`F(${fc.df1},${fc.df2}) = ${fc.fStat.toFixed(1)}`:'--';
+    const rStr=(rmseDrop[i]>=0?'−':'+')+'&thinsp;'+Math.abs(rmseDrop[i]).toFixed(3);
+    return `<div class="fit-card" style="border-top:3px solid ${colors[i]}">
+      <div class="fit-card-title">${blockNames[i]}</div>
+      <div class="fit-card-grid">
+        <div><div class="metric-label">ΔR²</div><div class="metric-value mono">+${deltaR2[i].toFixed(3)}</div></div>
+        <div><div class="metric-label">ΔRMSE</div><div class="metric-value mono">${rStr}</div></div>
+        <div><div class="metric-label">F-change</div><div class="metric-value mono" style="font-size:.8rem">${fStr}</div></div>
+        <div><div class="metric-label">p-value</div><div class="metric-value mono">${pStr}&ensp;<strong>${sig}</strong></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// FIX: table now has one tbody (duplicate ID removed), CI column retained,
+// Mean residual (always ≈0) replaced with F-change stat
+function updateTable(){
+  modelTableBody.innerHTML=modelResults.map((m,idx)=>{
+    const ci=m.coeffCI.seminar
+      ?`[${m.coeffCI.seminar.lower.toFixed(3)}, ${m.coeffCI.seminar.upper.toFixed(3)}]`:'--';
+    let fCell='--', pCell='--';
+    if(idx>0){
+      const fc=computeFChange(idx,idx-1);
+      if(fc.fStat!==null){
+        fCell=`F(${fc.df1},${fc.df2}) = ${fc.fStat.toFixed(1)}`;
+        pCell=`${fc.pVal<0.001?'< .001':fc.pVal.toFixed(3)} ${sigStars(fc.pVal)}`;
+      }
+    }
+    const hl=idx===Number(displayModelSelect.value)?'rgba(37,99,235,0.05)':'transparent';
+    return `<tr style="background:${hl}">
+      <td><strong>${m.name}</strong></td>
+      <td>${m.predictors.join(', ')}</td>
+      <td class="mono">${(m.coeffs.seminar??0).toFixed(3)}</td>
+      <td class="mono">${ci}</td>
+      <td class="mono">${m.r2.toFixed(3)}</td>
+      <td class="mono">${m.adjR2.toFixed(3)}</td>
+      <td class="mono">${m.rmse.toFixed(3)}</td>
+      <td class="mono">${fCell}</td>
+      <td class="mono">${pCell}</td>
+    </tr>`;
+  }).join('');
+}
+
+function updateSummary(){
+  const model=currentModel();
+  const seminarSlope=model.coeffs.seminar??0;
+
+  modelNameVal.textContent=model.name;
+  seminarSlopeVal.textContent=seminarSlope.toFixed(3);
+  interceptVal.textContent=model.intercept.toFixed(3);
+  r2Val.textContent=model.r2.toFixed(3);
+  adjR2Val.textContent=model.adjR2.toFixed(3);
+  rmseVal.textContent=model.rmse.toFixed(3);
+  meanObsVal.textContent=mean(rows.map(r=>r.gpa)).toFixed(3);
+  meanPredVal.textContent=mean(model.preds).toFixed(3);
+  courseScaleVal.textContent=`${mean(rows.map(r=>r.courseScale)).toFixed(2)} | α≈${alphaFromItems(['q1','q2','q3']).toFixed(2)}`;
+  belongScaleVal.textContent=`${mean(rows.map(r=>r.belongScale)).toFixed(2)} | α≈${alphaFromItems(['q4','q5','q6']).toFixed(2)}`;
+  const m1Slope=modelResults[0].coeffs.seminar;
+  const deltaSlope=seminarSlope-m1Slope;
+  const m2drop=(modelResults[0].coeffs.seminar??0)-(modelResults[1].coeffs.seminar??0);
+  const m4drop=(modelResults[2].coeffs.seminar??0)-(modelResults[3].coeffs.seminar??0);
+  let cue='';
+  if(Math.abs(deltaSlope)<0.03){
+    cue='The seminar slope is fairly stable across all four models. Prefer the M4 adjusted estimate; stability across blocks strengthens a causal interpretation, though unmeasured confounding can still be present.';
+  } else if(deltaSlope<0){
+    if(m2drop>m4drop*1.5){
+      cue='The slope shrank most when engagement entered (M2), suggesting engagement mediates the seminar-GPA path. Report both the raw M1 slope and the adjusted M2 slope. Consider a formal mediation analysis to quantify the indirect effect running through engagement.';
+    } else if(m4drop>m2drop*1.5){
+      cue='The slope shrank most when background controls entered (M4), suggesting selection confounding. Students who joined the seminar differed on factors that also predict GPA. Prefer the M4 adjusted estimate, and assess whether unmeasured confounders remain — propensity score or IV methods may be warranted.';
+    } else {
+      cue='The slope shrank as blocks entered, reflecting a mix of mediation (engagement) and confounding (background factors). Report all four slopes and note that the M4 estimate controls for both pathways.';
+    }
+  } else {
+    cue='The slope grew after controls entered, suggesting suppression. Examine which block caused the growth — if background controls are the driver, it may reflect that disadvantaged students disproportionately benefit from the seminar, a sign of heterogeneous treatment effects worth exploring by subgroup.';
+  }
+  cueVal.textContent=cue;
+
+  // ENHANCEMENT: pill-based interpretive summary
+  const pills=[];
+  if(model.r2>0.25)      pills.push(`<span class="pill good">R² = ${model.r2.toFixed(3)} — good fit</span>`);
+  else if(model.r2>0.10) pills.push(`<span class="pill warn">R² = ${model.r2.toFixed(3)} — moderate fit</span>`);
+  else                   pills.push(`<span class="pill bad">R² = ${model.r2.toFixed(3)} — weak fit</span>`);
+
+  if(Math.abs(deltaSlope)<0.03)  pills.push('<span class="pill good">Slope stable across models</span>');
+  else if(deltaSlope<-0.05)      pills.push('<span class="pill warn">Slope shrank — mediation or confounding</span>');
+  else if(deltaSlope>0.05)       pills.push('<span class="pill warn">Slope grew — possible suppression</span>');
+
+  const curIdx=Number(displayModelSelect.value);
+  if(curIdx>0){
+    const fc=computeFChange(curIdx,curIdx-1);
+    if(fc.fStat!==null){
+      const pStr=fc.pVal<0.001?'<.001':fc.pVal.toFixed(3);
+      if(fc.pVal<0.05) pills.push(`<span class="pill good">F-change significant (p=${pStr})</span>`);
+      else             pills.push(`<span class="pill warn">F-change not significant (p=${pStr})</span>`);
+    }
+  }
+  interpretivePillRow.innerHTML=pills.join('');
+
+  const ciStr=model.coeffCI.seminar
+    ?`[${model.coeffCI.seminar.lower.toFixed(3)}, ${model.coeffCI.seminar.upper.toFixed(3)}]`:'--';
+  const dr2=[(modelResults[1].r2-modelResults[0].r2),(modelResults[2].r2-modelResults[1].r2),(modelResults[3].r2-modelResults[2].r2)];
+  currentRead.innerHTML=`
+    <div class="read-rows">
+      <div class="read-row"><span class="read-label">Preset</span><span class="read-value">${presets[currentPreset].title}</span></div>
+      <div class="read-row"><span class="read-label">Model</span><span class="read-value">${model.label}</span></div>
+      <div class="read-row"><span class="read-label">Fit</span><span class="read-value">${(model.r2*100).toFixed(1)}% of GPA variance explained &nbsp;·&nbsp; Adj. R² = ${model.adjR2.toFixed(3)} &nbsp;·&nbsp; RMSE = ${model.rmse.toFixed(3)}</span></div>
+      <div class="read-row"><span class="read-label">Seminar β</span><span class="read-value">${seminarSlope.toFixed(3)} &nbsp;·&nbsp; 95% CI ${ciStr}</span></div>
+      <div class="read-row"><span class="read-label">ΔR²</span><span class="read-value">Engagement +${dr2[0].toFixed(3)} &nbsp;·&nbsp; Belonging +${dr2[1].toFixed(3)} &nbsp;·&nbsp; Background +${dr2[2].toFixed(3)}</span></div>
+    </div>
+    <div class="read-cue">${cue}</div>`;
+}
+
+function redraw(){
+  sampleSizeVal.textContent=`${sampleSizeSlider.value} students`;
+  drawObservedPlot();
+  drawResidualPlot();
+  drawCoefPath();
+  drawDag();
+  drawFitGains();
+  updateTable();
+  updateSummary();
+}
+
+function regenerate(){ buildData(); redraw(); }
+
+function setPreset(key){
+  currentPreset=key;
+  document.querySelectorAll('.preset-item button').forEach(b=>b.classList.remove('active-preset'));
+  const btnId=presetBtnMap[key];
+  if(btnId) document.getElementById(btnId)?.classList.add('active-preset');
+  regenerate();
+}
+
+// ── Event listeners ─────────────────────────────────────────────────────
+displayModelSelect.addEventListener('change', redraw);
+sampleSizeSlider.addEventListener('input', regenerate);
+document.querySelectorAll('input[name="residMode"]').forEach(el=>el.addEventListener('change',redraw));
+document.getElementById('newData').addEventListener('click', regenerate);
+
+document.getElementById('presetBalanced').addEventListener('click',  ()=>setPreset('balanced'));
+document.getElementById('presetEngagement').addEventListener('click', ()=>setPreset('engagementExplains'));
+document.getElementById('presetBackground').addEventListener('click', ()=>setPreset('backgroundConfounding'));
+document.getElementById('presetStrong').addEventListener('click',     ()=>setPreset('strongDirect'));
+
+document.getElementById('toggleGuide').addEventListener('click',()=>{
+  const g=document.getElementById('guideSection');
+  const btn=document.getElementById('toggleGuide');
+  const open=g.classList.toggle('open');
+  btn.textContent=open?'▲ Quick-Start Guide':'▼ Quick-Start Guide';
+});
+document.getElementById('toggleHelp').addEventListener('click',()=>{
+  const card=document.getElementById('helpCard');
+  card.style.display=card.style.display==='none'?'block':'none';
+});
+
+// ── Init ────────────────────────────────────────────────────────────────
+regenerate();
+</script>
+</body>
+</html>

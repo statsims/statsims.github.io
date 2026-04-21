@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Permutation Test Explorer</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg:#f6f7f9; --card:#ffffff; --border:#d9dde3;
+      --text:#1f2937; --muted:#6b7280; --soft:#f3f4f6;
+      --blue:#2563eb; --red:#dc2626; --green:#16a34a;
+      --amber:#d97706; --gray:#9ca3af;
+    }
+    * { box-sizing: border-box }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: var(--bg); color: var(--text) }
+    .container { max-width: 1380px; margin: auto }
+    .app-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: start }
+    .left-column, .right-column { display: grid; gap: 16px }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px }
+    .card > h3 { margin: 0 0 10px }
+    .controls { display: grid; gap: 10px }
+    .control-box { background: var(--soft); padding: 10px; border-radius: 10px; border: 1px solid var(--border) }
+    .control-title { font-size: .85rem; font-weight: 700; color: var(--text); margin-bottom: 6px; display: block }
+    button { padding: 9px 12px; border: 1px solid #bfc6d1; border-radius: 10px; background: white;
+             cursor: pointer; margin-right: 6px; margin-bottom: 6px; font-size: .875rem }
+    button:hover { background: #f8fafc }
+    input, select { width: 100% }
+    .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+    .metric { border: 1px solid var(--border); background: var(--soft); border-radius: 10px; padding: 10px }
+    .metric-label { font-size: .8rem; color: var(--muted) }
+    .metric-value { font-weight: 600; line-height: 1.35 }
+    .small { font-size: .9rem; color: var(--muted); line-height: 1.45 }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace }
+    .note { font-size: .85rem; color: var(--muted); margin-top: 8px }
+
+    /* Pills */
+    .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px }
+    .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border);
+            font-size: .8rem; background: white }
+    .pill.good    { background: #ecfdf5; color: #166534; border-color: #86efac }
+    .pill.warn    { background: #fff7ed; color: #9a3412; border-color: #fdba74 }
+    .pill.bad     { background: #fef2f2; color: #991b1b; border-color: #fca5a5 }
+    .pill.neutral { background: var(--soft); color: var(--muted); border-color: var(--border) }
+
+    /* Callout boxes */
+    .context-note { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--border);
+                    border-left: 4px solid var(--amber); background: #fffbeb;
+                    border-radius: 10px; font-size: .92rem; line-height: 1.45; color: var(--muted) }
+    .prominent-note { padding: 14px 16px; border: 1px solid #c7d2fe; border-left: 5px solid var(--blue);
+                      background: #eff6ff; border-radius: 10px }
+    .recommend-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px }
+    .recommend-box { background: var(--soft); border: 1px solid var(--border); border-radius: 10px; padding: 10px }
+
+    /* Interpretation panel - semantic coloring like prominent-note */
+    .interp-box { padding: 14px 16px; border: 1px solid; border-left: 5px solid; border-radius: 10px;
+                  transition: background .35s, border-color .35s }
+    .interp-box.pending  { background: #eff6ff;      border-color: #c7d2fe; border-left-color: var(--blue) }
+    .interp-box.not-sig  { background: var(--soft);  border-color: var(--border); border-left-color: var(--gray) }
+    .interp-box.marginal { background: #fff7ed;       border-color: #fdba74; border-left-color: var(--amber) }
+    .interp-box.sig      { background: #ecfdf5;       border-color: #86efac; border-left-color: var(--green) }
+    .interp-box.very-sig { background: #f0fdf4;       border-color: #4ade80; border-left-color: #15803d }
+
+    /* Panel headers */
+    .panel-header { display: flex; justify-content: space-between; align-items: baseline;
+                    gap: 8px; flex-wrap: wrap; margin-bottom: 6px }
+    .panel-header h3 { margin: 0 }
+    .panel-badge { font-size: .75rem; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+                   border: 1px solid var(--border); background: var(--soft); color: var(--muted); white-space: nowrap }
+    .what-to-watch { margin: 0 0 10px; padding: 10px 12px; background: #f0f9ff; border: 1px solid #bae6fd;
+                     border-radius: 8px; font-size: .84rem; color: #075985; line-height: 1.45 }
+    .what-to-watch strong { color: #0c4a6e }
+
+    /* Intro */
+    .intro-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap }
+    .intro-title-block { flex: 1 1 500px; min-width: 260px }
+    .intro-title-block h2 { margin: 0 0 6px }
+    .intro-subtitle { font-size: 1rem; color: var(--muted); margin: 0 0 12px; line-height: 1.5 }
+    .concept-trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px }
+    .concept-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--soft) }
+    .concept-card .concept-label { font-weight: 700; font-size: .9rem; color: var(--text) }
+    .concept-card .concept-desc { font-size: .82rem; color: var(--muted); margin-top: 4px; line-height: 1.4 }
+    .guide-toggle-btn { white-space: nowrap; align-self: flex-start; margin-top: 4px }
+
+    /* Guide section */
+    .guide-section { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 14px; display: none }
+    .guide-section.open { display: block }
+    .guide-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px }
+    .guide-col h4 { margin: 0 0 8px; font-size: .9rem; color: var(--text) }
+    .guide-col ol, .guide-col ul { margin: 0; padding-left: 18px }
+    .guide-col li { font-size: .85rem; color: var(--muted); line-height: 1.5; margin-bottom: 4px }
+    .guide-col li strong { color: var(--text) }
+
+    /* Step track */
+    .step-track { display: flex; margin-bottom: 12px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border) }
+    .step-btn { flex: 1; padding: 9px 4px; border: none; background: var(--soft); color: var(--muted);
+                cursor: pointer; font-size: .8rem; font-weight: 600; transition: background .15s, color .15s;
+                border-right: 1px solid var(--border) }
+    .step-btn:last-child { border-right: none }
+    .step-btn:hover { background: #e5e7eb }
+    .step-btn.active { background: var(--blue); color: white }
+
+    /* Presets */
+    .preset-stack { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px }
+    .preset-stack button { width: 100%; margin-right: 0; margin-bottom: 0; display: block }
+    .preset-item { margin-bottom: 4px }
+    .preset-desc { font-size: .78rem; color: var(--muted); margin: 2px 0 8px 0; padding-left: 2px; line-height: 1.35 }
+
+    /* Help card */
+    .help-card { margin-top: 0; width: 100%; max-width: 100% }
+    .help-section { margin-bottom: 18px }
+    .help-section h4 { margin: 0 0 6px; font-size: .95rem; color: var(--text);
+                       border-bottom: 1px solid var(--border); padding-bottom: 4px }
+    .help-section p, .help-section li { font-size: .88rem; color: var(--muted); line-height: 1.5; margin: 4px 0 }
+    .help-section ul { padding-left: 18px; margin: 6px 0 }
+    .help-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px }
+    .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px }
+    .case-box { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--soft) }
+    .case-box .case-label { font-weight: 700; font-size: .82rem; color: var(--text) }
+    .case-box .case-desc { font-size: .78rem; color: var(--muted); margin-top: 2px; line-height: 1.35 }
+
+    /* Plots */
+    #plotStep { height: 360px }
+    #plotNull  { height: 390px }
+
+    @media (max-width: 980px) {
+      .app-grid { grid-template-columns: 1fr }
+      .metric-grid { grid-template-columns: 1fr }
+      .concept-trio { grid-template-columns: 1fr }
+      .guide-cols { grid-template-columns: 1fr }
+      .help-2col { grid-template-columns: 1fr }
+      .case-grid { grid-template-columns: 1fr }
+      .recommend-row { grid-template-columns: 1fr }
+      .step-btn { font-size: .72rem; padding: 8px 2px }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="app-grid">
+
+    <!-- LEFT COLUMN -->
+    <div class="left-column">
+
+      <!-- Intro card -->
+      <div class="card">
+        <div class="intro-header">
+          <div class="intro-title-block">
+            <h2>Permutation Test Explorer</h2>
+            <p class="intro-subtitle">
+              An interactive lab for understanding how a <em>shuffle test</em> constructs a
+              null world from the observed data itself, and what it means for an outcome to be
+              unusual under that world.
+            </p>
+            <div class="concept-trio">
+              <div class="concept-card">
+                <div class="concept-label">Null World</div>
+                <div class="concept-desc">If group labels do not matter, the same values could have been assigned to either group. Pooling and re-dealing makes this concrete.</div>
+              </div>
+              <div class="concept-card">
+                <div class="concept-label">Shuffle</div>
+                <div class="concept-desc">Each re-deal keeps values fixed and only changes labels, producing one possible difference under the null.</div>
+              </div>
+              <div class="concept-card">
+                <div class="concept-label">Null Distribution</div>
+                <div class="concept-desc">Many shuffles build the distribution of differences expected when the null is true. The observed result is measured against this.</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;align-self:flex-start;margin-top:4px;">
+            <button class="guide-toggle-btn" id="toggleGuide">&#9660; Quick-Start Guide</button>
+            <button id="toggleHelp">Full Reference</button>
+          </div>
+        </div>
+
+        <!-- Quick-Start Guide -->
+        <div class="guide-section" id="guideSection">
+          <div class="guide-cols">
+            <div class="guide-col">
+              <h4>Purpose</h4>
+              <ul>
+                <li>This lab exists to make <strong>the null world tangible</strong> rather than abstract. You can watch each point keep its value while only its label changes.</li>
+                <li>A p-value is just a fraction of a histogram. This lab lets you build that histogram one shuffle at a time so the number has a picture behind it.</li>
+                <li>The app breaks the habit of treating the observed result as uniquely meaningful. Under the null, results just as extreme would appear by chance at a rate equal to the p-value.</li>
+                <li>Separation and noise together, not either alone, determine how unusual the observed difference is. The teaching scenarios demonstrate each combination.</li>
+              </ul>
+            </div>
+            <div class="guide-col">
+              <h4>How to Use</h4>
+              <ol>
+                <li><strong>Start with a teaching scenario</strong> from the right panel. Each illustrates a classic situation. The null distribution is pre-filled with 1,000 shuffles.</li>
+                <li><strong>Step through the four stages</strong> using the step track above the dot plot. Watch the highlighted diamond keep its position while its colour changes.</li>
+                <li><strong>On step 3</strong>, notice which dots flash large. Those are the points that switched group from the observed assignment, making the relabelling concrete.</li>
+                <li><strong>After step 4</strong>, run more shuffles or reset and build the distribution yourself one deal at a time.</li>
+                <li><strong>Slide Group size up and down</strong> with the same scenario loaded. A result that looked borderline at n = 6 may be clearly unusual at n = 25, even though the true separation did not change.</li>
+              </ol>
+            </div>
+            <div class="guide-col">
+              <h4>What You Gain</h4>
+              <ul>
+                <li>A <strong>concrete picture of the null world</strong>: not a formula, but a histogram built from the actual observed values.</li>
+                <li>An understanding that the p-value is simply the <strong>fraction of the histogram</strong> beyond the observed line, nothing more or less.</li>
+                <li>The intuition that <strong>noise and separation interact</strong>: a large separation in a noisy dataset may be less unusual than a small separation in a tight one.</li>
+                <li>A feel for why <strong>small samples are risky</strong>: the null distribution is wide and the observed line rarely falls clearly in the tail.</li>
+                <li>The distinction between <strong>a result being unusual</strong> and a result being important. A very small difference can be unusual; a large difference can be unremarkable if the noise is also large.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step plot -->
+      <div class="card">
+        <div class="panel-header">
+          <h3>Shuffle Step-Through</h3>
+          <span class="panel-badge" id="stepBadge">Step 1 of 4</span>
+        </div>
+        <p class="what-to-watch" id="watchText">
+          <strong>What to look for:</strong> the diamond point keeps the same position in every step. Its value never changes - only its label does. That is the core idea of a permutation test.
+        </p>
+        <div class="step-track">
+          <button class="step-btn active" id="sBtn0" onclick="goToStep(0)">1 - Observed</button>
+          <button class="step-btn"        id="sBtn1" onclick="goToStep(1)">2 - Pool</button>
+          <button class="step-btn"        id="sBtn2" onclick="goToStep(2)">3 - One shuffle</button>
+          <button class="step-btn"        id="sBtn3" onclick="goToStep(3)">4 - Add to null</button>
+        </div>
+        <div id="plotStep"></div>
+        <div class="note" id="stepNote">The original observed groups. Mean markers show the observed difference in means. All points stay in these exact positions throughout every step.</div>
+      </div>
+
+      <!-- Null distribution -->
+      <div class="card">
+        <div class="panel-header">
+          <h3>Null Distribution from Shuffling Labels</h3>
+          <span class="panel-badge" id="nullBadge">0 shuffles</span>
+        </div>
+        <p class="what-to-watch">
+          <strong>What to look for:</strong> does the black "Observed" line fall into the red tail? If so, the observed difference is unusual under the null. The further into the tail, the smaller the p-value. Run more shuffles to stabilise the shape of the distribution.
+        </p>
+        <div id="plotNull"></div>
+        <div class="note">Red bars share the same bins as the grey distribution and mark outcomes at least as extreme as observed. Dashed blue lines are reference percentiles for the selected tail rule.</div>
+      </div>
+
+      <!-- Interpretation panel -->
+      <div class="card">
+        <div class="panel-header">
+          <h3>Design Read and Interpretation</h3>
+          <span class="panel-badge" id="interpBadge">--</span>
+        </div>
+        <p class="what-to-watch">
+          <strong>What to look for:</strong> the plain-language verdict and the p-value approximation. The verdict changes as you add shuffles and the estimate stabilises. Run at least 1,000 shuffles before drawing conclusions.
+        </p>
+        <div id="interpBox" class="interp-box pending">
+          <div class="metric-label">Current read</div>
+          <div id="verdictText" class="metric-value" style="margin-top:4px;">Run shuffles to evaluate the observed result.</div>
+          <div id="verdictContext" class="small" style="margin-top:8px;">The null distribution has not been built yet. Use the step buttons above or the shuffle buttons on the right.</div>
+          <div class="recommend-row">
+            <div class="recommend-box">
+              <div class="metric-label">p-value approximation</div>
+              <div id="pvalVal" class="metric-value mono">--</div>
+            </div>
+            <div class="recommend-box">
+              <div class="metric-label">Shuffles at least this extreme</div>
+              <div id="extremeCountVal" class="metric-value mono">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="pill-row" id="interpPillRow" style="margin-top:10px"></div>
+        <div class="metric-grid" style="margin-top:10px">
+          <div class="metric">
+            <div class="metric-label">Position in null distribution</div>
+            <div id="percentileVal" class="metric-value mono">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Reference percentiles</div>
+            <div id="percentileGuideVal" class="metric-value mono">2.5th / 97.5th</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Tail rule</div>
+            <div id="tailRuleVal" class="metric-value">Two-sided</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Total shuffles</div>
+            <div id="shuffleCountVal" class="metric-value mono">0</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /left-column -->
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-column">
+
+      <!-- Teaching scenarios - separate card like effect12 -->
+      <div class="card">
+        <div class="panel-header"><h3>Teaching Scenarios</h3></div>
+        <div class="small" style="margin-bottom:10px;">
+          Each scenario sets up a classic situation. After loading one, try sliding
+          <span class="mono">Group size</span> up and down to see how n changes the verdict
+          without changing the true separation.
+        </div>
+        <div class="preset-stack">
+          <div class="preset-item">
+            <button id="presetNull">Null is true</button>
+            <p class="preset-desc">Zero separation, moderate noise. The observed line lands near the centre of the null distribution. Most shuffles are as extreme or more extreme than the observed result.</p>
+          </div>
+          <div class="preset-item">
+            <button id="presetSmall">Small but real</button>
+            <p class="preset-desc">Moderate group size, small separation. The observed line sits in a moderate tail. This is the ambiguous middle ground where real effects are hard to confirm.</p>
+          </div>
+          <div class="preset-item">
+            <button id="presetClear">Clear separation</button>
+            <p class="preset-desc">Large separation relative to noise. The observed line falls firmly in the far tail. Very few shuffles reach this level, giving a small p-value.</p>
+          </div>
+          <div class="preset-item">
+            <button id="presetUnder">Underpowered</button>
+            <p class="preset-desc">Small group size, moderate separation. The true effect exists but with only 6 per group the null distribution is wide and the result is often unremarkable by chance.</p>
+          </div>
+          <div class="preset-item">
+            <button id="presetLargeN">Large n, tiny effect</button>
+            <p class="preset-desc">Large sample, tiny true separation. Even a trivially small difference becomes unusual when n is large. A reminder that significance does not imply practical importance.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls card -->
+      <div class="card">
+        <div class="panel-header"><h3>Controls</h3></div>
+        <div class="controls">
+
+          <div class="control-box">
+            <span class="control-title">Actions</span>
+            <div class="small" style="margin-bottom:8px;">
+              Draw a fresh sample from the current settings. Other controls update the interpretation without redrawing the sample unless noted.
+            </div>
+            <button id="newData" style="width:100%;margin:0;">New observed data</button>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Group size</span>
+            <input type="range" id="groupSize" min="4" max="30" value="25" />
+            <div id="groupSizeVal" class="small">25 per group</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Observed separation</span>
+            <input type="range" id="effectSize" min="0" max="12" step="0.1" value="2.5" />
+            <div id="effectSizeVal" class="small">2.5</div>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Direction</span>
+            <select id="direction">
+              <option value="positive" selected>Group B higher than Group A</option>
+              <option value="negative">Group A higher than Group B</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Tail rule</span>
+            <select id="tailRule">
+              <option value="two-sided" selected>Two-sided</option>
+              <option value="greater">Observed difference or greater</option>
+              <option value="less">Observed difference or less</option>
+            </select>
+          </div>
+
+          <div class="control-box">
+            <span class="control-title">Build null distribution</span>
+            <button id="shuffle100">Shuffle 100</button>
+            <button id="shuffle1000">Shuffle 1,000</button>
+            <button id="resetNull">Reset null</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Summary card -->
+      <div class="card">
+        <h3>Summary</h3>
+        <div class="metric-grid">
+          <div class="metric">
+            <div class="metric-label">Observed diff in means</div>
+            <div id="observedDiffVal" class="metric-value mono">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Latest shuffled diff</div>
+            <div id="latestShuffleVal" class="metric-value mono">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Group A mean</div>
+            <div id="groupAMeanVal" class="metric-value mono">--</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Group B mean</div>
+            <div id="groupBMeanVal" class="metric-value mono">--</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /right-column -->
+  </div><!-- /app-grid -->
+
+  <!-- Full Reference (full-width, toggled) -->
+  <div class="card help-card" id="helpCard" style="display:none;margin-top:16px;">
+    <h3>Full Reference</h3>
+    <div class="help-2col">
+      <div>
+        <div class="help-section">
+          <h4>Core Concepts</h4>
+          <p><strong>Permutation test</strong> (also called a shuffle test or randomisation test) answers: is the observed difference between groups unusual under a null world where group labels are arbitrary? It builds its reference distribution directly from the observed data rather than relying on parametric assumptions. This makes it distribution-free.</p>
+          <p><strong>Null hypothesis</strong> for this test is that the group label carries no information: the same values would have appeared in either group by chance. Under this hypothesis, any assignment of labels to values is equally likely, which justifies shuffling.</p>
+          <p><strong>p-value approximation</strong> is the fraction of shuffles that produced a result at least as extreme as the observed one. With enough shuffles this converges to the exact permutation p-value. A small value means the observed result is rare in the null world, not that the null is definitely false.</p>
+          <p><strong>Fixed values, changing labels.</strong> The key mechanical fact is that values never move. Only labels (group assignments) change on each shuffle. This is why the dot plot positions are identical in every step of the step-through.</p>
+        </div>
+
+        <div class="help-section">
+          <h4>The Five Teaching Scenarios</h4>
+          <div class="case-grid">
+            <div class="case-box">
+              <div class="case-label">Null is true</div>
+              <div class="case-desc">No separation exists. The observed line lands in the body of the null distribution. Nearly all shuffles are as extreme or more so. p-value near 1.0.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label">Small but real</div>
+              <div class="case-desc">A genuine separation that is hard to confirm. The observed line sits in a moderate tail. The result is plausible but not clearly unusual. p-value often 0.10 to 0.30.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label">Clear separation</div>
+              <div class="case-desc">Large separation relative to noise. The observed line falls in the far tail. Very few shuffles match it. p-value near 0 and the verdict is unambiguous.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label">Underpowered</div>
+              <div class="case-desc">A real effect, small sample. The null distribution is wide because few points anchor it. A result that would look clearly unusual at n = 25 is unremarkable at n = 6.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label">Large n, tiny effect</div>
+              <div class="case-desc">Large sample, negligible true separation. The null distribution is narrow, so even a trivially small difference falls in the tail. Significance without importance.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4>Tail Rules Explained</h4>
+          <p><strong>Two-sided</strong> counts shuffles where the absolute difference is at least as large as the observed absolute difference. Use this when you had no prior reason to expect one group to be higher than the other.</p>
+          <p><strong>One-sided (greater)</strong> counts only shuffles where the signed difference is at least as large as the observed signed difference. Use only when a directional hypothesis was committed to before data collection. This gives a smaller p-value in the hypothesised direction but fails completely if the true direction is opposite.</p>
+          <p><strong>One-sided (less)</strong> is the symmetric counterpart. The reference percentile line shifts to the 5th percentile. The same caution about pre-commitment applies.</p>
+        </div>
+      </div>
+
+      <div>
+        <div class="help-section">
+          <h4>Key Controls Explained</h4>
+          <ul>
+            <li><strong>Slide Group size while holding everything else fixed.</strong> This is the lab's core demonstration. The observed separation barely moves but the null distribution narrows and the observed line moves further into the tail. A result that is unremarkable at n = 6 may be clearly extreme at n = 25, because the same labels are now more informative.</li>
+            <li><strong>Observed separation</strong> sets the true population difference between groups. Increasing it moves the observed line toward the tail. Decreasing it moves it back toward the centre. Neither change moves the null distribution, only where the observed line lands within it.</li>
+            <li><strong>Reset null and rebuild manually</strong> using step 3 and step 4 repeatedly. This gives direct experience of how each shuffle is one draw from the null world and how the histogram takes shape gradually.</li>
+            <li><strong>New observed data</strong> redraws a fresh sample from the same population. Use it repeatedly to see sampling variability: the same separation and noise can produce different observed differences and sometimes different verdicts by chance alone.</li>
+            <li><strong>Tail rule</strong> changes what counts as extreme. Switching from two-sided to one-sided at the correct direction roughly halves the p-value, but the reference percentile lines shift accordingly.</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h4>Reading the Null Distribution</h4>
+          <ul>
+            <li><strong>The grey histogram</strong> shows the distribution of differences produced by random relabelling. Its centre is near zero because, under the null, relabelling is equally likely to produce positive or negative differences.</li>
+            <li><strong>The red bars</strong> use the same bins and mark shuffles that are at least as extreme as the observed result. Their count divided by the total is the p-value approximation.</li>
+            <li><strong>The black vertical line</strong> marks the observed difference. If it falls in the red region, the result is unusual. If it sits in the grey body, the result is consistent with the null.</li>
+            <li><strong>Dashed blue lines</strong> mark reference percentiles (2.5th and 97.5th for two-sided; 5th or 95th for one-sided). These are landmarks from the shuffle distribution, not formal critical values from a parametric table.</li>
+            <li><strong>Stability requires many shuffles.</strong> With 100 shuffles, the tail estimate can vary substantially. With 1,000 or more, the p-value approximation stabilises enough to interpret.</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h4>When the Test Can Mislead</h4>
+          <ul>
+            <li><strong>Non-exchangeability.</strong> The test assumes that under the null, any assignment of values to groups is equally plausible. If the groups differ in variance or the data have dependencies (e.g. repeated measures), this assumption fails and the test may give misleading p-values.</li>
+            <li><strong>Small samples.</strong> With very few observations, the number of distinct permutations is small and the p-value cannot go below 1 divided by the number of permutations. The test has limited resolution.</li>
+            <li><strong>Significance without importance.</strong> At large n, trivially small differences become statistically unusual. Always ask whether the separation is large enough to matter in context, independent of whether it is unusual under the null.</li>
+            <li><strong>Multiple testing.</strong> Running many comparisons and reporting those with small p-values inflates the false discovery rate. This test is not immune to multiple comparisons problems.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// --- Constants ---
+const NOISE        = 4.0;
+const DOT_SIZE     = 20;
+const DOT_HI_SIZE  = 25;
+const DOT_FLASH    = 15;   // changed-group dots during reveal
+const DOT_HI_FLASH = 19;   // highlighted + changed dot during reveal
+const DOT_LW       = 1.5;
+const DOT_HI_LW    = 2.5;
+const DOT_FLASH_LW = 2.5;
+const Y_STEP       = 0.07;
+const Y_START      = 0.04;
+
+// --- DOM refs ---
+const stepPlot  = document.getElementById('plotStep');
+const nullPlot  = document.getElementById('plotNull');
+const stepNote  = document.getElementById('stepNote');
+const nullBadge = document.getElementById('nullBadge');
+const stepBadge = document.getElementById('stepBadge');
+const watchText = document.getElementById('watchText');
+
+const groupSizeSlider  = document.getElementById('groupSize');
+const effectSizeSlider = document.getElementById('effectSize');
+const directionSelect  = document.getElementById('direction');
+const tailRuleSelect   = document.getElementById('tailRule');
+
+// --- State ---
+let observedA = [], observedB = [];
+let observedDiff  = null;
+let shuffledDiffs = [];
+let latestShuffle = null;
+let stagedShuffle = null;
+let currentStep   = 0;
+let pointRegistry = [];
+let highlightedId = null;
+let cachedLayout  = null;
+let plotInitialised = false;
+let animTimer1 = null, animTimer2 = null;
+
+// --- Math ---
+function randn() {
+  let u = 0, v = 0;
+  while (!u) u = Math.random();
+  while (!v) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+function mean(arr) { return arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : NaN; }
+function quantile(sorted, q) {
+  if (!sorted.length) return NaN;
+  const pos = (sorted.length - 1) * q, base = Math.floor(pos), rest = pos - base;
+  return sorted[base + 1] !== undefined ? sorted[base] + rest * (sorted[base + 1] - sorted[base]) : sorted[base];
+}
+
+// --- Dot layout (cached per dataset) ---
+function buildStackedDotPositions(values) {
+  const bins = {};
+  values.forEach((v, i) => {
+    const key = Math.round(v);
+    if (!bins[key]) bins[key] = [];
+    bins[key].push(i);
+  });
+  const ys = new Array(values.length).fill(0);
+  Object.values(bins).forEach(idx => idx.forEach((i, j) => { ys[i] = Y_START + j * Y_STEP; }));
+  return { ys, maxY: Math.max(...ys, 0.18) + 0.1 };
+}
+function getLayout() {
+  if (cachedLayout) return cachedLayout;
+  const values  = pointRegistry.map(d => d.value);
+  const stacked = buildStackedDotPositions(values);
+  cachedLayout = {
+    xs: values, ys: stacked.ys,
+    minX: Math.min(...values) - 1,
+    maxX: Math.max(...values) + 1,
+    maxY: stacked.maxY
+  };
+  return cachedLayout;
+}
+
+// --- Data generation ---
+function generateObservedData() {
+  const n      = +groupSizeSlider.value;
+  const effect = +effectSizeSlider.value;
+  const shift  = directionSelect.value === 'positive' ? effect / 2 : -effect / 2;
+
+  observedA = []; observedB = []; pointRegistry = []; cachedLayout = null;
+  for (let i = 0; i < n; i++) {
+    const vA = Math.round(50 - shift + randn() * NOISE);
+    const vB = Math.round(50 + shift + randn() * NOISE);
+    observedA.push(vA);
+    observedB.push(vB);
+    pointRegistry.push({ id: `A${i}`, value: vA, originalGroup: 'A' });
+    pointRegistry.push({ id: `B${i}`, value: vB, originalGroup: 'B' });
+  }
+  highlightedId   = pointRegistry[0].id;
+  observedDiff    = mean(observedB) - mean(observedA);
+  shuffledDiffs   = []; latestShuffle = null; stagedShuffle = null;
+  currentStep     = 0; plotInitialised = false;
+}
+
+// --- Shuffle ---
+function generateOneShuffle() {
+  const combined = pointRegistry.map(d => ({ ...d }));
+  for (let i = combined.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [combined[i], combined[j]] = [combined[j], combined[i]];
+  }
+  const nA = observedA.length;
+  const A  = combined.slice(0, nA), B = combined.slice(nA);
+  return { A, B, diff: mean(B.map(d => d.value)) - mean(A.map(d => d.value)) };
+}
+function runShuffles(k) {
+  for (let i = 0; i < k; i++) {
+    const r = generateOneShuffle();
+    latestShuffle = r; shuffledDiffs.push(r.diff);
+  }
+}
+
+// --- Tail helpers ---
+function isExtreme(d) {
+  const rule = tailRuleSelect.value;
+  if (rule === 'two-sided') return Math.abs(d) >= Math.abs(observedDiff);
+  if (rule === 'greater')   return d >= observedDiff;
+  return d <= observedDiff;
+}
+function getPercentileGuideText() {
+  return tailRuleSelect.value === 'two-sided' ? '2.5th / 97.5th'
+       : tailRuleSelect.value === 'greater'   ? '95th' : '5th';
+}
+function getPercentileGuideValues(sorted) {
+  if (tailRuleSelect.value === 'two-sided')
+    return [{ value: quantile(sorted, 0.025), label: '2.5th' },
+            { value: quantile(sorted, 0.975), label: '97.5th' }];
+  if (tailRuleSelect.value === 'greater') return [{ value: quantile(sorted, 0.95), label: '95th' }];
+  return [{ value: quantile(sorted, 0.05), label: '5th' }];
+}
+
+// --- Colour builders ---
+function buildMarkerColours(mode, result = null) {
+  const assignment = {};
+  if (mode === 'observed') {
+    pointRegistry.forEach(d => { assignment[d.id] = d.originalGroup; });
+  } else if (mode === 'pooled') {
+    pointRegistry.forEach(d => { assignment[d.id] = 'pooled'; });
+  } else if (result) {
+    result.A.forEach(d => { assignment[d.id] = 'A'; });
+    result.B.forEach(d => { assignment[d.id] = 'B'; });
+  }
+  const fills   = pointRegistry.map(d => {
+    const g = assignment[d.id];
+    if (g === 'A') return 'rgba(37,99,235,0.14)';
+    if (g === 'B') return 'rgba(220,38,38,0.17)';
+    return 'rgba(156,163,175,0.14)';
+  });
+  const outlines = pointRegistry.map(d => {
+    const g = assignment[d.id];
+    if (g === 'A') return '#2563eb';
+    if (g === 'B') return '#dc2626';
+    return '#9ca3af';
+  });
+  return { fills, outlines, assignment };
+}
+
+// Normal sizes (all points)
+function normalSizes() {
+  return pointRegistry.map(d => d.id === highlightedId ? DOT_HI_SIZE : DOT_SIZE);
+}
+// Flash sizes: only points that CHANGED GROUP get large; unchanged stay normal
+function flashSizes(result) {
+  const assignment = {};
+  result.A.forEach(d => { assignment[d.id] = 'A'; });
+  result.B.forEach(d => { assignment[d.id] = 'B'; });
+  return pointRegistry.map(d => {
+    const changed = assignment[d.id] !== d.originalGroup;
+    if (d.id === highlightedId) return changed ? DOT_HI_FLASH : DOT_HI_SIZE;
+    return changed ? DOT_FLASH : DOT_SIZE;
+  });
+}
+function normalLW() {
+  return pointRegistry.map(d => d.id === highlightedId ? DOT_HI_LW : DOT_LW);
+}
+function flashLW(result) {
+  const assignment = {};
+  result.A.forEach(d => { assignment[d.id] = 'A'; });
+  result.B.forEach(d => { assignment[d.id] = 'B'; });
+  return pointRegistry.map(d => {
+    const changed = assignment[d.id] !== d.originalGroup;
+    return changed ? DOT_FLASH_LW : DOT_LW;
+  });
+}
+function markerSymbols() {
+  return pointRegistry.map(d => d.id === highlightedId ? 'diamond' : 'circle');
+}
+
+// --- Mean overlays ---
+function buildMeanOverlays(mode, result, layout) {
+  let mA = NaN, mB = NaN;
+  if (mode === 'observed') { mA = mean(observedA); mB = mean(observedB); }
+  else if (result && mode !== 'pooled') {
+    mA = mean(result.A.map(d => d.value));
+    mB = mean(result.B.map(d => d.value));
+  }
+  if (!Number.isFinite(mA)) return { shapes: [], annotations: [], extraTraces: [] };
+  return {
+    shapes: [
+      { type: 'line', x0: mA, x1: mA, y0: 0, y1: 0.88, xref: 'x', yref: 'paper', line: { color: '#2563eb', width: 2, dash: 'dot' } },
+      { type: 'line', x0: mB, x1: mB, y0: 0, y1: 0.88, xref: 'x', yref: 'paper', line: { color: '#dc2626', width: 2, dash: 'dot' } }
+    ],
+    annotations: [
+      { text: `A = ${mA.toFixed(2)}`, x: mA, y: 0.96, xref: 'x', yref: 'paper', showarrow: false, font: { size: 11, color: '#2563eb' } },
+      { text: `B = ${mB.toFixed(2)}`, x: mB, y: 0.96, xref: 'x', yref: 'paper', showarrow: false, font: { size: 11, color: '#dc2626' } }
+    ],
+    extraTraces: [
+      { x: [mA], y: [layout.maxY - 0.01], mode: 'markers', type: 'scatter',
+        marker: { symbol: 'triangle-up', size: 10, color: '#2563eb' }, showlegend: false,
+        hovertemplate: `Group A mean = ${mA.toFixed(2)}<extra></extra>` },
+      { x: [mB], y: [layout.maxY - 0.01], mode: 'markers', type: 'scatter',
+        marker: { symbol: 'triangle-up', size: 10, color: '#dc2626' }, showlegend: false,
+        hovertemplate: `Group B mean = ${mB.toFixed(2)}<extra></extra>` }
+    ]
+  };
+}
+
+// --- Plot init ---
+function initStepPlot() {
+  clearTimeout(animTimer1); clearTimeout(animTimer2);
+  const layout = getLayout();
+  const { fills, outlines } = buildMarkerColours('observed');
+  const { shapes, annotations, extraTraces } = buildMeanOverlays('observed', null, layout);
+  const sym = markerSymbols();
+
+  Plotly.newPlot(stepPlot, [
+    { x: layout.xs, y: layout.ys, mode: 'markers', type: 'scatter',
+      marker: { color: fills, size: normalSizes(), symbol: sym, line: { color: outlines, width: normalLW() } },
+      customdata: pointRegistry.map(d => [d.id, d.value]),
+      hovertemplate: '%{customdata[0]}: %{customdata[1]}<extra></extra>', showlegend: false },
+    ...extraTraces
+  ], {
+    margin: { t: 20, r: 20, b: 50, l: 50 },
+    xaxis: { title: 'Values', range: [layout.minX, layout.maxX] },
+    yaxis: { title: '', showticklabels: false, range: [0, layout.maxY + 0.12] },
+    showlegend: false, shapes, annotations
+  }, { responsive: true });
+  plotInitialised = true;
+}
+
+// --- Smooth colour transition (steps 0, 1, settle after 2) ---
+function animateStepColours(mode, result = null) {
+  if (!plotInitialised) { initStepPlot(); return; }
+  const layout = getLayout();
+  const { fills, outlines, assignment } = buildMarkerColours(mode, result);
+  const sym = markerSymbols();
+
+  Plotly.animate(stepPlot, {
+    data: [{ marker: { color: fills, size: normalSizes(), symbol: sym, line: { color: outlines, width: normalLW() } } }],
+    traces: [0]
+  }, { transition: { duration: 400, easing: 'cubic-in-out' }, frame: { duration: 400, redraw: false } });
+
+  const { shapes, annotations, extraTraces } = buildMeanOverlays(mode, result, layout);
+  const hiAnnotations = [...annotations];
+  if (assignment && highlightedId) {
+    const g = assignment[highlightedId];
+    const txt = g === 'pooled' ? 'Same value - label removed'
+              : `Same value - now Group ${g}`;
+    hiAnnotations.push({ text: txt, x: 0.5, y: 1.04, xref: 'paper', yref: 'paper',
+                         showarrow: false, font: { size: 11, color: '#6b7280' } });
+  }
+  Plotly.react(stepPlot, [stepPlot.data[0], ...extraTraces], {
+    margin: { t: 20, r: 20, b: 50, l: 50 },
+    xaxis: { title: 'Values', range: [layout.minX, layout.maxX] },
+    yaxis: { title: '', showticklabels: false, range: [0, layout.maxY + 0.12] },
+    showlegend: false, shapes, annotations: hiAnnotations
+  }, { responsive: true });
+}
+
+// --- Three-phase shuffle animation ---
+// Phase 1: fade to grey (pool)
+// Phase 2: only CHANGED-GROUP dots flash large at their new colour
+// Phase 3: all settle to normal size - then react to add mean lines
+function animateShuffleDeal(result) {
+  clearTimeout(animTimer1); clearTimeout(animTimer2);
+  if (!plotInitialised) { initStepPlot(); return; }
+
+  const { fills: gFills, outlines: gOut } = buildMarkerColours('pooled');
+  const { fills: nFills, outlines: nOut } = buildMarkerColours('shuffle', result);
+  const sym = markerSymbols();
+
+  // Phase 1: pool (grey, normal size)
+  Plotly.animate(stepPlot, {
+    data: [{ marker: { color: gFills, size: normalSizes(), symbol: sym, line: { color: gOut, width: normalLW() } } }],
+    traces: [0]
+  }, { transition: { duration: 180, easing: 'cubic-in-out' }, frame: { duration: 180, redraw: false } });
+
+  // Phase 2: changed dots flash large at new colours; unchanged stay normal
+  animTimer1 = setTimeout(() => {
+    Plotly.animate(stepPlot, {
+      data: [{ marker: { color: nFills, size: flashSizes(result), symbol: sym, line: { color: nOut, width: flashLW(result) } } }],
+      traces: [0]
+    }, { transition: { duration: 380, easing: 'cubic-in-out' }, frame: { duration: 380, redraw: false } });
+
+    // Phase 3: settle + mean lines
+    animTimer2 = setTimeout(() => { animateStepColours('shuffle', result); }, 460);
+  }, 230);
+}
+
+// --- Step metadata ---
+const STEP_META = [
+  { mode: 'observed', result: null,
+    note:  'The original observed groups. Mean markers show the observed difference. All points stay in these exact positions throughout every step.',
+    watch: 'Pick any dot and note its position. It will not move through any of the following steps.',
+    badge: 'Step 1 of 4 - Observed' },
+  { mode: 'pooled', result: null,
+    note:  'Under the null, labels do not matter. All values are pooled and treated as a single group waiting to be re-dealt.',
+    watch: 'The diamond is now grey. Its x-position has not changed - only its colour (label) has been removed.',
+    badge: 'Step 2 of 4 - Pool (null world)' },
+  { mode: 'shuffle', result: 'staged',
+    note:  'Labels are re-dealt at random. The dots that changed group flash large so you can see exactly which labels moved.',
+    watch: 'The large dots are the ones that switched group. Small dots stayed in the same group as before.',
+    badge: 'Step 3 of 4 - One shuffle' },
+  { mode: 'shuffle', result: 'staged',
+    note:  'This shuffle has been added to the null distribution below. A new shuffle is staged ready for the next deal.',
+    watch: 'Each new deal adds one point to the histogram. Over many shuffles the histogram becomes the null distribution.',
+    badge: 'Step 4 of 4 - Added to null' }
+];
+
+function goToStep(idx) {
+  currentStep = idx;
+  for (let i = 0; i < 4; i++) document.getElementById(`sBtn${i}`).classList.toggle('active', i === idx);
+  const meta = STEP_META[idx];
+  stepNote.textContent = meta.note;
+  watchText.innerHTML  = `<strong>What to look for:</strong> ${meta.watch}`;
+  stepBadge.textContent = meta.badge;
+
+  if (idx === 0) {
+    animateStepColours('observed');
+  } else if (idx === 1) {
+    animateStepColours('pooled');
+  } else if (idx === 2) {
+    stagedShuffle = generateOneShuffle();
+    animateShuffleDeal(stagedShuffle);
+  } else {
+    if (!stagedShuffle) stagedShuffle = generateOneShuffle();
+    latestShuffle = stagedShuffle;
+    shuffledDiffs.push(stagedShuffle.diff);
+    animateStepColours('shuffle', stagedShuffle);
+    stagedShuffle = generateOneShuffle();
+    drawNullPlot();
+    updateSummary();
+  }
+}
+
+// --- Null distribution ---
+function drawNullPlot() {
+  nullBadge.textContent = `${shuffledDiffs.length.toLocaleString()} shuffle${shuffledDiffs.length !== 1 ? 's' : ''}`;
+  if (!shuffledDiffs.length) {
+    Plotly.react(nullPlot, [], { margin: { t: 10 } }, { responsive: true });
+    return;
+  }
+  const extremes = shuffledDiffs.filter(isExtreme);
+  const minX = Math.min(...shuffledDiffs, observedDiff);
+  const maxX = Math.max(...shuffledDiffs, observedDiff);
+  const pad  = Math.max((maxX - minX) * 0.15, 1);
+  const xbins = { start: minX, end: maxX, size: Math.max((maxX - minX) / 40, 0.25) };
+
+  const traces = [
+    { x: shuffledDiffs, type: 'histogram', marker: { color: '#9ca3af' },
+      name: 'Shuffled differences', xbins,
+      hovertemplate: 'Diff=%{x:.3f}<br>Count=%{y}<extra></extra>' }
+  ];
+  if (extremes.length) {
+    traces.push({ x: extremes, type: 'histogram', marker: { color: '#dc2626' }, opacity: 0.9,
+                  name: 'At least this extreme', xbins,
+                  hovertemplate: 'Extreme diff=%{x:.3f}<br>Count=%{y}<extra></extra>' });
+  }
+
+  const shapes = [{ type: 'line', x0: observedDiff, x1: observedDiff, y0: 0, y1: 1,
+                    xref: 'x', yref: 'paper', line: { color: '#111827', width: 3 } }];
+  const annotations = [{ x: observedDiff, y: 1.02, xref: 'x', yref: 'paper',
+                          text: 'Observed', showarrow: false, font: { size: 12, color: '#111827' } }];
+
+  const sorted = [...shuffledDiffs].sort((a, b) => a - b);
+  getPercentileGuideValues(sorted).forEach(g => {
+    shapes.push({ type: 'line', x0: g.value, x1: g.value, y0: 0, y1: 1, xref: 'x', yref: 'paper',
+                  line: { color: '#2563eb', width: 2, dash: 'dot' } });
+    annotations.push({ x: g.value, y: 0.96, xref: 'x', yref: 'paper', text: g.label,
+                        showarrow: false, font: { size: 11, color: '#2563eb' } });
+  });
+
+  Plotly.react(nullPlot, traces, {
+    barmode: 'overlay', bargap: 0,
+    margin: { t: 10, r: 20, b: 50, l: 50 },
+    xaxis: { title: 'Difference in means after shuffling', range: [minX - pad, maxX + pad] },
+    yaxis: { title: 'Frequency' },
+    showlegend: true,
+    legend: { orientation: 'h', x: 0, y: 1.08, xanchor: 'left', yanchor: 'bottom' },
+    shapes, annotations
+  }, { responsive: true });
+}
+
+// --- Summary and interpretation ---
+function updateSummary() {
+  const extremeCount = shuffledDiffs.filter(isExtreme).length;
+  const n            = shuffledDiffs.length;
+  let percentile = null;
+  if (n) {
+    const sorted = [...shuffledDiffs].sort((a, b) => a - b);
+    percentile   = sorted.filter(x => x < observedDiff).length / n;
+  }
+  const pval = n ? extremeCount / n : null;
+
+  // Summary card
+  document.getElementById('observedDiffVal').textContent  = observedDiff.toFixed(3);
+  document.getElementById('latestShuffleVal').textContent = latestShuffle ? latestShuffle.diff.toFixed(3) : '--';
+  document.getElementById('groupAMeanVal').textContent    = mean(observedA).toFixed(3);
+  document.getElementById('groupBMeanVal').textContent    = mean(observedB).toFixed(3);
+
+  // Interpretation panel secondary metrics
+  document.getElementById('pvalVal').textContent           = pval !== null ? (pval === 0 ? `< ${(1/n).toFixed(4)}` : pval.toFixed(4)) : '--';
+  document.getElementById('extremeCountVal').textContent   = extremeCount.toLocaleString();
+  document.getElementById('percentileVal').textContent     = percentile !== null ? `${(percentile * 100).toFixed(1)}th percentile` : '--';
+  document.getElementById('percentileGuideVal').textContent = getPercentileGuideText();
+  document.getElementById('tailRuleVal').textContent       = tailRuleSelect.options[tailRuleSelect.selectedIndex].text;
+  document.getElementById('shuffleCountVal').textContent   = n.toLocaleString();
+
+  // Interpretation verdict box
+  const interpBox    = document.getElementById('interpBox');
+  const verdictText  = document.getElementById('verdictText');
+  const verdictCtx   = document.getElementById('verdictContext');
+  const interpBadge  = document.getElementById('interpBadge');
+  const pillRow      = document.getElementById('interpPillRow');
+
+  if (pval === null) {
+    interpBox.className    = 'interp-box pending';
+    verdictText.textContent = 'Run shuffles to evaluate the observed result.';
+    verdictCtx.textContent  = 'The null distribution has not been built yet. Use the step buttons above or the shuffle buttons on the right.';
+    interpBadge.textContent = '--';
+    pillRow.innerHTML       = '';
+  } else {
+    let cls, headline, context;
+    if (pval <= 0.01) {
+      cls      = 'very-sig';
+      headline = 'Very unusual under the null.';
+      context  = `Fewer than 1% of shuffles produce a result this extreme (p = ${pval.toFixed(4)}). This is strong evidence against the null hypothesis that group labels carry no information. The observed separation is unlikely to be due to chance alone.`;
+    } else if (pval <= 0.05) {
+      cls      = 'sig';
+      headline = 'Fairly unusual under the null.';
+      context  = `Between 1 and 5% of shuffles reach this level (p = ${pval.toFixed(4)}). The result sits at the conventional threshold for statistical significance. The observed separation would be uncommon if labels were truly arbitrary.`;
+    } else if (pval <= 0.20) {
+      cls      = 'marginal';
+      headline = 'Somewhat uncommon under the null.';
+      context  = `Between 5 and 20% of shuffles are this extreme (p = ${pval.toFixed(4)}). The result is in ambiguous territory. It is not clearly unusual but not fully consistent with the null either. A larger sample or clearer separation would resolve the question.`;
+    } else {
+      cls      = 'not-sig';
+      headline = 'Consistent with the null.';
+      context  = `More than 20% of shuffles are at least this extreme (p = ${pval.toFixed(4)}). The observed difference is well within the range expected by chance alone. There is no clear evidence against the null hypothesis with this data.`;
+    }
+
+    interpBox.className     = `interp-box ${cls}`;
+    verdictText.textContent  = headline;
+    verdictCtx.textContent   = context;
+    interpBadge.textContent  = `p = ${pval.toFixed(3)}`;
+
+    const rule = tailRuleSelect.value;
+    pillRow.innerHTML = [
+      `<span class="pill ${pval <= 0.05 ? 'good' : pval <= 0.20 ? 'warn' : 'neutral'}">p = ${pval.toFixed(3)}</span>`,
+      `<span class="pill neutral">${rule === 'two-sided' ? 'Two-sided' : rule === 'greater' ? 'One-sided (greater)' : 'One-sided (less)'}</span>`,
+      `<span class="pill neutral">n = ${+groupSizeSlider.value} per group</span>`,
+      `<span class="pill neutral">${n.toLocaleString()} shuffles</span>`
+    ].join('');
+  }
+}
+
+// --- Orchestration ---
+function updateLabels() {
+  document.getElementById('groupSizeVal').textContent  = `${groupSizeSlider.value} per group`;
+  document.getElementById('effectSizeVal').textContent = Number(effectSizeSlider.value).toFixed(1);
+}
+function regenerateData() {
+  clearTimeout(animTimer1); clearTimeout(animTimer2);
+  updateLabels();
+  generateObservedData();
+  initStepPlot();
+  goToStep(0);
+  drawNullPlot();
+  updateSummary();
+}
+function resetNull() {
+  shuffledDiffs = []; latestShuffle = null; stagedShuffle = null;
+  drawNullPlot(); updateSummary();
+}
+function applyPreset(cfg) {
+  groupSizeSlider.value  = cfg.n;
+  effectSizeSlider.value = cfg.effect;
+  directionSelect.value  = cfg.dir || 'positive';
+  tailRuleSelect.value   = cfg.tail || 'two-sided';
+  updateLabels();
+  generateObservedData();
+  initStepPlot();
+  goToStep(0);
+  runShuffles(1000);
+  drawNullPlot();
+  updateSummary();
+}
+
+// --- Teaching scenarios ---
+document.getElementById('presetNull').onclick   = () => applyPreset({ n: 25, effect: 0,   tail: 'two-sided' });
+document.getElementById('presetSmall').onclick  = () => applyPreset({ n: 20, effect: 2,   tail: 'two-sided' });
+document.getElementById('presetClear').onclick  = () => applyPreset({ n: 25, effect: 8,   tail: 'two-sided' });
+document.getElementById('presetUnder').onclick  = () => applyPreset({ n: 6,  effect: 3.5, tail: 'two-sided' });
+document.getElementById('presetLargeN').onclick = () => applyPreset({ n: 30, effect: 0.4, tail: 'two-sided' });
+
+// --- Action buttons ---
+document.getElementById('newData').onclick     = regenerateData;
+document.getElementById('shuffle100').onclick  = () => { runShuffles(100);  drawNullPlot(); updateSummary(); };
+document.getElementById('shuffle1000').onclick = () => { runShuffles(1000); drawNullPlot(); updateSummary(); };
+document.getElementById('resetNull').onclick   = resetNull;
+
+// --- Sliders and selects ---
+['input', 'change'].forEach(e => {
+  groupSizeSlider.addEventListener(e, regenerateData);
+  effectSizeSlider.addEventListener(e, regenerateData);
+});
+directionSelect.onchange = regenerateData;
+tailRuleSelect.onchange  = () => { drawNullPlot(); updateSummary(); };
+
+// --- Guide and help toggles ---
+document.getElementById('toggleGuide').addEventListener('click', () => {
+  const g = document.getElementById('guideSection');
+  const btn = document.getElementById('toggleGuide');
+  const open = g.classList.toggle('open');
+  btn.textContent = open ? '&#9650; Quick-Start Guide' : '&#9660; Quick-Start Guide';
+});
+document.getElementById('toggleHelp').addEventListener('click', () => {
+  const h = document.getElementById('helpCard');
+  h.style.display = h.style.display === 'none' ? 'block' : 'none';
+});
+
+// --- Init ---
+updateLabels();
+generateObservedData();
+initStepPlot();
+goToStep(0);
+drawNullPlot();
+updateSummary();
+</script>
+</body>
+</html>
