@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<!-- saved from url=(0063)file:///Users/psimac/Downloads/permutation_numeric_cards_3.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Permutation Test — Numeric Cards</title>
+<style>
+:root {
+  --bg:#f6f7f9; --card:#ffffff; --border:#d9dde3;
+  --text:#1f2937; --muted:#6b7280; --soft:#f3f4f6;
+  --blue:#2563eb; --red:#dc2626; --green:#16a34a;
+  --amber:#d97706; --gray:#9ca3af;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px;font-size:14px;line-height:1.5}
+.container{max-width:1380px;margin:auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+
+/* Tab bar */
+.tab-bar{display:flex;align-items:center;border-bottom:2px solid var(--border);margin-bottom:16px;gap:0}
+.tab-btn{padding:10px 18px;border:none;border-bottom:2px solid transparent;background:none;font-family:Arial,sans-serif;font-size:.85rem;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:-2px;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-hint{font-size:.76rem;color:var(--gray);font-style:italic;margin-left:auto;padding-right:6px;white-space:nowrap}
+
+/* Step track */
+.step-track{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--border);margin-bottom:14px}
+.step-btn{flex:1;padding:9px 4px;border:none;background:var(--soft);color:var(--muted);cursor:pointer;font-size:.78rem;font-weight:700;border-right:1px solid var(--border);transition:background .15s}
+.step-btn:last-child{border-right:none}
+.step-btn:hover{background:#e5e7eb}
+.step-btn.active{background:var(--blue);color:white}
+
+/* Layouts */
+.two-panel{display:grid;grid-template-columns:3fr 2fr;gap:16px}
+.full-sim-grid{display:grid;grid-template-columns:1fr 2fr;gap:16px}
+.tab3-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+
+/* Intro */
+.intro-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.intro-title{flex:1 1 400px}
+.intro-title h2{margin:0 0 5px;font-size:1.2rem}
+.intro-subtitle{font-size:.9rem;color:var(--muted);margin:0;line-height:1.5}
+.header-btns{display:flex;flex-direction:column;gap:8px;flex-shrink:0;margin-top:2px}
+
+/* Guide */
+.guide-section{display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.guide-section.open{display:block}
+.guide-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.guide-col h4{margin:0 0 7px;font-size:.9rem;color:var(--text)}
+.guide-col ul,.guide-col ol{padding-left:18px;margin:0}
+.guide-col li{font-size:.83rem;color:var(--muted);line-height:1.5;margin-bottom:3px}
+.guide-col li strong{color:var(--text)}
+
+/* Buttons */
+button{padding:8px 13px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;font-family:Arial,sans-serif;font-size:.84rem;color:var(--text);transition:background .15s}
+button:hover{background:#f8fafc}
+button:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--blue);border-color:var(--blue);color:white}
+.btn-primary:hover{background:#1d4ed8}
+
+/* Group rows & cards */
+.group-row{margin-bottom:18px}
+.group-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.group-label{font-size:.84rem;font-weight:700}
+.mean-badge{font-size:.78rem;background:var(--soft);border:1px solid var(--border);padding:2px 9px;border-radius:20px;color:var(--muted);font-family:ui-monospace,monospace}
+.obs-ghost{font-size:.74rem;color:var(--gray)}
+.cards-row{display:flex;gap:6px;flex-wrap:wrap;min-height:130px;align-items:flex-end}
+
+/* Numeric value cards (file 1) */
+.vcard{
+  width:50px;height:60px;
+  border-radius:8px;border:2px solid transparent;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex-shrink:0;user-select:none;
+}
+.vcard.grp-a{background:#dbeafe;border-color:#2563eb}
+.vcard.grp-b{background:#fee2e2;border-color:#dc2626}
+.vcard.pooled{background:var(--soft);border-color:#d1d5db}
+.vcard-val{font-size:.92rem;font-weight:700;font-family:ui-monospace,monospace;color:var(--text)}
+.origin-dot{width:6px;height:6px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.dot-a{background:#2563eb}.dot-b{background:#dc2626}
+
+/* Step description */
+.step-desc{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px;font-size:.84rem;color:#075985;line-height:1.5;margin-top:12px}
+.step-desc strong{color:#0c4a6e}
+
+/* Action row */
+.action-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+
+/* Metrics */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{border:1px solid var(--border);background:var(--soft);border-radius:8px;padding:8px 10px}
+.metric-label{font-size:.72rem;color:var(--muted)}
+.metric-value{font-weight:700;font-size:.95rem;font-family:ui-monospace,monospace;margin-top:1px}
+
+/* Interpretation */
+.interp-box{padding:12px 14px;border:1px solid;border-left:5px solid;border-radius:10px;transition:all .35s}
+.interp-box.pending{background:#eff6ff;border-color:#c7d2fe;border-left-color:var(--blue)}
+.interp-box.not-sig{background:var(--soft);border-color:var(--border);border-left-color:var(--gray)}
+.interp-box.marginal{background:#fff7ed;border-color:#fdba74;border-left-color:var(--amber)}
+.interp-box.sig{background:#ecfdf5;border-color:#86efac;border-left-color:var(--green)}
+.interp-box.very-sig{background:#f0fdf4;border-color:#4ade80;border-left-color:#15803d}
+.interp-verdict{font-weight:700;margin-bottom:5px}
+.interp-ctx{font-size:.84rem;color:var(--muted)}
+
+/* Scenario cards */
+.sc-card{border:1px solid var(--border);border-radius:10px;padding:11px 13px;background:var(--soft);cursor:pointer;transition:all .15s}
+.sc-card:hover{border-color:var(--blue);background:#eff6ff}
+.sc-card.active{border-color:var(--blue);background:#eff6ff}
+.sc-name{font-weight:700;font-size:.88rem;margin-bottom:4px}
+.sc-desc{font-size:.78rem;color:var(--muted);line-height:1.4}
+
+/* Controls */
+.control-box{background:var(--soft);padding:10px;border-radius:10px;border:1px solid var(--border);margin-bottom:10px}
+.control-title{font-size:.82rem;font-weight:700;display:block;margin-bottom:6px}
+input[type=range]{width:100%;accent-color:var(--blue)}
+select{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:Arial,sans-serif;font-size:.84rem;background:white}
+.val-display{font-size:.8rem;color:var(--muted);margin-top:3px}
+
+/* Panel header */
+.panel-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.panel-header h3{margin:0;font-size:1rem}
+.panel-badge{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:var(--soft);color:var(--muted)}
+.wtw{margin:0 0 10px;padding:9px 11px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:.82rem;color:#075985;line-height:1.45}
+.wtw strong{color:#0c4a6e}
+
+/* Histogram */
+.hist-wrap svg{width:100%;display:block}
+
+/* Help card */
+.help-card{display:none}
+.help-card.open{display:block}
+.help-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.help-section{margin-bottom:18px}
+.help-section h4{margin:0 0 6px;font-size:.93rem;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px}
+.help-section p,.help-section li{font-size:.86rem;color:var(--muted);line-height:1.5;margin:4px 0}
+.help-section ul{padding-left:18px;margin:6px 0}
+.help-section li strong{color:var(--text)}
+.case-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.case-box{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--soft)}
+.case-box .case-label{font-weight:700;font-size:.82rem;color:var(--text)}
+.case-box .case-desc{font-size:.76rem;color:var(--muted);margin-top:2px;line-height:1.35}
+
+/* Animation overlay */
+#animOverlay{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999}
+
+@media(max-width:900px){
+  .two-panel,.full-sim-grid,.tab3-grid,.guide-cols,.scenario-grid,.help-2col,.case-grid{grid-template-columns:1fr}
+  .metric-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="animOverlay"></div>
+<div class="container">
+
+<!-- HEADER -->
+<div class="card">
+  <div class="intro-header">
+    <div class="intro-title">
+      <h2>Permutation Test Explorer — Numeric Cards</h2>
+      <p class="intro-subtitle">An interactive lab for understanding how a shuffle test builds a null world from the observed data, and what it means for an outcome to be unusual under that world.</p>
+    </div>
+    <div class="header-btns">
+      <button id="toggleGuide">▼ Quick-Start Guide</button>
+      <button id="toggleHelp">📚 Full Reference</button>
+    </div>
+  </div>
+  <div class="guide-section" id="guideSection">
+    <div class="guide-cols">
+      <div class="guide-col">
+        <h4>Start Here</h4>
+        <ul>
+          <li>Go to <strong>Scenarios &amp; Controls</strong> and load a preset. Each one sets up a classic situation to explore.</li>
+          <li>Then open <strong>Tab 1</strong> to step through exactly what one shuffle does to the data cards.</li>
+          <li>Use <strong>Run 10 More</strong> to accumulate shuffles, then jump to <strong>Tab 2</strong> to read the full null distribution.</li>
+        </ul>
+      </div>
+      <div class="guide-col">
+        <h4>Tab 1: One Shuffle</h4>
+        <ul>
+          <li><strong>Step 1:</strong> Observed groups with their means.</li>
+          <li><strong>Step 2:</strong> Labels removed, all cards go grey.</li>
+          <li><strong>Step 3:</strong> Labels re-assigned. Cards animate to new groups. Values never change.</li>
+          <li><strong>Step 4:</strong> New difference recorded in the histogram on the right.</li>
+          <li>Click <strong>Run 10 More</strong> to watch repeated shuffles accumulate.</li>
+        </ul>
+      </div>
+      <div class="guide-col">
+        <h4>The Core Idea</h4>
+        <ul>
+          <li>A card's <strong>value never changes</strong>. Only its group label does.</li>
+          <li>The p-value is the <strong>fraction of the histogram</strong> beyond the observed line, nothing more.</li>
+          <li>Small samples produce a wide null distribution, making even real effects hard to confirm.</li>
+          <li>Significance does not mean importance. A tiny effect can be unusual at large n.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="0">1. One Shuffle</button>
+  <button class="tab-btn" data-tab="1">2. Build the Distribution</button>
+  <button class="tab-btn" data-tab="2">Scenarios &amp; Controls</button>
+  <span class="tab-hint">New to permutation tests? Start with Tab 1.</span>
+</div>
+
+<!-- ══ TAB 1 ══ -->
+<div id="tab0" class="tab-content">
+  <div class="two-panel">
+    <div>
+      <div class="card">
+        <div class="panel-header">
+          <h3>Shuffle Step-Through</h3>
+          <span class="panel-badge" id="stepBadge">Step 1 of 4</span>
+        </div>
+        <p class="wtw"><strong>What to look for:</strong> each card keeps its exact value in every step. Only its group label changes. That is the whole mechanism of a permutation test.</p>
+        <div class="step-track">
+          <button class="step-btn active" id="sb0" onclick="goToStep(0)">1 · Observed</button>
+          <button class="step-btn" id="sb1" onclick="goToStep(1)">2 · Pool</button>
+          <button class="step-btn" id="sb2" onclick="goToStep(2)">3 · Reassign</button>
+          <button class="step-btn" id="sb3" onclick="goToStep(3)">4 · Record</button>
+        </div>
+        <div class="group-row">
+          <div class="group-header">
+            <span class="group-label" style="color:var(--blue)">Group A</span>
+            <span class="mean-badge" id="meanA">mean = 9.34</span>
+            <span class="obs-ghost" id="ghostA"></span>
+          </div>
+          <div class="cards-row" id="cardsA"><div class="vcard grp-a" data-pid="0"><div class="vcard-val">16.7</div></div><div class="vcard grp-a" data-pid="1"><div class="vcard-val">7.3</div></div><div class="vcard grp-a" data-pid="2"><div class="vcard-val">4.2</div></div><div class="vcard grp-a" data-pid="3"><div class="vcard-val">2.4</div></div><div class="vcard grp-a" data-pid="4"><div class="vcard-val">9.4</div></div><div class="vcard grp-a" data-pid="5"><div class="vcard-val">1.4</div></div><div class="vcard grp-a" data-pid="6"><div class="vcard-val">13.4</div></div><div class="vcard grp-a" data-pid="7"><div class="vcard-val">14.5</div></div><div class="vcard grp-a" data-pid="8"><div class="vcard-val">15.8</div></div><div class="vcard grp-a" data-pid="9"><div class="vcard-val">7.8</div></div><div class="vcard grp-a" data-pid="10"><div class="vcard-val">11.1</div></div><div class="vcard grp-a" data-pid="11"><div class="vcard-val">10.4</div></div><div class="vcard grp-a" data-pid="12"><div class="vcard-val">3.8</div></div><div class="vcard grp-a" data-pid="13"><div class="vcard-val">16.1</div></div><div class="vcard grp-a" data-pid="14"><div class="vcard-val">5.7</div></div><div class="vcard grp-a" data-pid="15"><div class="vcard-val">9.4</div></div></div>
+        </div>
+        <div class="group-row" style="margin-bottom:0">
+          <div class="group-header">
+            <span class="group-label" style="color:var(--red)">Group B</span>
+            <span class="mean-badge" id="meanB">mean = 12.02</span>
+            <span class="obs-ghost" id="ghostB"></span>
+          </div>
+          <div class="cards-row" id="cardsB"><div class="vcard grp-b" data-pid="16"><div class="vcard-val">12.2</div></div><div class="vcard grp-b" data-pid="17"><div class="vcard-val">12.1</div></div><div class="vcard grp-b" data-pid="18"><div class="vcard-val">8.9</div></div><div class="vcard grp-b" data-pid="19"><div class="vcard-val">19.6</div></div><div class="vcard grp-b" data-pid="20"><div class="vcard-val">12.0</div></div><div class="vcard grp-b" data-pid="21"><div class="vcard-val">10.2</div></div><div class="vcard grp-b" data-pid="22"><div class="vcard-val">9.8</div></div><div class="vcard grp-b" data-pid="23"><div class="vcard-val">7.8</div></div><div class="vcard grp-b" data-pid="24"><div class="vcard-val">14.8</div></div><div class="vcard grp-b" data-pid="25"><div class="vcard-val">15.0</div></div><div class="vcard grp-b" data-pid="26"><div class="vcard-val">15.6</div></div><div class="vcard grp-b" data-pid="27"><div class="vcard-val">8.7</div></div><div class="vcard grp-b" data-pid="28"><div class="vcard-val">12.9</div></div><div class="vcard grp-b" data-pid="29"><div class="vcard-val">6.7</div></div><div class="vcard grp-b" data-pid="30"><div class="vcard-val">12.3</div></div><div class="vcard grp-b" data-pid="31"><div class="vcard-val">13.7</div></div></div>
+        </div>
+        <div class="step-desc" id="stepDesc"><strong>Step 1 — Observed:</strong> These are the two groups as observed. Each card shows a data value. Blue cards belong to Group A, red cards to Group B. The observed difference in means is <strong>2.68</strong>.</div>
+        <div class="action-row">
+          <button class="btn-primary" id="btnNext" onclick="nextStep()">Next Step</button>
+          <button id="btnRun10" onclick="run10More()" disabled="">Run 10 More</button>
+          <button id="btnGoToDist" onclick="goToDistTab()" style="display:none">→ See Distribution</button>
+          <div style="flex:1"></div>
+          <button id="btnResetStep" onclick="goToStep(0)">Reset Steps</button>
+          <button onclick="newData()">New Data</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="panel-header">
+          <h3>Null Distribution</h3>
+          <span class="panel-badge" id="t1NullBadge">0 shuffles</span>
+        </div>
+        <p class="wtw" style="font-size:.78rem"><strong>Each shuffle adds one bar here.</strong> The black line is the observed difference. Red bars are as extreme or more extreme than observed.</p>
+        <div class="hist-wrap"><svg id="t1Svg" viewBox="0 0 420 250"><line x1="46" y1="22" x2="46" y2="206" stroke="#d1d5db" stroke-width="1"></line>
+<line x1="46" y1="206" x2="404" y2="206" stroke="#d1d5db" stroke-width="1"></line>
+<text x="225" y="106" text-anchor="middle" fill="#9ca3af" font-size="13" font-family="Arial">Run shuffles to build the null distribution</text>
+<text x="225" y="126" text-anchor="middle" fill="#bfdbfe" font-size="11" font-family="Arial">Each shuffle will add one bar here</text>
+<line x1="300.43320235756386" y1="17" x2="300.43320235756386" y2="206" stroke="#111827" stroke-width="2.5"></line>
+<text x="296.43320235756386" y="15" text-anchor="end" fill="#111827" font-size="10" font-weight="700" font-family="Arial">Observed (2.68)</text>
+<text x="225" y="241" text-anchor="middle" fill="#6b7280" font-size="11" font-family="Arial">Shuffled difference in means</text></svg></div>
+        <div class="metric-grid" style="margin-top:10px">
+          <div class="metric">
+            <div class="metric-label">Observed diff</div>
+            <div class="metric-value" id="t1ObsDiff">2.68</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">p-value (approx)</div>
+            <div class="metric-value" id="t1Pval">--</div>
+          </div>
+        </div>
+        <div id="t1FriendlyBox" style="display:none;margin-top:10px;padding:9px 12px;border-radius:8px;border:1px solid;border-left:4px solid;font-size:.83rem;line-height:1.5;transition:all .3s">
+          <div id="t1FriendlyText" style="font-weight:700;margin-bottom:3px"></div>
+          <div id="t1FriendlyCtx" style="color:var(--muted)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 2 ══ -->
+<div id="tab1" class="tab-content" style="display:none">
+  <div class="full-sim-grid">
+    <div>
+      <div class="card">
+        <h3 style="margin-bottom:8px">Build the Null Distribution</h3>
+        <p style="font-size:.84rem;color:var(--muted);margin-bottom:12px">Run many shuffles to build the reference distribution. The p-value stabilises after around 1,000 shuffles.</p>
+        <div class="control-box">
+          <span class="control-title">Add shuffles</span>
+          <button onclick="t2Shuffle(100)" style="margin-right:6px;margin-bottom:6px">Shuffle 100</button>
+          <button onclick="t2Shuffle(1000)" style="margin-right:6px;margin-bottom:6px">Shuffle 1,000</button>
+          <button onclick="t2Reset()">Reset null</button>
+        </div>
+        <div id="t2InterpBox" class="interp-box pending" style="margin-bottom:10px">
+          <div class="interp-verdict" id="t2Friendly">Run shuffles to see an interpretation.</div>
+          <div style="font-weight:700;margin:4px 0 2px;font-size:.84rem" id="t2Verdict"></div>
+          <div class="interp-ctx" id="t2VerdictCtx">Use the buttons above to build the null distribution.</div>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Observed diff</div><div class="metric-value" id="t2ObsDiff">1.66</div></div>
+          <div class="metric"><div class="metric-label">p-value (approx)</div><div class="metric-value" id="t2Pval">--</div></div>
+          <div class="metric"><div class="metric-label">Total shuffles</div><div class="metric-value" id="t2ShCount">0</div></div>
+          <div class="metric"><div class="metric-label">Extreme shuffles</div><div class="metric-value" id="t2ExtCount">0</div></div>
+          <div class="metric"><div class="metric-label">Group A mean</div><div class="metric-value" id="t2MeanA">10.76</div></div>
+          <div class="metric"><div class="metric-label">Group B mean</div><div class="metric-value" id="t2MeanB">12.42</div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="panel-header">
+          <h3>Null Distribution from Label Shuffling</h3>
+          <span class="panel-badge" id="t2NullBadge">0 shuffles</span>
+        </div>
+        <p class="wtw"><strong>What to look for:</strong> the black line is the observed difference. Red bars mark shuffles as extreme as the observed result. Their fraction is the p-value approximation.</p>
+        <div class="hist-wrap"><svg id="t2Svg" viewBox="0 0 560 300"><line x1="46" y1="22" x2="46" y2="256" stroke="#d1d5db" stroke-width="1"></line>
+<line x1="46" y1="256" x2="544" y2="256" stroke="#d1d5db" stroke-width="1"></line>
+<text x="295" y="131" text-anchor="middle" fill="#9ca3af" font-size="13" font-family="Arial">Run shuffles to build the null distribution</text>
+<text x="295" y="151" text-anchor="middle" fill="#bfdbfe" font-size="11" font-family="Arial">Each shuffle will add one bar here</text>
+<line x1="390.68055555555554" y1="17" x2="390.68055555555554" y2="256" stroke="#111827" stroke-width="2.5"></line>
+<text x="386.68055555555554" y="15" text-anchor="end" fill="#111827" font-size="10" font-weight="700" font-family="Arial">Observed (1.66)</text>
+<text x="295" y="291" text-anchor="middle" fill="#6b7280" font-size="11" font-family="Arial">Shuffled difference in means</text></svg></div>
+        <p style="font-size:.76rem;color:var(--muted);margin-top:7px">Dashed blue lines mark reference percentiles (2.5th/97.5th for two-sided, 5th/95th for one-sided). Run at least 1,000 shuffles for a stable p-value.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 3 ══ -->
+<div id="tab2" class="tab-content" style="display:none">
+  <div class="tab3-grid">
+    <div class="card">
+      <h3 style="margin-bottom:6px">Teaching Scenarios</h3>
+      <p style="font-size:.84rem;color:var(--muted);margin-bottom:0">Each scenario illustrates a different classic situation. Loading one resets both tabs so you start fresh. Step through Tab 1, accumulate shuffles, then jump to Tab 2 to read the null distribution you built. Try adjusting Group size to see how n changes the verdict without changing the true separation.</p>
+      <div class="scenario-grid" id="scenarioGrid"><div class="sc-card" onclick="applyScenario(&#39;null&#39;)">
+      <div class="sc-name">Null is true</div>
+      <div class="sc-desc">Zero separation, moderate noise. Expect the observed line near the centre and a p-value close to 1.0.</div>
+    </div><div class="sc-card active" onclick="applyScenario(&#39;small&#39;)">
+      <div class="sc-name">Small but real</div>
+      <div class="sc-desc">Moderate group size, small separation. The observed line sits in a moderate tail — the ambiguous middle ground.</div>
+    </div><div class="sc-card" onclick="applyScenario(&#39;clear&#39;)">
+      <div class="sc-name">Clear separation</div>
+      <div class="sc-desc">Large separation relative to noise. The observed line falls firmly in the far tail, producing a very small p-value.</div>
+    </div><div class="sc-card" onclick="applyScenario(&#39;under&#39;)">
+      <div class="sc-name">Underpowered</div>
+      <div class="sc-desc">Small group size, moderate separation. The effect exists, but with few observations the null distribution is wide and ambiguous.</div>
+    </div><div class="sc-card" onclick="applyScenario(&#39;largeN&#39;)">
+      <div class="sc-name">Large n, tiny effect</div>
+      <div class="sc-desc">Large sample, tiny true separation. Even a trivially small difference becomes statistically unusual — significance without importance.</div>
+    </div></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Controls</h3>
+      <div class="control-box">
+        <span class="control-title">Group size (Tab 2 only)</span>
+        <input type="range" id="groupSize" min="4" max="30" value="25">
+        <div class="val-display" id="groupSizeVal">20 per group</div>
+        <div style="font-size:.74rem;color:var(--muted);margin-top:4px">Tab 1 always uses 6 per group for animation clarity.</div>
+      </div>
+      <div class="control-box">
+        <span class="control-title">Observed separation</span>
+        <input type="range" id="effectSize" min="0" max="12" step="0.1" value="2.5">
+        <div class="val-display" id="effectSizeVal">2.0</div>
+      </div>
+      <div class="control-box">
+        <span class="control-title">Direction</span>
+        <select id="directionSel">
+          <option value="positive">Group B higher than Group A</option>
+          <option value="negative">Group A higher than Group B</option>
+        </select>
+      </div>
+      <div class="control-box">
+        <span class="control-title">Tail rule</span>
+        <select id="tailRuleSel">
+          <option value="two-sided">Two-sided</option>
+          <option value="greater">One-sided (greater)</option>
+          <option value="less">One-sided (less)</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="newData()" style="width:100%">New Observed Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- FULL REFERENCE -->
+<div class="card help-card" id="helpCard" style="margin-top:0">
+  <h3 style="margin-bottom:14px">Full Reference</h3>
+  <div class="help-2col">
+    <div>
+      <div class="help-section">
+        <h4>Core Concepts</h4>
+        <p><strong>Permutation test</strong> (shuffle test, randomisation test) asks whether the observed difference between groups is unusual under a null world where labels are arbitrary. It builds its reference distribution from the actual data, making it distribution-free.</p>
+        <p><strong>Null hypothesis:</strong> the group label carries no information. Any assignment of values to groups is equally plausible, which justifies random reshuffling.</p>
+        <p><strong>Fixed values, changing labels.</strong> Values never move. On each shuffle only the group assignment changes. This is why cards keep their face values in every step.</p>
+        <p><strong>p-value approximation:</strong> the fraction of shuffles producing a result at least as extreme as observed. With enough shuffles this converges to the exact permutation p-value.</p>
+      </div>
+      <div class="help-section">
+        <h4>The Five Teaching Scenarios</h4>
+        <div class="case-grid">
+          <div class="case-box"><div class="case-label">Null is true</div><div class="case-desc">Zero separation. Observed line near centre. p near 1.0.</div></div>
+          <div class="case-box"><div class="case-label">Small but real</div><div class="case-desc">Genuine but uncertain separation. p often 0.10 to 0.30.</div></div>
+          <div class="case-box"><div class="case-label">Clear separation</div><div class="case-desc">Large separation, far tail, unambiguous small p.</div></div>
+          <div class="case-box"><div class="case-label">Underpowered</div><div class="case-desc">Real effect, tiny sample. Wide distribution obscures the result.</div></div>
+          <div class="case-box"><div class="case-label">Large n, tiny effect</div><div class="case-desc">Trivial difference becomes statistically unusual. Significance without importance.</div></div>
+        </div>
+      </div>
+      <div class="help-section">
+        <h4>Tail Rules</h4>
+        <p><strong>Two-sided:</strong> counts shuffles where |diff| is at least as large as |observed|. Use when no directional hypothesis was committed in advance.</p>
+        <p><strong>One-sided (greater):</strong> counts shuffles where diff is at least as large as observed. Requires pre-commitment. Fails if the true direction is opposite.</p>
+        <p><strong>One-sided (less):</strong> the symmetric counterpart for the other direction.</p>
+      </div>
+    </div>
+    <div>
+      <div class="help-section">
+        <h4>Reading the Null Distribution</h4>
+        <ul>
+          <li><strong>Grey bars:</strong> differences from random label shuffles. Centred near zero under the null.</li>
+          <li><strong>Red bars:</strong> shuffles as extreme as the observed result. Their fraction is the p-value.</li>
+          <li><strong>Black line:</strong> the observed difference. In the tail = unusual. In the grey body = consistent with null.</li>
+          <li><strong>Dashed blue lines:</strong> reference percentiles from the shuffle distribution, not formal critical values.</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h4>When the Test Can Mislead</h4>
+        <ul>
+          <li><strong>Non-exchangeability:</strong> if groups differ in variance or data have dependencies, the null (any assignment is equally likely) fails.</li>
+          <li><strong>Small samples:</strong> the p-value cannot go below 1 divided by the number of distinct permutations.</li>
+          <li><strong>Significance without importance:</strong> at large n, trivially small differences become unusual. Always assess practical magnitude.</li>
+          <li><strong>Multiple testing:</strong> running many comparisons inflates false discovery rates. This test is not immune.</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h4>Why 0.05 Is a Convention, Not a Law</h4>
+        <p>Results at p = 0.049 and p = 0.051 carry virtually identical information. The threshold became a default through convention, not mathematical necessity. The real question is always: how unusual is this result, and how large and practically meaningful is the effect?</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+<script>
+// ══════════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════════
+const NOISE = 4.0;
+const TAB1_N = 16;
+const ANIM_MS = 520;
+const BASE_MEAN = 10;
+
+const SCENARIOS = [
+  {id:'null',    label:'Null is true',        desc:'Zero separation, moderate noise. Expect the observed line near the centre and a p-value close to 1.0.',                              n:25, effect:0,   dir:'positive', tail:'two-sided'},
+  {id:'small',   label:'Small but real',       desc:'Moderate group size, small separation. The observed line sits in a moderate tail — the ambiguous middle ground.',                    n:20, effect:2,   dir:'positive', tail:'two-sided'},
+  {id:'clear',   label:'Clear separation',     desc:'Large separation relative to noise. The observed line falls firmly in the far tail, producing a very small p-value.',               n:25, effect:8,   dir:'positive', tail:'two-sided'},
+  {id:'under',   label:'Underpowered',         desc:'Small group size, moderate separation. The effect exists, but with few observations the null distribution is wide and ambiguous.',  n:6,  effect:3.5, dir:'positive', tail:'two-sided'},
+  {id:'largeN',  label:'Large n, tiny effect', desc:'Large sample, tiny true separation. Even a trivially small difference becomes statistically unusual — significance without importance.', n:30, effect:0.4, dir:'positive', tail:'two-sided'},
+];
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let scenario = SCENARIOS.find(s => s.id === 'small');
+let activeTab = 0;
+let currentStep = 0;
+let isAnimating = false;
+let tab1ObsA = [], tab1ObsB = [];
+let tab1CurA = [], tab1CurB = [];
+let tab1Staged = null;
+let tab1Diffs = [];
+let tab2ObsA = [], tab2ObsB = [];
+let tab2Diffs = [];
+let lastAddedDiff = null;
+
+// ══════════════════════════════════════════════════════
+// MATH
+// ══════════════════════════════════════════════════════
+function randn() {
+  let u=0,v=0;
+  while(u===0)u=Math.random();
+  while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function mean(arr){ return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0; }
+function fmt(v,d=2){ return typeof v==='number'&&isFinite(v) ? v.toFixed(d) : '--'; }
+
+// ══════════════════════════════════════════════════════
+// DATA GENERATION
+// ══════════════════════════════════════════════════════
+function generateGroups(n, effect, dir) {
+  const mA = BASE_MEAN;
+  const mB = dir==='positive' ? mA+effect : mA-effect;
+  const A = Array.from({length:n}, (_,i) => ({id:i,     value: Math.round((randn()*NOISE+mA)*10)/10}));
+  const B = Array.from({length:n}, (_,i) => ({id:n+i,   value: Math.round((randn()*NOISE+mB)*10)/10}));
+  return {A,B};
+}
+
+function goToDistTab() {
+  activeTab = 1;
+  document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===1));
+  document.querySelectorAll('.tab-content').forEach((c,j)=>c.style.display=j===1?'':'none');
+}
+
+function switchToTab(i) {
+  activeTab = i;
+  document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  document.querySelectorAll('.tab-content').forEach((c,j)=>c.style.display=j===i?'':'none');
+}
+
+function newData() {
+  const eff  = parseFloat(document.getElementById('effectSize').value);
+  const dir  = document.getElementById('directionSel').value;
+  const n2   = parseInt(document.getElementById('groupSize').value);
+  const d1   = generateGroups(TAB1_N, eff, dir);
+  tab1ObsA = d1.A; tab1ObsB = d1.B;
+  tab1CurA = [...d1.A]; tab1CurB = [...d1.B];
+  tab1Staged = null; tab1Diffs = []; lastAddedDiff = null;
+  currentStep = 0;
+  const d2 = generateGroups(n2, eff, dir);
+  tab2ObsA = d2.A; tab2ObsB = d2.B; tab2Diffs = [];
+  switchToTab(0);
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════
+// PERMUTATION
+// ══════════════════════════════════════════════════════
+function permute(A, B) {
+  const pool = [...A, ...B];
+  for(let i=pool.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  const nA = A.length;
+  const newA = pool.slice(0,nA);
+  const newB = pool.slice(nA);
+  return {A:newA, B:newB, diff: mean(newB.map(p=>p.value)) - mean(newA.map(p=>p.value))};
+}
+
+function isExtreme(d, obs, tail) {
+  if(tail==='two-sided') return Math.abs(d) >= Math.abs(obs);
+  if(tail==='greater')   return d >= obs;
+  return d <= obs;
+}
+
+// ══════════════════════════════════════════════════════
+// STEP DESCRIPTIONS
+// ══════════════════════════════════════════════════════
+function getStepDesc(step) {
+  const obsDiff = mean(tab1ObsB.map(p=>p.value)) - mean(tab1ObsA.map(p=>p.value));
+  switch(step) {
+    case 0:
+      return `<strong>Step 1 &mdash; Observed:</strong> These are the two groups as observed. Each card shows a data value. Blue cards belong to Group A, red cards to Group B. The observed difference in means is <strong>${fmt(obsDiff)}</strong>.`;
+    case 1:
+      return `<strong>Step 2 &mdash; Pool:</strong> Under the null hypothesis, group labels carry no information. All labels are removed and every value is treated as part of a shared pool. Nothing moved &mdash; only the labels disappeared.`;
+    case 2:
+      return `<strong>Step 3 &mdash; Reassign:</strong> Labels are re-assigned at random, with exactly ${TAB1_N} going to each group. Cards that changed group slide to their new row. Every card keeps its exact value &mdash; only its group membership changed.`;
+    case 3:
+      const d = tab1Staged ? tab1Staged.diff : null;
+      const tail = document.getElementById('tailRuleSel').value;
+      const extreme = d !== null ? isExtreme(d, obsDiff, tail) : false;
+      return `<strong>Step 4 &mdash; Record:</strong> The shuffled difference is <strong>${d!==null?fmt(d):'--'}</strong> vs the observed <strong>${fmt(obsDiff)}</strong>. This value is added to the histogram. ${d!==null ? (extreme ? '<strong style="color:var(--red)">This shuffle is as extreme as the observed result</strong> &mdash; it counts toward the p-value.' : 'This shuffle is <em>less</em> extreme than the observed result &mdash; it does not count.') : ''}`;
+    default: return '';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// STEP-THROUGH (TAB 1)
+// ══════════════════════════════════════════════════════
+function updateStepButtons(s) {
+  [0,1,2,3].forEach(i => document.getElementById(`sb${i}`).classList.toggle('active', i===s));
+  document.getElementById('stepBadge').textContent = `Step ${s+1} of 4`;
+  document.getElementById('btnNext').textContent = s<3 ? 'Next Step' : 'Next Shuffle';
+  document.getElementById('btnRun10').disabled = s<3;
+}
+
+function goToStep(s) {
+  if(isAnimating) return;
+  currentStep = s;
+  updateStepButtons(s);
+
+  const ghostA = document.getElementById('ghostA');
+  const ghostB = document.getElementById('ghostB');
+  const obsMA = mean(tab1ObsA.map(p=>p.value));
+  const obsMB = mean(tab1ObsB.map(p=>p.value));
+
+  if(s===0) {
+    tab1CurA = [...tab1ObsA]; tab1CurB = [...tab1ObsB]; tab1Staged = null;
+    renderCards(tab1CurA, tab1CurB, 'observed', false);
+    setMeans(tab1CurA, tab1CurB);
+    ghostA.textContent = ''; ghostB.textContent = '';
+  } else if(s===1) {
+    renderCards(tab1CurA, tab1CurB, 'pooled', false);
+    document.getElementById('meanA').textContent = 'pooled';
+    document.getElementById('meanB').textContent = 'pooled';
+    ghostA.textContent = ''; ghostB.textContent = '';
+  } else if(s===2) {
+    tab1CurA = [...tab1ObsA]; tab1CurB = [...tab1ObsB];
+    tab1Staged = permute(tab1ObsA, tab1ObsB);
+    animateSwapAsync(tab1CurA, tab1CurB, tab1Staged.A, tab1Staged.B).then(() => {
+      tab1CurA = tab1Staged.A; tab1CurB = tab1Staged.B;
+      setMeans(tab1CurA, tab1CurB);
+      ghostA.textContent = `obs: ${fmt(obsMA)}`;
+      ghostB.textContent = `obs: ${fmt(obsMB)}`;
+    });
+  } else {
+    if(tab1Staged) {
+      lastAddedDiff = tab1Staged.diff;
+      tab1Diffs.push(tab1Staged.diff);
+      drawT1Hist(); updateT1Stats();
+    }
+    ghostA.textContent = `obs: ${fmt(obsMA)}`;
+    ghostB.textContent = `obs: ${fmt(obsMB)}`;
+  }
+  document.getElementById('stepDesc').innerHTML = getStepDesc(s);
+  // Show "→ See Distribution" once shuffles have been recorded
+  const goBtn = document.getElementById('btnGoToDist');
+  if(goBtn) goBtn.style.display = tab1Diffs.length > 0 ? '' : 'none';
+}
+
+function nextStep() {
+  if(isAnimating) return;
+  if(currentStep < 3) { goToStep(currentStep+1); }
+  else {
+    tab1CurA = [...tab1ObsA]; tab1CurB = [...tab1ObsB]; tab1Staged = null;
+    goToStep(0);
+  }
+}
+
+async function run10More() {
+  if(isAnimating) return;
+  const btnR = document.getElementById('btnRun10');
+  const btnN = document.getElementById('btnNext');
+  btnR.disabled = true; btnN.disabled = true;
+  const ghostA = document.getElementById('ghostA');
+  const ghostB = document.getElementById('ghostB');
+  const obsMA = mean(tab1ObsA.map(p=>p.value));
+  const obsMB = mean(tab1ObsB.map(p=>p.value));
+
+  for(let i=0;i<10;i++) {
+    // Step 1: observed
+    tab1CurA = [...tab1ObsA]; tab1CurB = [...tab1ObsB];
+    renderCards(tab1CurA, tab1CurB, 'observed', false);
+    setMeans(tab1CurA, tab1CurB);
+    ghostA.textContent = ''; ghostB.textContent = '';
+    updateStepButtons(0);
+    document.getElementById('stepDesc').innerHTML = getStepDesc(0);
+    await sleep(200);
+    // Step 2: pool
+    renderCards(tab1CurA, tab1CurB, 'pooled', false);
+    document.getElementById('meanA').textContent = 'pooled';
+    document.getElementById('meanB').textContent = 'pooled';
+    updateStepButtons(1);
+    document.getElementById('stepDesc').innerHTML = getStepDesc(1);
+    await sleep(200);
+    // Step 3: reassign
+    const staged = permute(tab1ObsA, tab1ObsB);
+    tab1Staged = staged;
+    updateStepButtons(2);
+    await animateSwapAsync(tab1CurA, tab1CurB, staged.A, staged.B);
+    tab1CurA = staged.A; tab1CurB = staged.B;
+    setMeans(tab1CurA, tab1CurB);
+    ghostA.textContent = `obs: ${fmt(obsMA)}`;
+    ghostB.textContent = `obs: ${fmt(obsMB)}`;
+    document.getElementById('stepDesc').innerHTML = getStepDesc(2);
+    await sleep(180);
+    // Step 4: record
+    lastAddedDiff = staged.diff;
+    tab1Diffs.push(staged.diff);
+    updateStepButtons(3);
+    document.getElementById('stepDesc').innerHTML = getStepDesc(3);
+    drawT1Hist(); updateT1Stats();
+    // Show distribution button once shuffles exist
+    const goBtn = document.getElementById('btnGoToDist');
+    if(goBtn) goBtn.style.display = '';
+    await sleep(220);
+  }
+  currentStep = 3;
+  btnR.disabled = false; btnN.disabled = false;
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// ══════════════════════════════════════════════════════
+// CARD RENDERING (NUMERIC)
+// ══════════════════════════════════════════════════════
+function renderCards(A, B, mode, showOrigin=false) {
+  const rowA = document.getElementById('cardsA');
+  const rowB = document.getElementById('cardsB');
+  if(!rowA||!rowB) return;
+  const grpA = mode==='pooled' ? 'pool' : 'a';
+  const grpB = mode==='pooled' ? 'pool' : 'b';
+  rowA.innerHTML = A.map(p => cardHTML(p, grpA, showOrigin)).join('');
+  rowB.innerHTML = B.map(p => cardHTML(p, grpB, showOrigin)).join('');
+}
+
+function cardHTML(p, grp, showOrigin=false) {
+  const cls = grp==='a' ? 'grp-a' : grp==='b' ? 'grp-b' : 'pooled';
+  const dot = showOrigin
+    ? `<div class="origin-dot ${p.id < TAB1_N ? 'dot-a' : 'dot-b'}"></div>`
+    : '';
+  return `<div class="vcard ${cls}" data-pid="${p.id}"><div class="vcard-val">${p.value.toFixed(1)}</div>${dot}</div>`;
+}
+
+function setMeans(A, B) {
+  document.getElementById('meanA').textContent = `mean = ${fmt(mean(A.map(p=>p.value)))}`;
+  document.getElementById('meanB').textContent = `mean = ${fmt(mean(B.map(p=>p.value)))}`;
+}
+
+// ══════════════════════════════════════════════════════
+// CARD ANIMATION (OVERLAY CLONE APPROACH)
+// ══════════════════════════════════════════════════════
+async function animateSwapAsync(oldA, oldB, newA, newB) {
+  isAnimating = true;
+  const newAIds = new Set(newA.map(p=>p.id));
+  const movingIds = new Set([
+    ...oldA.filter(p=>!newAIds.has(p.id)).map(p=>p.id),
+    ...oldB.filter(p=>newAIds.has(p.id)).map(p=>p.id),
+  ]);
+
+  if(!movingIds.size) {
+    renderCards(newA, newB, 'observed');
+    isAnimating = false; return;
+  }
+
+  const overlay = document.getElementById('animOverlay');
+
+  // ── Step 1: capture SOURCE rects BEFORE re-rendering ──
+  const sourceRects = {};
+  movingIds.forEach(id => {
+    const el = document.querySelector(`[data-pid="${id}"]`);
+    if(el) sourceRects[id] = el.getBoundingClientRect();
+  });
+
+  // ── Step 2: re-render with new group assignments (with origin dots) ──
+  renderCards(newA, newB, 'observed', true);
+
+  // ── Step 3: capture TARGET rects, then hide originals ──
+  const targetRects = {};
+  movingIds.forEach(id => {
+    const el = document.querySelector(`[data-pid="${id}"]`);
+    if(el) {
+      targetRects[id] = el.getBoundingClientRect();
+      el.style.visibility = 'hidden';
+    }
+  });
+
+  // ── Step 4: build clones at source positions with destination colour ──
+  const allNew = [...newA, ...newB];
+  const cloneList = [];
+  [...movingIds].forEach((id, idx) => {
+    const src = sourceRects[id], tgt = targetRects[id];
+    if(!src || !tgt) return;
+    const toGroup = newAIds.has(id) ? 'a' : 'b';
+    const p = allNew.find(x => x.id === id);
+    const clone = document.createElement('div');
+    clone.className = `vcard ${toGroup==='a'?'grp-a':'grp-b'}`;
+    clone.innerHTML = `<div class="vcard-val">${p ? p.value.toFixed(1) : ''}</div>`;
+    Object.assign(clone.style, {
+      position: 'fixed',
+      left:   src.left+'px',
+      top:    src.top+'px',
+      width:  src.width+'px',
+      height: src.height+'px',
+      margin: '0',
+      zIndex: '9999',
+      pointerEvents: 'none',
+      willChange: 'transform',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+      transition: 'none',
+    });
+    overlay.appendChild(clone);
+    cloneList.push({clone, src, tgt, idx});
+  });
+
+  // ── Step 5: double-RAF so browser paints the start state first ──
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  // ── Step 6: apply transform slide (GPU-accelerated, always triggers) ──
+  const total = cloneList.length;
+  cloneList.forEach(({clone, src, tgt, idx}) => {
+    const dx = tgt.left - src.left;
+    const dy = tgt.top  - src.top;
+    const delay = Math.round((idx / Math.max(total-1, 1)) * 70);
+    clone.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.34,1.06,0.64,1) ${delay}ms,
+                              box-shadow ${ANIM_MS*0.4}ms ease ${delay}ms`;
+    clone.style.transform  = `translate(${dx}px, ${dy}px)`;
+    clone.style.boxShadow  = '0 8px 20px rgba(0,0,0,0.20)';
+  });
+
+  await sleep(ANIM_MS + 120);
+
+  // ── Step 7: reveal originals, clear overlay ──
+  movingIds.forEach(id => {
+    const el = document.querySelector(`[data-pid="${id}"]`);
+    if(el) el.style.visibility = '';
+  });
+  overlay.innerHTML = '';
+  isAnimating = false;
+}
+
+// ══════════════════════════════════════════════════════
+// STATS UPDATES
+// ══════════════════════════════════════════════════════
+
+// Returns {cls, friendly, verdict, ctx} for a given p-value
+function interpTiers(pval, n) {
+  const pStr = pval === 0 ? `< ${fmt(1/n, 4)}` : pval.toFixed(4);
+  const extPct = pval === 0 ? 'fewer than 1 in ' + n : Math.round(pval * 100) + '%';
+  if(pval <= 0.01) return {
+    cls: 'very-sig',
+    friendly: 'The observed result would be very unlikely to occur by chance alone.',
+    verdict:  'Very unusual under the null.',
+    ctx: `Only about ${extPct} of random shuffles produce a difference this large (p = ${pStr}). Strong evidence against the null hypothesis.`,
+  };
+  if(pval <= 0.05) return {
+    cls: 'sig',
+    friendly: 'The observed result would be unlikely to occur by chance alone.',
+    verdict:  'Fairly unusual under the null.',
+    ctx: `About ${extPct} of random shuffles are at least this extreme (p = ${pStr}). At the conventional significance threshold.`,
+  };
+  if(pval <= 0.20) return {
+    cls: 'marginal',
+    friendly: 'The observed result is somewhat uncommon, but not strongly unusual.',
+    verdict:  'Moderately uncommon under the null.',
+    ctx: `About ${extPct} of random shuffles are at least this extreme (p = ${pStr}). Ambiguous — could go either way with more data.`,
+  };
+  return {
+    cls: 'not-sig',
+    friendly: 'The observed result is quite likely to occur by chance alone.',
+    verdict:  'Consistent with the null.',
+    ctx: `About ${extPct} of random shuffles are at least this extreme (p = ${pStr}). No clear evidence against the null hypothesis.`,
+  };
+}
+
+function updateT1Stats() {
+  const obsDiff = mean(tab1ObsB.map(p=>p.value)) - mean(tab1ObsA.map(p=>p.value));
+  const tail = document.getElementById('tailRuleSel').value;
+  const n = tab1Diffs.length;
+  const ext = n ? tab1Diffs.filter(d=>isExtreme(d,obsDiff,tail)).length : 0;
+  const pval = n ? ext/n : null;
+  document.getElementById('t1ObsDiff').textContent = fmt(obsDiff);
+  document.getElementById('t1Pval').textContent = pval!==null ? (pval===0?`< ${fmt(1/n,4)}`:pval.toFixed(3)) : '--';
+  document.getElementById('t1NullBadge').textContent = `${n} shuffle${n!==1?'s':''}`;
+
+  const box = document.getElementById('t1FriendlyBox');
+  if(!box) return;
+  if(pval === null || n < 5) { box.style.display='none'; return; }
+
+  const t = interpTiers(pval, n);
+  const colours = {
+    'very-sig': {bg:'#f0fdf4', border:'#4ade80', left:'#15803d', txt:'#14532d'},
+    'sig':      {bg:'#ecfdf5', border:'#86efac', left:'#16a34a', txt:'#14532d'},
+    'marginal': {bg:'#fff7ed', border:'#fdba74', left:'#d97706', txt:'#78350f'},
+    'not-sig':  {bg:'#f9fafb', border:'#d1d5db', left:'#6b7280', txt:'#374151'},
+  };
+  const c = colours[t.cls];
+  box.style.display = '';
+  box.style.background = c.bg;
+  box.style.borderColor = c.border;
+  box.style.borderLeftColor = c.left;
+  document.getElementById('t1FriendlyText').style.color = c.left;
+  document.getElementById('t1FriendlyText').textContent = t.friendly;
+  document.getElementById('t1FriendlyCtx').textContent = `(p ≈ ${pval===0?`< ${fmt(1/n,4)}`:pval.toFixed(3)} from ${n} shuffles)`;
+}
+
+function updateT2Stats() {
+  const obsDiff = mean(tab2ObsB.map(p=>p.value)) - mean(tab2ObsA.map(p=>p.value));
+  const tail = document.getElementById('tailRuleSel').value;
+  const n = tab2Diffs.length;
+  const ext = n ? tab2Diffs.filter(d=>isExtreme(d,obsDiff,tail)).length : 0;
+  const pval = n ? ext/n : null;
+  document.getElementById('t2ObsDiff').textContent = fmt(obsDiff);
+  document.getElementById('t2MeanA').textContent = fmt(mean(tab2ObsA.map(p=>p.value)));
+  document.getElementById('t2MeanB').textContent = fmt(mean(tab2ObsB.map(p=>p.value)));
+  document.getElementById('t2ShCount').textContent = n.toLocaleString();
+  document.getElementById('t2ExtCount').textContent = ext.toLocaleString();
+  document.getElementById('t2NullBadge').textContent = `${n.toLocaleString()} shuffle${n!==1?'s':''}`;
+  document.getElementById('t2Pval').textContent = pval!==null ? (pval===0?`< ${fmt(1/n,4)}`:pval.toFixed(4)) : '--';
+
+  const box = document.getElementById('t2InterpBox');
+  const friendly = document.getElementById('t2Friendly');
+  const v = document.getElementById('t2Verdict');
+  const ctx = document.getElementById('t2VerdictCtx');
+
+  if(pval===null){
+    box.className='interp-box pending';
+    friendly.textContent='Run shuffles to see an interpretation.';
+    v.textContent='';
+    ctx.textContent='Use the buttons above to build the null distribution.';
+    return;
+  }
+
+  const t = interpTiers(pval, n);
+  box.className = `interp-box ${t.cls}`;
+  friendly.textContent = t.friendly;
+  v.textContent = t.verdict;
+  ctx.textContent = t.ctx;
+}
+
+// ══════════════════════════════════════════════════════
+// TAB 2 CONTROLS
+// ══════════════════════════════════════════════════════
+function t2Shuffle(n) {
+  for(let i=0;i<n;i++) tab2Diffs.push(permute(tab2ObsA,tab2ObsB).diff);
+  drawT2Hist(); updateT2Stats();
+}
+function t2Reset() { tab2Diffs=[]; drawT2Hist(); updateT2Stats(); }
+
+// ══════════════════════════════════════════════════════
+// HISTOGRAM (SVG)
+// ══════════════════════════════════════════════════════
+function drawHist(svgId, diffs, obsDiff, tail, VW, VH) {
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const ML=46,MR=16,MT=22,MB=44;
+  const PW=VW-ML-MR, PH=VH-MT-MB;
+
+  const spread = Math.max(Math.abs(obsDiff)*2, 3)+1;
+  const xMin0 = -spread, xMax0 = spread;
+  const xMin = diffs.length ? Math.min(xMin0,...diffs)-0.2 : xMin0;
+  const xMax = diffs.length ? Math.max(xMax0,...diffs)+0.2 : xMax0;
+
+  const xPx = v => ML + (v-xMin)/(xMax-xMin)*PW;
+  const obsX = Math.max(ML+1, Math.min(ML+PW-1, xPx(obsDiff)));
+
+  if(!diffs.length) {
+    svg.innerHTML = emptyHist(ML,MR,MT,MB,PW,PH,VW,VH,obsX,obsDiff);
+    return;
+  }
+
+  const nBins = diffs.length<50?15:diffs.length<300?25:35;
+  const binW = (xMax-xMin)/nBins;
+
+  // Count bins
+  const bins = Array(nBins).fill(0);
+  const extBins = Array(nBins).fill(0);
+  diffs.forEach(d=>{
+    const i=Math.min(nBins-1,Math.max(0,Math.floor((d-xMin)/binW)));
+    bins[i]++;
+    if(isExtreme(d,obsDiff,tail)) extBins[i]++;
+  });
+  const yMax = Math.max(...bins,1);
+  const yPx = c => MT + PH - (c/yMax)*PH;
+
+  let h='';
+
+  // Bars
+  bins.forEach((cnt,i)=>{
+    if(!cnt) return;
+    const bx = xMin+i*binW;
+    const x = Math.max(ML, xPx(bx));
+    const w = Math.max(1, Math.min(ML+PW,xPx(bx+binW)) - x -1);
+    const isRed = extBins[i]>0;
+    const isNew = lastAddedDiff!==null && lastAddedDiff>=bx && lastAddedDiff<bx+binW;
+    const fill = isRed?'#ef4444':'#93c5fd';
+    const op = isNew?'1':'0.75';
+    const sw = isNew?'stroke="#374151" stroke-width="1.5"':'';
+    h+=`<rect x="${x}" y="${yPx(cnt)}" width="${w}" height="${MT+PH-yPx(cnt)}" fill="${fill}" opacity="${op}" ${sw}/>`;
+  });
+
+  // Axes
+  h+=`<line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT+PH}" stroke="#d1d5db" stroke-width="1"/>`;
+  h+=`<line x1="${ML}" y1="${MT+PH}" x2="${ML+PW}" y2="${MT+PH}" stroke="#d1d5db" stroke-width="1"/>`;
+
+  // X ticks
+  const nTx=7;
+  for(let i=0;i<=nTx;i++){
+    const v=xMin+(xMax-xMin)*i/nTx;
+    const x=xPx(v);
+    h+=`<line x1="${x}" y1="${MT+PH}" x2="${x}" y2="${MT+PH+4}" stroke="#9ca3af" stroke-width="1"/>`;
+    h+=`<text x="${x}" y="${MT+PH+15}" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Arial">${v.toFixed(1)}</text>`;
+  }
+
+  // Y ticks
+  [0,0.5,1].forEach(f=>{
+    const c=Math.round(f*yMax), y=yPx(c);
+    h+=`<line x1="${ML-3}" y1="${y}" x2="${ML}" y2="${y}" stroke="#9ca3af" stroke-width="1"/>`;
+    h+=`<text x="${ML-5}" y="${y+4}" text-anchor="end" fill="#9ca3af" font-size="10" font-family="Arial">${c}</text>`;
+  });
+
+  // Axis labels
+  h+=`<text x="${ML+PW/2}" y="${MT+PH+35}" text-anchor="middle" fill="#6b7280" font-size="11" font-family="Arial">Shuffled difference in means</text>`;
+  h+=`<text x="12" y="${MT+PH/2}" text-anchor="middle" fill="#6b7280" font-size="11" font-family="Arial" transform="rotate(-90,12,${MT+PH/2})">Count</text>`;
+
+  // Percentile lines
+  const sorted=[...diffs].sort((a,b)=>a-b);
+  const pct=p=>{ const i=(p/100)*(sorted.length-1),lo=Math.floor(i),hi=Math.ceil(i); return sorted[lo]+(i-lo)*(sorted[hi]-sorted[lo]); };
+  const drawPctLine = (v, label) => {
+    const x=Math.max(ML+1,Math.min(ML+PW-1,xPx(v)));
+    h+=`<line x1="${x}" y1="${MT}" x2="${x}" y2="${MT+PH}" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="5,3"/>`;
+    const anchor = x > ML+PW*0.7 ? 'end' : 'start';
+    const lx = x > ML+PW*0.7 ? x-4 : x+4;
+    h+=`<text x="${lx}" y="${MT+11}" text-anchor="${anchor}" fill="#2563eb" font-size="9.5" font-family="Arial" opacity="0.85">${label}</text>`;
+  };
+  if(tail==='two-sided'){ drawPctLine(pct(2.5),'2.5th'); drawPctLine(pct(97.5),'97.5th'); }
+  else if(tail==='greater') drawPctLine(pct(95),'95th');
+  else drawPctLine(pct(5),'5th');
+
+  // Observed line
+  h+=`<line x1="${obsX}" y1="${MT-5}" x2="${obsX}" y2="${MT+PH}" stroke="#111827" stroke-width="2.5"/>`;
+  const anchor = obsX>ML+PW*0.68?'end':'start';
+  const lx = obsX>(ML+PW*0.68) ? obsX-4 : obsX+4;
+  h+=`<text x="${lx}" y="${MT-7}" text-anchor="${anchor}" fill="#111827" font-size="10.5" font-weight="700" font-family="Arial">Observed (${fmt(obsDiff)})</text>`;
+
+  svg.innerHTML=h;
+}
+
+function emptyHist(ML,MR,MT,MB,PW,PH,VW,VH,obsX,obsDiff) {
+  return `<line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT+PH}" stroke="#d1d5db" stroke-width="1"/>
+<line x1="${ML}" y1="${MT+PH}" x2="${ML+PW}" y2="${MT+PH}" stroke="#d1d5db" stroke-width="1"/>
+<text x="${ML+PW/2}" y="${MT+PH/2-8}" text-anchor="middle" fill="#9ca3af" font-size="13" font-family="Arial">Run shuffles to build the null distribution</text>
+<text x="${ML+PW/2}" y="${MT+PH/2+12}" text-anchor="middle" fill="#bfdbfe" font-size="11" font-family="Arial">Each shuffle will add one bar here</text>
+<line x1="${obsX}" y1="${MT-5}" x2="${obsX}" y2="${MT+PH}" stroke="#111827" stroke-width="2.5"/>
+<text x="${obsX>ML+PW*0.6?obsX-4:obsX+4}" y="${MT-7}" text-anchor="${obsX>ML+PW*0.6?'end':'start'}" fill="#111827" font-size="10" font-weight="700" font-family="Arial">Observed (${fmt(obsDiff)})</text>
+<text x="${ML+PW/2}" y="${MT+PH+35}" text-anchor="middle" fill="#6b7280" font-size="11" font-family="Arial">Shuffled difference in means</text>`;
+}
+
+function drawT1Hist() {
+  const obs = mean(tab1ObsB.map(p=>p.value)) - mean(tab1ObsA.map(p=>p.value));
+  drawHist('t1Svg', tab1Diffs, obs, document.getElementById('tailRuleSel').value, 420, 250);
+}
+function drawT2Hist() {
+  const obs = mean(tab2ObsB.map(p=>p.value)) - mean(tab2ObsA.map(p=>p.value));
+  drawHist('t2Svg', tab2Diffs, obs, document.getElementById('tailRuleSel').value, 560, 300);
+}
+
+// ══════════════════════════════════════════════════════
+// SCENARIOS
+// ══════════════════════════════════════════════════════
+function buildScenarioGrid() {
+  document.getElementById('scenarioGrid').innerHTML = SCENARIOS.map(sc =>
+    `<div class="sc-card${sc===scenario?' active':''}" onclick="applyScenario('${sc.id}')">
+      <div class="sc-name">${sc.label}</div>
+      <div class="sc-desc">${sc.desc}</div>
+    </div>`
+  ).join('');
+}
+
+function applyScenario(id) {
+  scenario = SCENARIOS.find(s=>s.id===id);
+  document.getElementById('groupSize').value  = scenario.n;
+  document.getElementById('effectSize').value = scenario.effect;
+  document.getElementById('directionSel').value = scenario.dir;
+  document.getElementById('tailRuleSel').value  = scenario.tail;
+  document.getElementById('groupSizeVal').textContent  = `${scenario.n} per group`;
+  document.getElementById('effectSizeVal').textContent = scenario.effect.toFixed(1);
+
+  const d1 = generateGroups(TAB1_N, scenario.effect, scenario.dir);
+  tab1ObsA=d1.A; tab1ObsB=d1.B; tab1CurA=[...d1.A]; tab1CurB=[...d1.B];
+  tab1Staged=null; tab1Diffs=[]; lastAddedDiff=null; currentStep=0;
+
+  const d2 = generateGroups(scenario.n, scenario.effect, scenario.dir);
+  tab2ObsA=d2.A; tab2ObsB=d2.B; tab2Diffs=[];
+
+  buildScenarioGrid();
+  switchToTab(0);
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════════════════════
+function renderAll() {
+  const showOrigin = currentStep >= 2;
+  const mode = currentStep === 1 ? 'pooled' : 'observed';
+  renderCards(tab1CurA, tab1CurB, mode, showOrigin);
+  if(currentStep===1){ document.getElementById('meanA').textContent='pooled'; document.getElementById('meanB').textContent='pooled'; }
+  else setMeans(tab1CurA, tab1CurB);
+  updateStepButtons(currentStep);
+  document.getElementById('stepDesc').innerHTML = getStepDesc(currentStep);
+  document.getElementById('btnRun10').disabled = currentStep<3;
+  document.getElementById('ghostA').textContent = '';
+  document.getElementById('ghostB').textContent = '';
+  const goBtn = document.getElementById('btnGoToDist');
+  if(goBtn) goBtn.style.display = tab1Diffs.length > 0 ? '' : 'none';
+  drawT1Hist(); updateT1Stats();
+  drawT2Hist(); updateT2Stats();
+}
+
+// ══════════════════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach((btn,i)=>{
+  btn.addEventListener('click',()=>{
+    if(isAnimating) return;
+    switchToTab(i);
+  });
+});
+
+// ══════════════════════════════════════════════════════
+// CONTROLS & EVENTS
+// ══════════════════════════════════════════════════════
+document.getElementById('groupSize').addEventListener('input',()=>{
+  document.getElementById('groupSizeVal').textContent=`${document.getElementById('groupSize').value} per group`;
+});
+document.getElementById('effectSize').addEventListener('input',()=>{
+  document.getElementById('effectSizeVal').textContent=parseFloat(document.getElementById('effectSize').value).toFixed(1);
+});
+document.getElementById('tailRuleSel').addEventListener('change',()=>{
+  drawT1Hist(); drawT2Hist(); updateT1Stats(); updateT2Stats();
+  document.getElementById('stepDesc').innerHTML = getStepDesc(currentStep);
+});
+document.getElementById('toggleGuide').addEventListener('click',()=>{
+  const g=document.getElementById('guideSection'),btn=document.getElementById('toggleGuide');
+  const open=g.classList.toggle('open');
+  btn.textContent=open?'▲ Hide Guide':'▼ Quick-Start Guide';
+});
+document.getElementById('toggleHelp').addEventListener('click',()=>{
+  const h=document.getElementById('helpCard'),btn=document.getElementById('toggleHelp');
+  h.classList.toggle('open');
+  btn.textContent=h.classList.contains('open')?'📖 Hide Reference':'📖 Full Reference';
+  if(h.classList.contains('open')) h.scrollIntoView({behavior:'smooth'});
+});
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+buildScenarioGrid();
+applyScenario('small');
+</script>
+
+
+</body></html>
