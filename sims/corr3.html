@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<!-- saved from url=(0058)file:///Users/psimac/Downloads/correlation-explorer_4.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistics Lab — Correlation Explorer</title>
+  <script src="./corr3_files/plotly-2.35.2.min.js"></script><style id="plotly.js-style-global"></style><style>.maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;-webkit-tap-highlight-color:rgb(0 0 0/0)}.maplibregl-canvas{left:0;position:absolute;top:0}.maplibregl-map:fullscreen{height:100%;width:100%}.maplibregl-ctrl-group button.maplibregl-ctrl-compass{touch-action:none}.maplibregl-canvas-container.maplibregl-interactive,.maplibregl-ctrl-group button.maplibregl-ctrl-compass{cursor:grab;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer{cursor:pointer}.maplibregl-canvas-container.maplibregl-interactive:active,.maplibregl-ctrl-group button.maplibregl-ctrl-compass:active{cursor:grabbing}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-canvas-container.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:pinch-zoom}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:none}.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures,.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-top-left,.maplibregl-ctrl-top-right{pointer-events:none;position:absolute;z-index:2}.maplibregl-ctrl-top-left{left:0;top:0}.maplibregl-ctrl-top-right{right:0;top:0}.maplibregl-ctrl-bottom-left{bottom:0;left:0}.maplibregl-ctrl-bottom-right{bottom:0;right:0}.maplibregl-ctrl{clear:both;pointer-events:auto;transform:translate(0)}.maplibregl-ctrl-top-left .maplibregl-ctrl{float:left;margin:10px 0 0 10px}.maplibregl-ctrl-top-right .maplibregl-ctrl{float:right;margin:10px 10px 0 0}.maplibregl-ctrl-bottom-left .maplibregl-ctrl{float:left;margin:0 0 10px 10px}.maplibregl-ctrl-bottom-right .maplibregl-ctrl{float:right;margin:0 10px 10px 0}.maplibregl-ctrl-group{background:#fff;border-radius:4px}.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px rgba(0,0,0,.1)}@media (forced-colors:active){.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px ButtonText}}.maplibregl-ctrl-group button{background-color:transparent;border:0;box-sizing:border-box;cursor:pointer;display:block;height:29px;outline:none;padding:0;width:29px}.maplibregl-ctrl-group button+button{border-top:1px solid #ddd}.maplibregl-ctrl button .maplibregl-ctrl-icon{background-position:50%;background-repeat:no-repeat;display:block;height:100%;width:100%}@media (forced-colors:active){.maplibregl-ctrl-icon{background-color:transparent}.maplibregl-ctrl-group button+button{border-top:1px solid ButtonText}}.maplibregl-ctrl button::-moz-focus-inner{border:0;padding:0}.maplibregl-ctrl-attrib-button:focus,.maplibregl-ctrl-group button:focus{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl button:disabled{cursor:not-allowed}.maplibregl-ctrl button:disabled .maplibregl-ctrl-icon{opacity:.25}.maplibregl-ctrl button:not(:disabled):hover{background-color:rgb(0 0 0/5%)}.maplibregl-ctrl-group button:focus:focus-visible{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl-group button:focus:not(:focus-visible){box-shadow:none}.maplibregl-ctrl-group button:focus:first-child{border-radius:4px 4px 0 0}.maplibregl-ctrl-group button:focus:last-child{border-radius:0 0 4px 4px}.maplibregl-ctrl-group button:focus:only-child{border-radius:inherit}.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23333%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23333%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5%27/%3E%3C/svg%3E")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23fff%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23fff%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5%27/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5%27/%3E%3C/svg%3E")}}.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23333%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z%27/%3E%3C/svg%3E")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23fff%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23fff%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z%27/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z%27/%3E%3C/svg%3E")}}.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23333%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27m10.5 14 4-8 4 8z%27/%3E%3Cpath fill=%27%23ccc%27 d=%27m10.5 16 4 8 4-8z%27/%3E%3C/svg%3E")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23fff%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27m10.5 14 4-8 4 8z%27/%3E%3Cpath fill=%27%23ccc%27 d=%27m10.5 16 4 8 4-8z%27/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 viewBox=%270 0 29 29%27%3E%3Cpath d=%27m10.5 14 4-8 4 8z%27/%3E%3Cpath fill=%27%23ccc%27 d=%27m10.5 16 4 8 4-8z%27/%3E%3C/svg%3E")}}.maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2722%27 height=%2722%27 fill=%27%23333%27 viewBox=%270 0 22 22%27%3E%3Cpath d=%27m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2722%27 height=%2722%27 fill=%27%2333b5e5%27 viewBox=%270 0 22 22%27%3E%3Cpath d=%27m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23333%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3Ccircle cx=%2710%27 cy=%2710%27 r=%272%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23aaa%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3Ccircle cx=%2710%27 cy=%2710%27 r=%272%27/%3E%3Cpath fill=%27red%27 d=%27m14 5 1 1-9 9-1-1z%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%2333b5e5%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3Ccircle cx=%2710%27 cy=%2710%27 r=%272%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23e58978%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3Ccircle cx=%2710%27 cy=%2710%27 r=%272%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%2333b5e5%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23e54e33%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon{animation:maplibregl-spin 2s linear infinite}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23fff%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3Ccircle cx=%2710%27 cy=%2710%27 r=%272%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23999%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3Ccircle cx=%2710%27 cy=%2710%27 r=%272%27/%3E%3Cpath fill=%27red%27 d=%27m14 5 1 1-9 9-1-1z%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%2333b5e5%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3Ccircle cx=%2710%27 cy=%2710%27 r=%272%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23e58978%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3Ccircle cx=%2710%27 cy=%2710%27 r=%272%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%2333b5e5%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23e54e33%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3Ccircle cx=%2710%27 cy=%2710%27 r=%272%27/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2729%27 height=%2729%27 fill=%27%23666%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7%27/%3E%3Ccircle cx=%2710%27 cy=%2710%27 r=%272%27/%3E%3Cpath fill=%27red%27 d=%27m14 5 1 1-9 9-1-1z%27/%3E%3C/svg%3E")}}@keyframes maplibregl-spin{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}a.maplibregl-ctrl-logo{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2788%27 height=%2723%27 fill=%27none%27%3E%3Cpath fill=%27%23000%27 fill-opacity=%27.4%27 fill-rule=%27evenodd%27 d=%27M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z%27/%3E%3Cpath fill=%27%23fff%27 d=%27m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z%27/%3E%3Cpath fill=%27%23e1e3e9%27 d=%27M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z%27/%3E%3Cpath d=%27M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z%27 style=%27fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001%27/%3E%3Cg style=%27stroke-width:1.12603545%27%3E%3Cpath d=%27M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668%27 style=%27color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto%27 transform=%27translate%2815.553 2.85%29scale%28.88807%29%27/%3E%3Cpath d=%27M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3%27 style=%27clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4%27 transform=%27translate%2815.553 2.85%29scale%28.88807%29%27/%3E%3Cpath d=%27M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z%27 style=%27clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4%27 transform=%27translate%2815.553 2.85%29scale%28.88807%29%27/%3E%3C/g%3E%3C/svg%3E");background-repeat:no-repeat;cursor:pointer;display:block;height:23px;margin:0 0 -4px -4px;overflow:hidden;width:88px}a.maplibregl-ctrl-logo.maplibregl-compact{width:14px}@media (forced-colors:active){a.maplibregl-ctrl-logo{background-color:transparent;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2788%27 height=%2723%27 fill=%27none%27%3E%3Cpath fill=%27%23000%27 fill-opacity=%27.4%27 fill-rule=%27evenodd%27 d=%27M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z%27/%3E%3Cpath fill=%27%23fff%27 d=%27m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z%27/%3E%3Cpath fill=%27%23e1e3e9%27 d=%27M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z%27/%3E%3Cpath d=%27M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z%27 style=%27fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001%27/%3E%3Cg style=%27stroke-width:1.12603545%27%3E%3Cpath d=%27M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668%27 style=%27color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto%27 transform=%27translate%2815.553 2.85%29scale%28.88807%29%27/%3E%3Cpath d=%27M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3%27 style=%27clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4%27 transform=%27translate%2815.553 2.85%29scale%28.88807%29%27/%3E%3Cpath d=%27M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z%27 style=%27clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4%27 transform=%27translate%2815.553 2.85%29scale%28.88807%29%27/%3E%3C/g%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){a.maplibregl-ctrl-logo{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2788%27 height=%2723%27 fill=%27none%27%3E%3Cpath fill=%27%23000%27 fill-opacity=%27.4%27 fill-rule=%27evenodd%27 d=%27M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z%27/%3E%3Cpath fill=%27%23fff%27 d=%27m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z%27/%3E%3Cpath fill=%27%23e1e3e9%27 d=%27M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z%27/%3E%3Cpath d=%27M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z%27 style=%27fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001%27/%3E%3Cg style=%27stroke-width:1.12603545%27%3E%3Cpath d=%27M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668%27 style=%27color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto%27 transform=%27translate%2815.553 2.85%29scale%28.88807%29%27/%3E%3Cpath d=%27M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3%27 style=%27clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4%27 transform=%27translate%2815.553 2.85%29scale%28.88807%29%27/%3E%3Cpath d=%27M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z%27 style=%27clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4%27 transform=%27translate%2815.553 2.85%29scale%28.88807%29%27/%3E%3C/g%3E%3C/svg%3E")}}.maplibregl-ctrl.maplibregl-ctrl-attrib{background-color:hsla(0,0%,100%,.5);margin:0;padding:0 5px}@media screen{.maplibregl-ctrl-attrib.maplibregl-compact{background-color:#fff;border-radius:12px;box-sizing:content-box;color:#000;margin:10px;min-height:20px;padding:2px 24px 2px 0;position:relative}.maplibregl-ctrl-attrib.maplibregl-compact-show{padding:2px 28px 2px 8px;visibility:visible}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show,.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show{border-radius:12px;padding:2px 8px 2px 28px}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner{display:none}.maplibregl-ctrl-attrib-button{background-color:hsla(0,0%,100%,.5);background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724%27 height=%2724%27 fill-rule=%27evenodd%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0%27/%3E%3C/svg%3E");border:0;border-radius:12px;box-sizing:border-box;cursor:pointer;display:none;height:24px;outline:none;position:absolute;right:0;top:0;width:24px}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button{-webkit-appearance:none;-moz-appearance:none;appearance:none;list-style:none}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker{display:none}.maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button{left:0}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner{display:block}.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button{background-color:rgb(0 0 0/5%)}.maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;right:0}.maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{right:0;top:0}.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{left:0;top:0}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;left:0}}@media screen and (forced-colors:active){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724%27 height=%2724%27 fill=%27%23fff%27 fill-rule=%27evenodd%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0%27/%3E%3C/svg%3E")}}@media screen and (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724%27 height=%2724%27 fill-rule=%27evenodd%27 viewBox=%270 0 20 20%27%3E%3Cpath d=%27M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0%27/%3E%3C/svg%3E")}}.maplibregl-ctrl-attrib a{color:rgba(0,0,0,.75);text-decoration:none}.maplibregl-ctrl-attrib a:hover{color:inherit;text-decoration:underline}.maplibregl-attrib-empty{display:none}.maplibregl-ctrl-scale{background-color:hsla(0,0%,100%,.75);border:2px solid #333;border-top:#333;box-sizing:border-box;color:#333;font-size:10px;padding:0 5px}.maplibregl-popup{display:flex;left:0;pointer-events:none;position:absolute;top:0;will-change:transform}.maplibregl-popup-anchor-top,.maplibregl-popup-anchor-top-left,.maplibregl-popup-anchor-top-right{flex-direction:column}.maplibregl-popup-anchor-bottom,.maplibregl-popup-anchor-bottom-left,.maplibregl-popup-anchor-bottom-right{flex-direction:column-reverse}.maplibregl-popup-anchor-left{flex-direction:row}.maplibregl-popup-anchor-right{flex-direction:row-reverse}.maplibregl-popup-tip{border:10px solid transparent;height:0;width:0;z-index:1}.maplibregl-popup-anchor-top .maplibregl-popup-tip{align-self:center;border-bottom-color:#fff;border-top:none}.maplibregl-popup-anchor-top-left .maplibregl-popup-tip{align-self:flex-start;border-bottom-color:#fff;border-left:none;border-top:none}.maplibregl-popup-anchor-top-right .maplibregl-popup-tip{align-self:flex-end;border-bottom-color:#fff;border-right:none;border-top:none}.maplibregl-popup-anchor-bottom .maplibregl-popup-tip{align-self:center;border-bottom:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip{align-self:flex-start;border-bottom:none;border-left:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{align-self:flex-end;border-bottom:none;border-right:none;border-top-color:#fff}.maplibregl-popup-anchor-left .maplibregl-popup-tip{align-self:center;border-left:none;border-right-color:#fff}.maplibregl-popup-anchor-right .maplibregl-popup-tip{align-self:center;border-left-color:#fff;border-right:none}.maplibregl-popup-close-button{background-color:transparent;border:0;border-radius:0 3px 0 0;cursor:pointer;position:absolute;right:0;top:0}.maplibregl-popup-close-button:hover{background-color:rgb(0 0 0/5%)}.maplibregl-popup-content{background:#fff;border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.1);padding:15px 10px;pointer-events:auto;position:relative}.maplibregl-popup-anchor-top-left .maplibregl-popup-content{border-top-left-radius:0}.maplibregl-popup-anchor-top-right .maplibregl-popup-content{border-top-right-radius:0}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-content{border-bottom-left-radius:0}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-content{border-bottom-right-radius:0}.maplibregl-popup-track-pointer{display:none}.maplibregl-popup-track-pointer *{pointer-events:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-map:hover .maplibregl-popup-track-pointer{display:flex}.maplibregl-map:active .maplibregl-popup-track-pointer{display:none}.maplibregl-marker{left:0;position:absolute;top:0;transition:opacity .2s;will-change:transform}.maplibregl-user-location-dot,.maplibregl-user-location-dot:before{background-color:#1da1f2;border-radius:50%;height:15px;width:15px}.maplibregl-user-location-dot:before{animation:maplibregl-user-location-dot-pulse 2s infinite;content:"";position:absolute}.maplibregl-user-location-dot:after{border:2px solid #fff;border-radius:50%;box-shadow:0 0 3px rgba(0,0,0,.35);box-sizing:border-box;content:"";height:19px;left:-2px;position:absolute;top:-2px;width:19px}@keyframes maplibregl-user-location-dot-pulse{0%{opacity:1;transform:scale(1)}70%{opacity:0;transform:scale(3)}to{opacity:0;transform:scale(1)}}.maplibregl-user-location-dot-stale{background-color:#aaa}.maplibregl-user-location-dot-stale:after{display:none}.maplibregl-user-location-accuracy-circle{background-color:#1da1f233;border-radius:100%;height:1px;width:1px}.maplibregl-crosshair,.maplibregl-crosshair .maplibregl-interactive,.maplibregl-crosshair .maplibregl-interactive:active{cursor:crosshair}.maplibregl-boxzoom{background:#fff;border:2px dotted #202020;height:0;left:0;opacity:.5;position:absolute;top:0;width:0}.maplibregl-cooperative-gesture-screen{align-items:center;background:rgba(0,0,0,.4);color:#fff;display:flex;font-size:1.4em;inset:0;justify-content:center;line-height:1.2;opacity:0;padding:1rem;pointer-events:none;position:absolute;transition:opacity 1s ease 1s;z-index:99999}.maplibregl-cooperative-gesture-screen.maplibregl-show{opacity:1;transition:opacity .05s}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:none}@media (hover:none),(width <= 480px){.maplibregl-cooperative-gesture-screen .maplibregl-desktop-message{display:none}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:block}}.maplibregl-pseudo-fullscreen{height:100%!important;left:0!important;position:fixed!important;top:0!important;width:100%!important;z-index:99999}</style>
+  <style>
+    :root {
+      --bg:#f6f7f9; --card:#ffffff; --border:#d9dde3;
+      --text:#1f2937; --muted:#6b7280; --soft:#f3f4f6;
+      --blue:#2563eb; --red:#dc2626; --green:#16a34a;
+      --amber:#d97706; --gray:#9ca3af; --purple:#7c3aed;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px}
+    .container{max-width:1380px;margin:auto}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+    .small{font-size:.88rem;color:var(--muted);line-height:1.55}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+    /* ── App header ── */
+    .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+    .app-header h1{font-size:1.45rem;font-weight:700;margin-bottom:4px}
+    .app-header p{font-size:.93rem;color:var(--muted)}
+    .header-btns{display:flex;gap:8px;flex-shrink:0;align-self:flex-start;flex-wrap:wrap}
+
+    /* ── Intro card ── */
+    .intro-card{margin-bottom:16px}
+    .concept-trio{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}
+    .concept-card{border:1px solid var(--border);border-radius:10px;padding:11px 13px;background:var(--soft)}
+    .concept-label{font-weight:700;font-size:.85rem;color:var(--text)}
+    .concept-desc{font-size:.77rem;color:var(--muted);margin-top:4px;line-height:1.4}
+
+    /* ── Guide section ── */
+    .guide-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px;display:none}
+    .guide-section.open{display:block}
+    .guide-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .guide-col h4{margin:0 0 8px;font-size:.9rem;color:var(--text)}
+    .guide-col ol,.guide-col ul{margin:0;padding-left:18px}
+    .guide-col li{font-size:.84rem;color:var(--muted);line-height:1.55;margin-bottom:5px}
+    .guide-col li strong{color:var(--text)}
+
+    /* ── Lesson rail ── */
+    .lesson-rail{display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+    .lesson-btn{flex:1;padding:11px 8px;background:var(--card);border:none;border-right:1px solid var(--border);cursor:pointer;font-size:.76rem;font-weight:600;color:var(--muted);line-height:1.35;text-align:center;transition:background .15s,color .15s}
+    .lesson-btn:last-child{border-right:none}
+    .lesson-btn:hover{background:var(--soft)}
+    .lesson-btn.active{background:var(--blue);color:#fff}
+    .lesson-btn .lesson-num{display:block;font-size:.65rem;font-weight:400;opacity:.75;margin-bottom:2px}
+
+    /* ── Main layout ── */
+    .main-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+
+    /* ── Lesson card ── */
+    .lesson-card{border:1px solid #bfdbfe;border-left:5px solid var(--blue);background:#eff6ff;border-radius:10px;padding:14px 16px;margin-bottom:14px}
+    .lesson-card h3{font-size:.95rem;color:#1e40af;margin:0 0 6px}
+    .lesson-card p{font-size:.84rem;color:#1d4ed8;line-height:1.6;margin:0}
+    .lesson-card strong{color:#1e3a8a}
+
+    /* ── Plot card ── */
+    .plot-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    #plot{width:100%;height:420px}
+
+    /* ── Stat bar ── */
+    .stat-bar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border)}
+    .stat-cell{padding:12px 14px;border-right:1px solid var(--border);position:relative}
+    .stat-cell:last-child{border-right:none}
+    .stat-name{font-size:.72rem;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:5px}
+    .stat-val{font-family:ui-monospace,monospace;font-size:1.45rem;font-weight:700;line-height:1;transition:color .4s}
+    .stat-sub{font-size:.72rem;color:var(--muted);margin-top:4px;line-height:1.35}
+    .info-tip{display:inline-block;width:14px;height:14px;background:#e0e7ff;color:#3730a3;border-radius:50%;font-size:.65rem;font-weight:700;text-align:center;line-height:14px;cursor:default;position:relative;flex-shrink:0}
+    .info-tip:hover .tip-text{display:block}
+    .tip-text{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 6px);background:#1f2937;color:#fff;font-size:.72rem;padding:8px 10px;border-radius:7px;width:230px;line-height:1.5;font-family:Arial,sans-serif;font-weight:400;z-index:20;white-space:normal;pointer-events:none}
+
+    /* ── Partial correlation panel ── */
+    .partial-panel{border:1px solid #e9d5ff;border-left:5px solid var(--purple);background:#f5f3ff;border-radius:10px;padding:14px 16px;margin-top:12px;display:none}
+    .partial-panel h4{font-size:.88rem;font-weight:700;color:#5b21b6;margin:0 0 10px}
+    .partial-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .partial-cell{border:1px solid #ddd6fe;background:#fff;border-radius:8px;padding:10px}
+    .partial-cell .pc-label{font-size:.7rem;color:#6d28d9;margin-bottom:4px}
+    .partial-cell .pc-val{font-family:ui-monospace,monospace;font-size:1.25rem;font-weight:700}
+    .partial-cell .pc-sub{font-size:.68rem;color:var(--muted);margin-top:3px;line-height:1.3}
+
+    /* ── Observation panel ── */
+    .obs-card{border-radius:10px;padding:12px 14px;margin-top:12px;border:1px solid var(--border);background:var(--soft);font-size:.83rem;line-height:1.65;color:var(--text)}
+    .obs-card.blue{border-color:#bfdbfe;background:#eff6ff;color:#1e3a8a}
+    .obs-card.amber{border-color:#fde68a;background:#fffbeb;color:#78350f}
+    .obs-card.green{border-color:#86efac;background:#f0fdf4;color:#14532d}
+    .obs-card.red{border-color:#fca5a5;background:#fef2f2;color:#7f1d1d}
+    .obs-card.purple{border-color:#ddd6fe;background:#f5f3ff;color:#4c1d95}
+
+    /* ── Controls sidebar ── */
+    .sidebar{display:flex;flex-direction:column;gap:12px}
+    .ctrl-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+    .ctrl-card h3{font-size:.9rem;font-weight:700;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    .ctrl-section{margin-bottom:12px}
+    .ctrl-section:last-child{margin-bottom:0}
+    .ctrl-label{font-size:.78rem;font-weight:600;color:var(--text);display:block;margin-bottom:5px}
+    .ctrl-note{font-size:.74rem;color:var(--muted);margin-bottom:6px;line-height:1.5}
+    .slider-row{display:flex;align-items:center;gap:8px}
+    .slider-row input[type="range"]{flex:1;-webkit-appearance:none;height:3px;background:var(--border);border-radius:2px;cursor:pointer;outline:none}
+    .slider-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue);border:2px solid #fff;box-shadow:0 0 0 1px var(--blue);cursor:pointer}
+    .slider-row input[type="range"].purple-thumb::-webkit-slider-thumb{background:var(--purple);box-shadow:0 0 0 1px var(--purple)}
+    .slider-val{font-family:ui-monospace,monospace;font-size:.8rem;font-weight:600;color:var(--blue);min-width:32px;text-align:right}
+    .slider-val.purple{color:var(--purple)}
+    .radio-row{display:flex;gap:6px;flex-wrap:wrap}
+    .radio-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border:1px solid var(--border);border-radius:999px;cursor:pointer;font-size:.79rem;color:var(--muted);transition:all .15s;user-select:none}
+    .radio-chip input{display:none}
+    .radio-chip.checked{background:#eff6ff;border-color:#93c5fd;color:var(--blue);font-weight:600}
+    .toggle-row{display:flex;flex-direction:column;gap:6px}
+    .toggle-chip{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.79rem;color:var(--muted);transition:all .15s;user-select:none}
+    .toggle-chip input{display:none}
+    .toggle-chip.checked{background:#f0fdf4;border-color:#86efac;color:#166534}
+    .toggle-dot{width:8px;height:8px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;transition:all .15s}
+    .toggle-chip.checked .toggle-dot{background:#16a34a;border-color:#16a34a}
+    .btn{padding:8px 14px;border:1px solid var(--border);border-radius:9px;background:var(--card);cursor:pointer;font-size:.82rem;font-weight:600;color:var(--text);transition:background .15s;display:inline-flex;align-items:center;gap:5px}
+    .btn:hover{background:var(--soft)}
+    .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .btn.primary:hover{background:#1d4ed8}
+    .btn-row{display:flex;gap:8px;flex-wrap:wrap}
+
+    /* ── Spearman card ── */
+    .spearman-card{display:none}
+    .compare-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .compare-box{border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--soft)}
+    .compare-box .cb-label{font-size:.72rem;color:var(--muted);margin-bottom:4px;font-weight:600}
+    .verdict{border-radius:9px;padding:10px 13px;margin-top:10px;font-size:.82rem;font-weight:600;line-height:1.5}
+    .verdict.good{background:#dcfce7;color:#14532d;border:1px solid #86efac}
+    .verdict.warn{background:#fef9c3;color:#78350f;border:1px solid #fde047}
+    .verdict.info{background:#eff6ff;color:#1e40af;border:1px solid #93c5fd}
+
+    /* ── Full Reference card ── */
+    .ref-card{display:none;margin-bottom:16px}
+    .ref-card.open{display:block}
+    .ref-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .ref-section{margin-bottom:18px}
+    .ref-section h4{font-size:.9rem;font-weight:700;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:8px}
+    .ref-section p{font-size:.84rem;color:var(--muted);line-height:1.6;margin-bottom:6px}
+    .ref-section p strong{color:var(--text)}
+    .ref-section ul{padding-left:18px;margin:4px 0}
+    .ref-section li{font-size:.84rem;color:var(--muted);line-height:1.55;margin-bottom:4px}
+    .ref-section li strong{color:var(--text)}
+    .case-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .case-box{border:1px solid var(--border);border-radius:8px;padding:9px 11px;background:var(--soft)}
+    .case-box .case-label{font-weight:700;font-size:.82rem;margin-bottom:3px}
+    .case-box .case-desc{font-size:.77rem;color:var(--muted);line-height:1.4}
+
+    /* ── Partial controls (lesson 5 only) ── */
+    .partial-controls{display:none}
+
+    @media(max-width:1100px){.concept-trio{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:980px){
+      .main-grid{grid-template-columns:1fr}
+      .stat-bar{grid-template-columns:1fr 1fr}
+      .stat-cell:nth-child(2){border-right:none}
+      .stat-cell:nth-child(3){border-top:1px solid var(--border)}
+      .partial-grid{grid-template-columns:1fr 1fr}
+      .ref-2col{grid-template-columns:1fr}
+      .guide-cols{grid-template-columns:1fr}
+      .concept-trio{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:600px){
+      .stat-bar{grid-template-columns:1fr}
+      .stat-cell{border-right:none;border-top:1px solid var(--border)}
+      .stat-cell:first-child{border-top:none}
+      .concept-trio{grid-template-columns:1fr}
+      .partial-grid{grid-template-columns:1fr 1fr}
+    }
+  </style>
+<style id="plotly.js-style-modebar-cb7159"></style></head>
+<body>
+<div class="container">
+
+  <!-- ── App header ── -->
+  <div class="app-header">
+    <div>
+      <h1>Correlation Explorer</h1>
+      <p>Five guided lessons — each teaches a distinct concept about correlation and when it misleads.</p>
+    </div>
+    <div class="header-btns">
+      <button class="btn" id="btnGuide">▼ Quick-Start Guide</button>
+      <button class="btn" id="btnRef">📖 Full Reference</button>
+    </div>
+  </div>
+
+  <!-- ── Intro / concept strip ── -->
+  <div class="card intro-card">
+    <div class="concept-trio">
+      <div class="concept-card">
+        <div class="concept-label">Pearson's r</div>
+        <div class="concept-desc">Linear association, −1 to +1. Sensitive to outliers. Only sees straight-line patterns.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">Spearman's ρ</div>
+        <div class="concept-desc">Ranks the data first, then computes r on those ranks. Robust to outliers; detects any monotone (not just linear) trend.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">R² (variance explained)</div>
+        <div class="concept-desc">r² tells you the fraction of Y's variation that X accounts for linearly. The scale is nonlinear — small r → very small R².</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">p-value &amp; n</div>
+        <div class="concept-desc">Significance depends on both r AND n. Same r=0.4 can be p&lt;.001 at n=60 and p&gt;.10 at n=10.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">Partial correlation</div>
+        <div class="concept-desc">r(X,Y|Z) is the X–Y association after removing Z's linear influence from both. Reveals whether a correlation is genuine or driven by a third variable.</div>
+      </div>
+    </div>
+
+    <!-- Quick-Start Guide (collapsible) -->
+    <div class="guide-section" id="guideSection">
+      <div class="guide-cols">
+        <div class="guide-col">
+          <h4>Purpose</h4>
+          <ul>
+            <li>This lab is built around one core habit to break: <strong>reading a correlation number without asking what produced it</strong>.</li>
+            <li>Noise, outliers, nonlinear patterns, small samples, and confounding third variables can each create or destroy a correlation independently of whether a real relationship exists.</li>
+            <li>By working through the five lessons in order, you build a complete picture of what r does and doesn't measure.</li>
+          </ul>
+        </div>
+        <div class="guide-col">
+          <h4>How to Use</h4>
+          <ol>
+            <li><strong>Click a lesson tab</strong> — it loads a preset and a plain-language description of the concept.</li>
+            <li>Read the blue lesson card, then adjust the controls it points you to.</li>
+            <li>Watch the <strong>four stat cells</strong> below the plot update live and read the <strong>observation panel</strong> for a plain-English interpretation of what changed.</li>
+            <li>Click <strong>↺ New data</strong> repeatedly to see how different random samples behave under the same settings.</li>
+            <li>In <strong>Lesson 5</strong>, watch both raw r and partial r — when they diverge, a confound is present.</li>
+          </ol>
+        </div>
+        <div class="guide-col">
+          <h4>What You Gain</h4>
+          <ul>
+            <li>An intuition that <strong>r measures linear association only</strong> — a strong curved pattern can still produce r ≈ 0.</li>
+            <li>A feel for how <strong>one outlier</strong> can dominate Pearson's r while Spearman's ρ barely moves.</li>
+            <li>The insight that <strong>significance (p-value) is about design quality</strong>, not the size of the effect — the same r can be significant or not depending purely on n.</li>
+            <li>An understanding of <strong>spurious correlation</strong>: two variables can be correlated only because a third variable drives both — partial correlation unmasks this.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Full Reference card (toggled) ── -->
+  <div class="card ref-card" id="refCard">
+    <h3 style="margin-bottom:14px">Full Reference</h3>
+    <div class="ref-2col">
+      <div>
+        <div class="ref-section">
+          <h4>Pearson's r — What It Measures</h4>
+          <p><strong>Pearson's r</strong> is the ratio of the covariance of X and Y to the product of their standard deviations. It ranges from −1 (perfect negative linear relationship) to +1 (perfect positive linear relationship), with 0 meaning no linear relationship. It says nothing about whether the relationship is curved, causal, or practically important.</p>
+          <p>Common misreadings: r = 0 does not mean "no relationship" — it means no <em>linear</em> relationship. A U-shaped pattern with tight points still produces r ≈ 0.</p>
+        </div>
+        <div class="ref-section">
+          <h4>Spearman's ρ — Why It Works on Any Numeric Data</h4>
+          <p>Spearman's ρ does not require ordinal data. It works by <strong>converting any numeric data to ranks</strong> first, then computing Pearson's r on those ranks. This makes it robust to outliers (an extreme value becomes rank 1 or rank n, losing its leverage) and capable of detecting any <em>monotone</em> association — consistently rising or falling — whether curved or straight.</p>
+          <p>When Pearson and Spearman agree closely, the pattern is approximately linear and robust. When they diverge substantially, there is likely an outlier or a nonlinear pattern distorting Pearson's r.</p>
+        </div>
+        <div class="ref-section">
+          <h4>R² and Practical Significance</h4>
+          <p>R² = r². It is the proportion of variance in Y linearly explained by X. Because r is squared, the scale is highly nonlinear: r = 0.3 explains only 9% of variance; r = 0.7 explains 49%; r = 0.9 explains 81%. A "statistically significant" r = 0.15 at large n explains only 2.25% of variance — detectable but rarely practically meaningful.</p>
+        </div>
+        <div class="ref-section">
+          <h4>Partial Correlation</h4>
+          <p><strong>Partial r(X,Y|Z)</strong> is the correlation between X and Y after removing the linear influence of Z from both variables. It is computed by regressing both X and Y on Z, taking the residuals from each regression, and correlating those residuals.</p>
+          <p>The formula is: r<sub>XY·Z</sub> = (r<sub>XY</sub> − r<sub>XZ</sub>·r<sub>YZ</sub>) / √[(1−r<sub>XZ</sub>²)(1−r<sub>YZ</sub>²)]</p>
+          <p><strong>When to use it:</strong> whenever you suspect a third variable Z may be creating or inflating the X–Y correlation. Classic example: ice cream sales and drowning rates are correlated — but both are caused by hot weather (Z). Partial correlation controlling for temperature would reveal the direct X–Y link is near zero.</p>
+        </div>
+      </div>
+      <div>
+        <div class="ref-section">
+          <h4>p-value and Sample Size</h4>
+          <p>The p-value for r is computed via Fisher's z-transformation: z = atanh(r) · √(n−3), then compared to the standard normal. The critical insight is that p depends on <em>both</em> r and n simultaneously. You can achieve p &lt; .001 with a trivial r = 0.10 if n is large enough. Conversely, a strong r = 0.5 will be non-significant at n = 10.</p>
+          <p>Statistical significance answers "is this different from zero given the design?" It does not answer "is this large enough to matter?"</p>
+        </div>
+        <div class="ref-section">
+          <h4>The Four Interpretation Cases</h4>
+          <div class="case-grid">
+            <div class="case-box">
+              <div class="case-label" style="color:var(--green)">✓ Strong + Significant</div>
+              <div class="case-desc">Large |r|, p &lt; .05. The pattern is both real and substantial. Most reliable verdict.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label" style="color:var(--amber)">⚠ Significant, Weak</div>
+              <div class="case-desc">Small |r|, p &lt; .05, large n. Detectable but R² is small — practical importance is limited.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label" style="color:var(--amber)">⚠ Promising, Inconclusive</div>
+              <div class="case-desc">Moderate |r|, p &gt; .05, small n. The effect may be real but the design is underpowered to confirm it.</div>
+            </div>
+            <div class="case-box">
+              <div class="case-label" style="color:var(--red)">✗ Neither</div>
+              <div class="case-desc">Near-zero |r|, p &gt; .05. Genuine null result — or a curved/outlier-driven pattern that r is failing to capture. Always check the plot.</div>
+            </div>
+          </div>
+        </div>
+        <div class="ref-section">
+          <h4>Why Not Cronbach's Alpha Here?</h4>
+          <p>Cronbach's α measures <em>scale reliability</em> — whether a set of items (e.g., five survey questions) are internally consistent enough to be summed into a single score. Its formula involves the average inter-item correlation across all item pairs, but the underlying question is completely different from bivariate or partial correlation. It belongs in a psychometrics or scale-construction lab, not here.</p>
+        </div>
+        <div class="ref-section">
+          <h4>When to Use Spearman Instead of Pearson</h4>
+          <ul>
+            <li><strong>Outliers are present</strong> and you want a robust measure.</li>
+            <li><strong>The pattern looks curved</strong> but consistently increasing or decreasing.</li>
+            <li><strong>Normality is doubtful</strong> and you prefer a nonparametric approach.</li>
+            <li>When Pearson and Spearman agree closely, either is defensible and Pearson is conventionally preferred for its interpretability.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Lesson rail ── -->
+  <div class="lesson-rail">
+    <button class="lesson-btn active" data-lesson="noise" onclick="setLesson(&#39;noise&#39;)">
+      <span class="lesson-num">Lesson 1</span>Noise &amp; Scatter
+    </button>
+    <button class="lesson-btn" data-lesson="outlier" onclick="setLesson(&#39;outlier&#39;)">
+      <span class="lesson-num">Lesson 2</span>The Outlier Problem
+    </button>
+    <button class="lesson-btn" data-lesson="curve" onclick="setLesson(&#39;curve&#39;)">
+      <span class="lesson-num">Lesson 3</span>When r Lies
+    </button>
+    <button class="lesson-btn" data-lesson="n" onclick="setLesson(&#39;n&#39;)">
+      <span class="lesson-num">Lesson 4</span>n &amp; Significance
+    </button>
+    <button class="lesson-btn" data-lesson="partial" onclick="setLesson(&#39;partial&#39;)">
+      <span class="lesson-num">Lesson 5</span>Partial Correlation
+    </button>
+  </div>
+
+  <!-- ── Main grid ── -->
+  <div class="main-grid">
+    <div>
+      <!-- Lesson narrative -->
+      <div class="lesson-card" id="lessonCard">
+        <h3 id="lessonTitle">Lesson 1 — Noise &amp; Scatter</h3>
+        <p id="lessonBody"><strong>Core idea:</strong> Pearson's r measures how tightly points cluster around a straight line. Noise (vertical scatter) weakens that clustering — and therefore weakens r — even when the direction of the trend is perfectly obvious to the eye.<br><br>
+<strong>Try this:</strong> Drag the <em>Noise</em> slider all the way to 0. The points fall on a near-perfect line and r approaches ±1. Now slowly increase noise and watch r fall. Notice the regression line barely changes direction — the trend is still real. Only the precision of r is affected. This is why you should always report a scatterplot alongside a correlation: the number alone doesn't tell you how obvious the pattern looks.</p>
+      </div>
+
+      <!-- Plot + stat bar -->
+      <div class="plot-card">
+        <div id="plot" class="js-plotly-plot"><div class="plot-container plotly"><div class="user-select-none svg-container" style="position: relative; width: 100%; height: 100%;"><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1022" height="420" style="background: rgb(255, 255, 255);"><defs id="defs-cb7159"><g class="clips"><clippath id="clipcb7159xyplot" class="plotclip"><rect width="954" height="312"></rect></clippath><clippath class="axesclip" id="clipcb7159x"><rect x="52" y="0" width="954" height="420"></rect></clippath><clippath class="axesclip" id="clipcb7159y"><rect x="0" y="60" width="1022" height="312"></rect></clippath><clippath class="axesclip" id="clipcb7159xy"><rect x="52" y="60" width="954" height="312"></rect></clippath></g><g class="gradients"></g><g class="patterns"></g></defs><g class="bglayer"></g><g class="draglayer cursor-crosshair"><g class="xy"><rect class="nsewdrag drag" data-subplot="xy" x="52" y="60" width="954" height="312" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="nwdrag drag cursor-nw-resize" data-subplot="xy" x="32" y="40" width="20" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="nedrag drag cursor-ne-resize" data-subplot="xy" x="1006" y="40" width="20" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="swdrag drag cursor-sw-resize" data-subplot="xy" x="32" y="372" width="20" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="sedrag drag cursor-se-resize" data-subplot="xy" x="1006" y="372" width="20" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="ewdrag drag cursor-ew-resize" data-subplot="xy" x="147.4" y="372.5" width="763.2" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="wdrag drag cursor-w-resize" data-subplot="xy" x="52" y="372.5" width="95.4" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="edrag drag cursor-e-resize" data-subplot="xy" x="910.6" y="372.5" width="95.4" height="20" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="nsdrag drag cursor-ns-resize" data-subplot="xy" x="31.5" y="91.2" width="20" height="249.60000000000002" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="sdrag drag cursor-s-resize" data-subplot="xy" x="31.5" y="340.8" width="20" height="31.200000000000003" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect><rect class="ndrag drag cursor-n-resize" data-subplot="xy" x="31.5" y="60" width="20" height="31.200000000000003" style="fill: transparent; stroke-width: 0; pointer-events: all;"></rect></g></g><g class="layer-below"><g class="imagelayer"></g><g class="shapelayer"></g></g><g class="cartesianlayer"><g class="subplot xy"><g class="layer-subplot"><g class="shapelayer"></g><g class="imagelayer"></g></g><g class="minor-gridlayer"><g class="x"></g><g class="y"></g></g><g class="gridlayer"><g class="x"><path class="xgrid crisp" transform="translate(222.36,0)" d="M0,60v312" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(392.71,0)" d="M0,60v312" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(563.0699999999999,0)" d="M0,60v312" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(733.43,0)" d="M0,60v312" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="xgrid crisp" transform="translate(903.79,0)" d="M0,60v312" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path></g><g class="y"><path class="ygrid crisp" transform="translate(0,357.97)" d="M52,0h954" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,320.72)" d="M52,0h954" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,283.48)" d="M52,0h954" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,246.23)" d="M52,0h954" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,208.98)" d="M52,0h954" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,171.74)" d="M52,0h954" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,134.49)" d="M52,0h954" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path><path class="ygrid crisp" transform="translate(0,97.25)" d="M52,0h954" style="stroke: rgb(238, 238, 238); stroke-opacity: 1; stroke-width: 1px;"></path></g></g><g class="zerolinelayer"><path class="xzl zl crisp" transform="translate(52,0)" d="M0,60v312" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; stroke-width: 1px;"></path></g><g class="layer-between"><g class="shapelayer"></g><g class="imagelayer"></g></g><path class="xlines-below"></path><path class="ylines-below"></path><g class="overlines-below"></g><g class="xaxislayer-below"></g><g class="yaxislayer-below"></g><g class="overaxes-below"></g><g class="overplot"><g class="xy" transform="translate(52,60)" clip-path="url(#clipcb7159xyplot)"><g class="scatterlayer mlayer"><g class="trace scatter trace322766" style="stroke-miterlimit: 2; opacity: 1;"><g class="fills"></g><g class="errorbars"></g><g class="lines"></g><g class="points"><path class="point" transform="translate(34.07,282.2)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(68.14,280.63)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(102.21,244.53)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(136.29,260.6)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(170.36,239.92)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(204.43,259.21)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(238.5,242.62)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(272.57,213.11)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(306.64,208.86)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(340.71,227.03)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(374.79,200.29)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(408.86,192.66)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(442.93,177.63)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(477,179.32)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(511.07,167.6)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(545.14,186.73)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(579.21,178.28)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(613.29,163.49)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(647.36,164.88)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(681.43,147.04)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(715.5,138.47)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(749.57,120.12)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(783.64,115.9)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path><path class="point" transform="translate(817.71,121.48)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path></g><g class="text"></g></g><g class="trace scatter trace074ab8" style="stroke-miterlimit: 2; opacity: 1;"><g class="fills"></g><g class="errorbars"></g><g class="lines"><path class="js-line" d="M0,282.93L954,89.01" style="vector-effect: non-scaling-stroke; fill: none; stroke: rgb(17, 24, 39); stroke-opacity: 1; stroke-width: 2px; opacity: 1;"></path></g><g class="points"></g><g class="text"></g></g></g></g></g><path class="xlines-above crisp" d="M0,0" style="fill: none;"></path><path class="ylines-above crisp" d="M0,0" style="fill: none;"></path><g class="overlines-above"></g><g class="xaxislayer-above"><g class="xtick"><text text-anchor="middle" x="0" y="385" data-unformatted="0" data-math="N" transform="translate(52,0)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;">0</text></g><g class="xtick"><text text-anchor="middle" x="0" y="385" data-unformatted="5" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(222.36,0)">5</text></g><g class="xtick"><text text-anchor="middle" x="0" y="385" data-unformatted="10" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(392.71,0)">10</text></g><g class="xtick"><text text-anchor="middle" x="0" y="385" data-unformatted="15" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(563.0699999999999,0)">15</text></g><g class="xtick"><text text-anchor="middle" x="0" y="385" data-unformatted="20" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(733.43,0)">20</text></g><g class="xtick"><text text-anchor="middle" x="0" y="385" data-unformatted="25" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(903.79,0)">25</text></g></g><g class="yaxislayer-above"><g class="ytick"><text text-anchor="end" x="51" y="4.199999999999999" data-unformatted="5" data-math="N" transform="translate(0,357.97)" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;">5</text></g><g class="ytick"><text text-anchor="end" x="51" y="4.199999999999999" data-unformatted="10" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(0,320.72)">10</text></g><g class="ytick"><text text-anchor="end" x="51" y="4.199999999999999" data-unformatted="15" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(0,283.48)">15</text></g><g class="ytick"><text text-anchor="end" x="51" y="4.199999999999999" data-unformatted="20" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(0,246.23)">20</text></g><g class="ytick"><text text-anchor="end" x="51" y="4.199999999999999" data-unformatted="25" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(0,208.98)">25</text></g><g class="ytick"><text text-anchor="end" x="51" y="4.199999999999999" data-unformatted="30" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(0,171.74)">30</text></g><g class="ytick"><text text-anchor="end" x="51" y="4.199999999999999" data-unformatted="35" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(0,134.49)">35</text></g><g class="ytick"><text text-anchor="end" x="51" y="4.199999999999999" data-unformatted="40" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(0,97.25)">40</text></g><g class="ytick"><text text-anchor="end" x="51" y="4.199999999999999" data-unformatted="45" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre; opacity: 1;" transform="translate(0,60)">45</text></g></g><g class="overaxes-above"></g></g></g><g class="polarlayer"></g><g class="smithlayer"></g><g class="ternarylayer"></g><g class="geolayer"></g><g class="funnelarealayer"></g><g class="pielayer"></g><g class="iciclelayer"></g><g class="treemaplayer"></g><g class="sunburstlayer"></g><g class="glimages"></g></svg><div class="gl-container"></div><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1022" height="420"><defs id="topdefs-cb7159"><g class="clips"></g><clippath id="legendcb7159"><rect width="210" height="29" x="0" y="0"></rect></clippath></defs><g class="indicatorlayer"></g><g class="layer-above"><g class="imagelayer"></g><g class="shapelayer"></g></g><g class="selectionlayer"></g><g class="infolayer"><g class="legend" pointer-events="all" transform="translate(52,12.279999999999987)"><rect class="bg" shape-rendering="crispEdges" style="stroke: rgb(68, 68, 68); stroke-opacity: 1; fill: rgb(255, 255, 255); fill-opacity: 1; stroke-width: 0px;" width="210" height="29" x="0" y="0"></rect><g class="scrollbox" transform="" clip-path="url(#legendcb7159)"><g class="groups"><g class="traces" transform="translate(0,14.5)" style="opacity: 1;"><text class="legendtext" text-anchor="start" x="40" y="4.680000000000001" data-unformatted="Data" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre;">Data</text><g class="layers" style="opacity: 1;"><g class="legendfill"></g><g class="legendlines"></g><g class="legendsymbols"><g class="legendpoints"><path class="scatterpts" transform="translate(20,0)" d="M4,0A4,4 0 1,1 0,-4A4,4 0 0,1 4,0Z" style="opacity: 0.75; stroke-width: 1px; fill: rgb(37, 99, 235); fill-opacity: 1; stroke: rgb(30, 64, 175); stroke-opacity: 1;"></path></g></g></g><rect class="legendtoggle" pointer-events="all" x="0" y="-9.5" width="70.890625" height="19" style="cursor: pointer; fill: rgb(0, 0, 0); fill-opacity: 0;"></rect></g><g class="traces" transform="translate(73.390625,14.5)" style="opacity: 1;"><text class="legendtext" text-anchor="start" x="40" y="4.680000000000001" data-unformatted="Regression line" data-math="N" style="font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 12px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre;">Regression line</text><g class="layers" style="opacity: 1;"><g class="legendfill"></g><g class="legendlines"><path class="js-line" d="M5,0h30" style="fill: none; stroke: rgb(17, 24, 39); stroke-opacity: 1; stroke-width: 2px;"></path></g><g class="legendsymbols"><g class="legendpoints"></g></g></g><rect class="legendtoggle" pointer-events="all" x="0" y="-9.5" width="133.671875" height="19" style="cursor: pointer; fill: rgb(0, 0, 0); fill-opacity: 0;"></rect></g></g></g><rect class="scrollbar" rx="20" ry="3" width="0" height="0" style="fill: rgb(128, 139, 164); fill-opacity: 1;" x="0" y="0"></rect></g><g class="g-gtitle"></g><g class="g-xtitle" transform="translate(0,-7)"><text class="xtitle" x="529" y="424" text-anchor="middle" data-unformatted="X" data-math="N" style="opacity: 1; font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 14px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre;">X</text></g><g class="g-ytitle"><text class="ytitle" transform="rotate(-90,14,216)" x="14" y="216" text-anchor="middle" data-unformatted="Y" data-math="N" style="opacity: 1; font-family: &quot;Open Sans&quot;, verdana, arial, sans-serif; font-size: 14px; fill: rgb(68, 68, 68); fill-opacity: 1; font-weight: normal; font-style: normal; font-variant: normal; white-space: pre;">Y</text></g></g><g class="menulayer"></g><g class="zoomlayer"></g></svg><div class="modebar-container" style="position: absolute; top: 0px; right: 0px; width: 100%;"><div id="modebar-cb7159" class="modebar modebar--hover ease-bg"><div class="modebar-group"><a rel="tooltip" class="modebar-btn" data-title="Download plot as a png" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m500 450c-83 0-150-67-150-150 0-83 67-150 150-150 83 0 150 67 150 150 0 83-67 150-150 150z m400 150h-120c-16 0-34 13-39 29l-31 93c-6 15-23 28-40 28h-340c-16 0-34-13-39-28l-31-94c-6-15-23-28-40-28h-120c-55 0-100-45-100-100v-450c0-55 45-100 100-100h800c55 0 100 45 100 100v450c0 55-45 100-100 100z m-400-550c-138 0-250 112-250 250 0 138 112 250 250 250 138 0 250-112 250-250 0-138-112-250-250-250z m365 380c-19 0-35 16-35 35 0 19 16 35 35 35 19 0 35-16 35-35 0-19-16-35-35-35z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a></div><div class="modebar-group"><a rel="tooltip" class="modebar-btn active" data-title="Zoom" data-attr="dragmode" data-val="zoom" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m1000-25l-250 251c40 63 63 138 63 218 0 224-182 406-407 406-224 0-406-182-406-406s183-406 407-406c80 0 155 22 218 62l250-250 125 125z m-812 250l0 438 437 0 0-438-437 0z m62 375l313 0 0-312-313 0 0 312z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Pan" data-attr="dragmode" data-val="pan" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m1000 350l-187 188 0-125-250 0 0 250 125 0-188 187-187-187 125 0 0-250-250 0 0 125-188-188 186-187 0 125 252 0 0-250-125 0 187-188 188 188-125 0 0 250 250 0 0-126 187 188z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Box Select" data-attr="dragmode" data-val="select" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m0 850l0-143 143 0 0 143-143 0z m286 0l0-143 143 0 0 143-143 0z m285 0l0-143 143 0 0 143-143 0z m286 0l0-143 143 0 0 143-143 0z m-857-286l0-143 143 0 0 143-143 0z m857 0l0-143 143 0 0 143-143 0z m-857-285l0-143 143 0 0 143-143 0z m857 0l0-143 143 0 0 143-143 0z m-857-286l0-143 143 0 0 143-143 0z m286 0l0-143 143 0 0 143-143 0z m285 0l0-143 143 0 0 143-143 0z m286 0l0-143 143 0 0 143-143 0z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Lasso Select" data-attr="dragmode" data-val="lasso" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1031 1000" class="icon" height="1em" width="1em"><path d="m1018 538c-36 207-290 336-568 286-277-48-473-256-436-463 10-57 36-108 76-151-13-66 11-137 68-183 34-28 75-41 114-42l-55-70 0 0c-2-1-3-2-4-3-10-14-8-34 5-45 14-11 34-8 45 4 1 1 2 3 2 5l0 0 113 140c16 11 31 24 45 40 4 3 6 7 8 11 48-3 100 0 151 9 278 48 473 255 436 462z m-624-379c-80 14-149 48-197 96 42 42 109 47 156 9 33-26 47-66 41-105z m-187-74c-19 16-33 37-39 60 50-32 109-55 174-68-42-25-95-24-135 8z m360 75c-34-7-69-9-102-8 8 62-16 128-68 170-73 59-175 54-244-5-9 20-16 40-20 61-28 159 121 317 333 354s407-60 434-217c28-159-121-318-333-355z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a></div><div class="modebar-group"><a rel="tooltip" class="modebar-btn" data-title="Zoom in" data-attr="zoom" data-val="in" data-toggle="false" data-gravity="n"><svg viewBox="0 0 875 1000" class="icon" height="1em" width="1em"><path d="m1 787l0-875 875 0 0 875-875 0z m687-500l-187 0 0-187-125 0 0 187-188 0 0 125 188 0 0 187 125 0 0-187 187 0 0-125z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Zoom out" data-attr="zoom" data-val="out" data-toggle="false" data-gravity="n"><svg viewBox="0 0 875 1000" class="icon" height="1em" width="1em"><path d="m0 788l0-876 875 0 0 876-875 0z m688-500l-500 0 0 125 500 0 0-125z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Autoscale" data-attr="zoom" data-val="auto" data-toggle="false" data-gravity="n"><svg viewBox="0 0 1000 1000" class="icon" height="1em" width="1em"><path d="m250 850l-187 0-63 0 0-62 0-188 63 0 0 188 187 0 0 62z m688 0l-188 0 0-62 188 0 0-188 62 0 0 188 0 62-62 0z m-875-938l0 188-63 0 0-188 0-62 63 0 187 0 0 62-187 0z m875 188l0-188-188 0 0-62 188 0 62 0 0 62 0 188-62 0z m-125 188l-1 0-93-94-156 156 156 156 92-93 2 0 0 250-250 0 0-2 93-92-156-156-156 156 94 92 0 2-250 0 0-250 0 0 93 93 157-156-157-156-93 94 0 0 0-250 250 0 0 0-94 93 156 157 156-157-93-93 0 0 250 0 0 250z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a><a rel="tooltip" class="modebar-btn" data-title="Reset axes" data-attr="zoom" data-val="reset" data-toggle="false" data-gravity="n"><svg viewBox="0 0 928.6 1000" class="icon" height="1em" width="1em"><path d="m786 296v-267q0-15-11-26t-25-10h-214v214h-143v-214h-214q-15 0-25 10t-11 26v267q0 1 0 2t0 2l321 264 321-264q1-1 1-4z m124 39l-34-41q-5-5-12-6h-2q-7 0-12 3l-386 322-386-322q-7-4-13-4-7 2-12 7l-35 41q-4 5-3 13t6 12l401 334q18 15 42 15t43-15l136-114v109q0 8 5 13t13 5h107q8 0 13-5t5-13v-227l122-102q5-5 6-12t-4-13z" transform="matrix(1 0 0 -1 0 850)"></path></svg></a></div><div class="modebar-group"><a href="https://plotly.com/" target="_blank" data-title="Produced with Plotly.js (v2.35.2)" class="modebar-btn plotlyjsicon modebar-btn--logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 132 132" height="1em" width="1em"><defs> <style>  .cls-0{fill:#000;}  .cls-1{fill:#FFF;}  .cls-2{fill:#F26;}  .cls-3{fill:#D69;}  .cls-4{fill:#BAC;}  .cls-5{fill:#9EF;} </style></defs> <title>plotly-logomark</title> <g id="symbol">  <rect class="cls-0" x="0" y="0" width="132" height="132" rx="18" ry="18"></rect>  <circle class="cls-5" cx="102" cy="30" r="6"></circle>  <circle class="cls-4" cx="78" cy="30" r="6"></circle>  <circle class="cls-4" cx="78" cy="54" r="6"></circle>  <circle class="cls-3" cx="54" cy="30" r="6"></circle>  <circle class="cls-2" cx="30" cy="30" r="6"></circle>  <circle class="cls-2" cx="30" cy="54" r="6"></circle>  <path class="cls-1" d="M30,72a6,6,0,0,0-6,6v24a6,6,0,0,0,12,0V78A6,6,0,0,0,30,72Z"></path>  <path class="cls-1" d="M78,72a6,6,0,0,0-6,6v24a6,6,0,0,0,12,0V78A6,6,0,0,0,78,72Z"></path>  <path class="cls-1" d="M54,48a6,6,0,0,0-6,6v48a6,6,0,0,0,12,0V54A6,6,0,0,0,54,48Z"></path>  <path class="cls-1" d="M102,48a6,6,0,0,0-6,6v48a6,6,0,0,0,12,0V54A6,6,0,0,0,102,48Z"></path> </g></svg></a></div></div></div><svg class="main-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1022" height="420"><g class="hoverlayer"></g></svg></div></div></div>
+        <div class="stat-bar">
+
+          <div class="stat-cell">
+            <div class="stat-name">
+              Pearson's r
+              <span class="info-tip">i<span class="tip-text">Pearson's r measures linear association. +1 = perfect positive line, −1 = perfect negative line, 0 = no linear trend. Sensitive to outliers; only detects straight-line relationships.</span></span>
+            </div>
+            <div class="stat-val" id="rVal" style="color: var(--green);">0.976</div>
+            <div class="stat-sub" id="rLabel">very strong linear assoc.</div>
+          </div>
+
+          <div class="stat-cell" id="cellRho">
+            <div class="stat-name">
+              Spearman's ρ
+              <span class="info-tip">i<span class="tip-text">Spearman ranks every data point first, then computes Pearson's r on those ranks. Works on any numeric data — no ordinal data required. Robust to outliers; detects curved monotone trends Pearson misses.</span></span>
+            </div>
+            <div class="stat-val" id="rhoVal" style="color:var(--muted)">0.977</div>
+            <div class="stat-sub" id="rhoLabel">close to r — linear pattern likely</div>
+          </div>
+
+          <div class="stat-cell" id="cellPartial">
+            <div class="stat-name">
+              Partial r(X,Y|Z)
+              <span class="info-tip">i<span class="tip-text">The X–Y correlation after removing Z's linear influence from both X and Y. Formula: (rxy − rxz·ryz) / √[(1−rxz²)(1−ryz²)]. Near zero means Z explains the X–Y correlation — it is spurious.</span></span>
+            </div>
+            <div class="stat-val" id="partialVal" style="color: var(--gray);">n/a</div>
+            <div class="stat-sub" id="partialLabel">(Lesson 5 only)</div>
+          </div>
+
+          <div class="stat-cell">
+            <div class="stat-name" id="stat4name">R² <span class="info-tip" id="stat4tip"><span class="tip-text" id="stat4tiptext">R² = r². The proportion of variance in Y linearly explained by X. r=0.7 → R²=49%. The scale is nonlinear — going from r=0.7 to r=0.9 nearly doubles the explained variance.</span>i</span>
+            </div>
+            <div class="stat-val" id="r2Val" style="color: var(--text);">95.2%</div>
+            <div class="stat-sub" id="r2Label">explains 95.2% of variance</div>
+          </div>
+
+        </div><!-- /stat-bar -->
+      </div>
+
+      <!-- Partial correlation breakdown panel (Lesson 5 only) -->
+      <div class="partial-panel" id="partialPanel" style="display: none;">
+        <h4>Correlation Breakdown — Controlling for Z</h4>
+        <div class="partial-grid">
+          <div class="partial-cell">
+            <div class="pc-label">Raw r(X,Y)</div>
+            <div class="pc-val" id="pcRaw">—</div>
+            <div class="pc-sub">X–Y before controlling for Z</div>
+          </div>
+          <div class="partial-cell">
+            <div class="pc-label">Partial r(X,Y|Z)</div>
+            <div class="pc-val" id="pcPartial" style="color:var(--purple)">—</div>
+            <div class="pc-sub">X–Y after removing Z's influence</div>
+          </div>
+          <div class="partial-cell">
+            <div class="pc-label">r(X,Z) — confound on X</div>
+            <div class="pc-val" id="pcRxz">—</div>
+            <div class="pc-sub">How strongly Z drives X</div>
+          </div>
+          <div class="partial-cell">
+            <div class="pc-label">r(Y,Z) — confound on Y</div>
+            <div class="pc-val" id="pcRyz">—</div>
+            <div class="pc-sub">How strongly Z drives Y</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Observation panel -->
+      <div class="obs-card green" id="observationPanel">✓ Strong association (r = 0.98). The fitted line accounts for 95% of the variance in Y.</div>
+    </div>
+
+    <!-- ── Sidebar ── -->
+    <div class="sidebar">
+
+      <!-- Data controls -->
+      <div class="ctrl-card">
+        <h3>Data</h3>
+        <div class="ctrl-section">
+          <div class="btn-row">
+            <button class="btn primary" onclick="regenerate()">↺ New data</button>
+            <button class="btn" onclick="resetLesson()">Reset</button>
+          </div>
+        </div>
+        <div class="ctrl-section" id="dirSection" style="display: block;">
+          <span class="ctrl-label">Direction</span>
+          <div class="radio-row" id="dirRow">
+            <label class="radio-chip checked"><input type="radio" name="dir" value="positive" checked="" onchange="onDirChange()">↗ Positive</label>
+            <label class="radio-chip"><input type="radio" name="dir" value="negative" onchange="onDirChange()">↘ Negative</label>
+          </div>
+        </div>
+        <div class="ctrl-section">
+          <span class="ctrl-label">Sample size &nbsp;<span class="mono" id="nLabel" style="color:var(--blue)">n = 24</span></span>
+          <span class="ctrl-note">Lesson 4's core insight: slide this while holding everything else constant.</span>
+          <div class="slider-row">
+            <input type="range" id="nSlider" min="10" max="60" step="1" value="24" oninput="onNChange()">
+            <span class="slider-val" id="nDisp">24</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scatter & pattern (hidden in lesson 5) -->
+      <div class="ctrl-card" id="scatterCard" style="display: block;">
+        <h3>Scatter &amp; Pattern</h3>
+        <div class="ctrl-section">
+          <span class="ctrl-label">Noise &nbsp;<span class="mono" id="noiseLabel" style="color:var(--blue)">2.5</span></span>
+          <span class="ctrl-note">Increases vertical spread. More noise → weaker r even if trend direction is obvious.</span>
+          <div class="slider-row">
+            <input type="range" id="noiseSlider" min="0" max="20" step="0.1" value="2.5" oninput="onNoiseChange()">
+            <span class="slider-val" id="noiseDisp">2.5</span>
+          </div>
+        </div>
+        <div class="ctrl-section">
+          <span class="ctrl-label">Pattern type</span>
+          <div class="toggle-row">
+            <label class="toggle-chip" id="chipCurve">
+              <input type="checkbox" id="cbCurve" onchange="onCurveChange()">
+              <span class="toggle-dot"></span>Curved (quadratic) pattern
+            </label>
+          </div>
+          <div class="ctrl-note" style="margin-top:6px">Lesson 3: enable this and compare Pearson's r with Spearman's ρ.</div>
+        </div>
+      </div>
+
+      <!-- Partial correlation controls (Lesson 5 only) -->
+      <div class="ctrl-card partial-controls" id="partialCtrl" style="display: none;">
+        <h3>Confound Controls</h3>
+        <div class="ctrl-section">
+          <span class="ctrl-label">Z → X strength &nbsp;<span class="mono purple" id="zxLabel">1.0</span></span>
+          <span class="ctrl-note">How strongly the confound Z drives X. Set to 0 for no influence.</span>
+          <div class="slider-row">
+            <input type="range" class="purple-thumb" id="zxSlider" min="0" max="2" step="0.05" value="1.0" oninput="onPartialChange(&#39;zx&#39;)">
+            <span class="slider-val purple" id="zxDisp">1.0</span>
+          </div>
+        </div>
+        <div class="ctrl-section">
+          <span class="ctrl-label">Z → Y strength &nbsp;<span class="mono purple" id="zyLabel">1.0</span></span>
+          <span class="ctrl-note">How strongly the confound Z drives Y.</span>
+          <div class="slider-row">
+            <input type="range" class="purple-thumb" id="zySlider" min="0" max="2" step="0.05" value="1.0" oninput="onPartialChange(&#39;zy&#39;)">
+            <span class="slider-val purple" id="zyDisp">1.0</span>
+          </div>
+        </div>
+        <div class="ctrl-section">
+          <span class="ctrl-label">X → Y direct &nbsp;<span class="mono purple" id="xyLabel">0.0</span></span>
+          <span class="ctrl-note">A genuine direct effect from X to Y, independent of Z. When 0, all X–Y correlation is spurious.</span>
+          <div class="slider-row">
+            <input type="range" class="purple-thumb" id="xySlider" min="0" max="2" step="0.05" value="0.0" oninput="onPartialChange(&#39;xy&#39;)">
+            <span class="slider-val purple" id="xyDisp">0.0</span>
+          </div>
+        </div>
+        <div class="ctrl-section">
+          <span class="ctrl-label">Noise &nbsp;<span class="mono purple" id="partialNoiseLabel">3.0</span></span>
+          <div class="slider-row">
+            <input type="range" class="purple-thumb" id="partialNoiseSlider" min="0" max="10" step="0.1" value="3.0" oninput="onPartialChange(&#39;noise&#39;)">
+            <span class="slider-val purple" id="partialNoiseDisp">3.0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlays -->
+      <div class="ctrl-card" id="overlayCard" style="display: block;">
+        <h3>Overlays</h3>
+        <div class="toggle-row">
+          <label class="toggle-chip checked" id="chipFit">
+            <input type="checkbox" id="cbFit" checked="" onchange="onFitChange()">
+            <span class="toggle-dot"></span>Show regression line
+          </label>
+          <label class="toggle-chip" id="chipOutlier">
+            <input type="checkbox" id="cbOutlier" onchange="onOutlierChange()">
+            <span class="toggle-dot"></span>Add outlier point
+          </label>
+        </div>
+        <div class="ctrl-note" style="margin-top:8px">
+          Outlier position is <strong>fixed</strong> until you click New data — toggle off and on to see the same point's effect.
+        </div>
+      </div>
+
+      <!-- Spearman explainer (Lessons 2 & 3) -->
+      <div class="ctrl-card spearman-card" id="spearmanCard" style="display: none;">
+        <h3>Why Spearman here?</h3>
+        <p class="small" style="margin-bottom:10px">Spearman's ρ doesn't require ordinal data. It <strong>converts any numeric values to ranks first</strong>, then computes correlation on those ranks. Two results follow:</p>
+        <div class="compare-row">
+          <div class="compare-box">
+            <div class="cb-label">Outlier robustness</div>
+            <div class="small" style="margin-top:4px">An extreme value becomes rank 1 or n. It can't drag the coefficient the way it drags Pearson's r.</div>
+          </div>
+          <div class="compare-box">
+            <div class="cb-label">Monotone detection</div>
+            <div class="small" style="margin-top:4px">Any consistently rising or falling trend — curved or straight — gets a high ρ. Pearson only sees the straight-line part.</div>
+          </div>
+        </div>
+        <div id="spearmanVerdict" class="verdict info" style="margin-top:10px">
+          Activate an outlier or curved pattern to see Pearson and Spearman diverge.
+        </div>
+      </div>
+
+    </div><!-- /sidebar -->
+  </div><!-- /main-grid -->
+
+</div><!-- /container -->
+<script>
+/* ═══════════════════════════════════
+   LESSON CONTENT
+═══════════════════════════════════ */
+const LESSONS = {
+  noise: {
+    title: 'Lesson 1 — Noise &amp; Scatter',
+    body: `<strong>Core idea:</strong> Pearson's r measures how tightly points cluster around a straight line. Noise (vertical scatter) weakens that clustering — and therefore weakens r — even when the direction of the trend is perfectly obvious to the eye.<br><br>
+<strong>Try this:</strong> Drag the <em>Noise</em> slider all the way to 0. The points fall on a near-perfect line and r approaches ±1. Now slowly increase noise and watch r fall. Notice the regression line barely changes direction — the trend is still real. Only the precision of r is affected. This is why you should always report a scatterplot alongside a correlation: the number alone doesn't tell you how obvious the pattern looks.`,
+    preset:{ n:24, noise:2.5, curve:false, outlier:false, dir:'positive' },
+    showSpearman:false, showPartial:false
+  },
+  outlier: {
+    title: 'Lesson 2 — The Outlier Problem',
+    body: `<strong>Core idea:</strong> Pearson's r uses raw values, so one extreme point can move the coefficient dramatically. Spearman's ρ ranks every point first — an outlier just becomes rank 1 or rank n and loses most of its leverage. The gap between the two coefficients tells you how fragile the result is.<br><br>
+<strong>Try this:</strong> Look at r and ρ (Spearman) in the stat bar — they should be close. Toggle <em>Add outlier</em> on. Watch r shift, sometimes dramatically. Spearman barely moves. Toggle the outlier off and on several times. Then click <em>New data</em> to see how different samples behave — sometimes the outlier helps, sometimes it hurts.`,
+    preset:{ n:16, noise:3.0, curve:false, outlier:true, dir:'positive' },
+    showSpearman:true, showPartial:false
+  },
+  curve: {
+    title: 'Lesson 3 — When r Lies',
+    body: `<strong>Core idea:</strong> Pearson's r only measures <em>linear</em> (straight-line) association. A U-shaped or arc pattern can produce r ≈ 0 because the left half of the curve cancels the right half. The relationship is strong, but r doesn't see it. Spearman's ρ detects any consistently rising or falling (monotone) pattern regardless of curvature.<br><br>
+<strong>Try this:</strong> Enable the <em>Curved pattern</em> toggle and set noise low. Watch r stay modest while Spearman's ρ is much higher. Now gradually increase noise — both r and ρ will fall, but ρ stays above r. This is exactly why r = 0.2 might mean "weak relationship" or it might mean "strong nonlinear relationship that Pearson can't measure." You can't tell without the plot.`,
+    preset:{ n:30, noise:1.5, curve:true, outlier:false, dir:'positive' },
+    showSpearman:true, showPartial:false
+  },
+  n: {
+    title: 'Lesson 4 — n Determines Significance',
+    body: `<strong>Core idea:</strong> Statistical significance (the p-value) depends on both r <em>and</em> the sample size n. The same r = 0.40 is highly significant at n = 60 and completely non-significant at n = 10. The association hasn't changed — only the design quality has.<br><br>
+<strong>Try this:</strong> Set noise to a moderate level, then drag the <em>Sample size</em> slider from 10 up to 60 and back. Watch the p-value flip from red (not significant) to green (significant) while r barely moves. This is the single most important lesson in statistical literacy: significance is a statement about your design, not about the size of the effect.`,
+    preset:{ n:50, noise:7.0, curve:false, outlier:false, dir:'positive' },
+    showSpearman:false, showPartial:false
+  },
+  partial: {
+    title: 'Lesson 5 — Partial Correlation',
+    body: `<strong>Core idea:</strong> Two variables can be strongly correlated simply because a third variable (Z) drives both of them. This is called a <em>spurious correlation</em>. Partial correlation r(X,Y|Z) removes Z's linear influence from both X and Y, then correlates the leftovers (residuals). If the raw correlation collapses toward zero, the relationship was largely or entirely driven by Z.<br><br>
+<strong>Try this:</strong> The points are colored by Z — blue = low Z, red = high Z. With default settings, Z drives both X and Y (raw r looks strong) but X has no direct effect on Y. Watch the <em>partial r</em> in the stat bar: it should be near zero. Now increase the <em>X → Y direct</em> slider — raw r and partial r both rise together, because now there's a genuine direct relationship. Setting Z-influence to 0 makes raw r ≈ partial r.`,
+    preset:{ n:40, noise:3.0, curve:false, outlier:false, dir:'positive' },
+    showSpearman:false, showPartial:true
+  }
+};
+
+let currentLesson = 'noise';
+
+/* ═══════════════════════════════════
+   STATE
+═══════════════════════════════════ */
+let basePoints    = [];
+let storedOutlier = null;
+let points        = [];
+
+/* ═══════════════════════════════════
+   HELPERS
+═══════════════════════════════════ */
+const rand   = (a,b) => Math.random()*(b-a)+a;
+const getDir = ()    => document.querySelector('input[name="dir"]:checked').value;
+const getN   = ()    => +document.getElementById('nSlider').value;
+
+/* ═══════════════════════════════════
+   DATA GENERATION — LESSONS 1–4
+═══════════════════════════════════ */
+function generateBaseData() {
+  const dir    = getDir();
+  const noise  = +document.getElementById('noiseSlider').value;
+  const curved = document.getElementById('cbCurve').checked;
+  const n      = getN();
+  const step   = 23/Math.max(n-1,1);
+  const slope  = dir==='positive' ? rand(0.7,1.3) : rand(-1.3,-0.7);
+  const intcpt = dir==='positive' ? rand(3,8) : rand(26,32);
+  const data   = [];
+  for(let i=0;i<n;i++){
+    const x = 1+i*step;
+    let y;
+    if(curved){ const cx=x-12.5; y=dir==='positive'?3+0.08*cx*cx+0.25*x:33-0.08*cx*cx-0.25*x; }
+    else { y=intcpt+slope*x; }
+    y+=(Math.random()-0.5)*2*noise;
+    data.push({x, y:Math.max(0.25,y), isOutlier:false});
+  }
+  return data;
+}
+
+function generateOutlier() {
+  const dir=getDir();
+  return {x:rand(20,26), y:dir==='positive'?rand(0.5,5):rand(33,42), isOutlier:true};
+}
+
+function buildPoints() {
+  const data = basePoints.map(p=>({...p}));
+  if(document.getElementById('cbOutlier').checked && storedOutlier) data.push({...storedOutlier});
+  return data;
+}
+
+/* ═══════════════════════════════════
+   DATA GENERATION — LESSON 5
+═══════════════════════════════════ */
+let partialData = [];   // [{x,y,z}]
+
+function generatePartialData() {
+  const n      = getN();
+  const zx     = +document.getElementById('zxSlider').value;
+  const zy     = +document.getElementById('zySlider').value;
+  const xy     = +document.getElementById('xySlider').value;
+  const noise  = +document.getElementById('partialNoiseSlider').value;
+  const data   = [];
+  for(let i=0;i<n;i++){
+    const z = rand(0,20);
+    const x = zx*z + (Math.random()-0.5)*2*noise*2;
+    const y = zy*z + xy*x + (Math.random()-0.5)*2*noise*2;
+    data.push({x, y, z, isOutlier:false});
+  }
+  return data;
+}
+
+/* ═══════════════════════════════════
+   STATISTICS
+═══════════════════════════════════ */
+function pearson(data, xKey='x', yKey='y') {
+  const n=data.length; if(n<2) return 0;
+  const mx=data.reduce((s,p)=>s+p[xKey],0)/n;
+  const my=data.reduce((s,p)=>s+p[yKey],0)/n;
+  let num=0,sxx=0,syy=0;
+  for(const p of data){ const dx=p[xKey]-mx,dy=p[yKey]-my; num+=dx*dy; sxx+=dx*dx; syy+=dy*dy; }
+  return(sxx===0||syy===0)?0:num/Math.sqrt(sxx*syy);
+}
+
+function rankArr(vals) {
+  const s=vals.map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);
+  const r=new Array(vals.length); let i=0;
+  while(i<s.length){
+    let j=i; while(j<s.length-1&&s[j+1].v===s[j].v)j++;
+    const rank=(i+j)/2+1;
+    for(let k=i;k<=j;k++) r[s[k].i]=rank;
+    i=j+1;
+  }
+  return r;
+}
+
+function spearman(data) {
+  const xr=rankArr(data.map(p=>p.x));
+  const yr=rankArr(data.map(p=>p.y));
+  return pearson(xr.map((rx,i)=>({x:rx,y:yr[i]})));
+}
+
+function ols(data, xKey='x', yKey='y') {
+  const n=data.length;
+  const mx=data.reduce((s,p)=>s+p[xKey],0)/n;
+  const my=data.reduce((s,p)=>s+p[yKey],0)/n;
+  let num=0,den=0;
+  for(const p of data){ num+=(p[xKey]-mx)*(p[yKey]-my); den+=(p[xKey]-mx)**2; }
+  const slope=den===0?0:num/den;
+  return{slope,intercept:my-slope*mx};
+}
+
+function partialCorr(data) {
+  const rxy=pearson(data,'x','y');
+  const rxz=pearson(data,'x','z');
+  const ryz=pearson(data,'y','z');
+  const denom=Math.sqrt((1-rxz*rxz)*(1-ryz*ryz));
+  if(denom<1e-10) return 0;
+  return(rxy-rxz*ryz)/denom;
+}
+
+function normalCDF(z) {
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign=z<0?-1:1; z=Math.abs(z);
+  const t=1/(1+p*z);
+  const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-z*z);
+  return 0.5*(1+sign*y);
+}
+
+function pValue(r,n) {
+  if(n<5) return null;
+  const rc=Math.min(Math.max(r,-0.9999),0.9999);
+  const z=Math.atanh(rc)*Math.sqrt(n-3);
+  return 2*(1-normalCDF(Math.abs(z)));
+}
+
+/* ═══════════════════════════════════
+   RENDER
+═══════════════════════════════════ */
+function rStrength(r){
+  const a=Math.abs(r);
+  if(a<0.10) return 'near zero';
+  if(a<0.30) return 'weak';
+  if(a<0.50) return 'modest';
+  if(a<0.70) return 'moderate';
+  if(a<0.90) return 'strong';
+  return 'very strong';
+}
+
+function rCol(r){
+  const a=Math.abs(r);
+  if(a<0.10) return 'var(--gray)';
+  if(a<0.40) return 'var(--red)';
+  if(a<0.70) return 'var(--amber)';
+  return 'var(--green)';
+}
+
+function updateStatsNormal() {
+  const r   = pearson(points);
+  const rho = spearman(points);
+  const r2  = r*r;
+  const n   = points.length;
+  const p   = pValue(r,n);
+
+  const rEl=document.getElementById('rVal');
+  rEl.textContent=r.toFixed(3); rEl.style.color=rCol(r);
+  document.getElementById('rLabel').textContent=rStrength(r)+' linear assoc.';
+
+  const rhoEl=document.getElementById('rhoVal');
+  rhoEl.textContent=rho.toFixed(3);
+  const gap=Math.abs(r-rho);
+  if(gap>0.15){ rhoEl.style.color='var(--red)'; document.getElementById('rhoLabel').textContent='diverges from r — outlier or curve?'; }
+  else        { rhoEl.style.color='var(--muted)'; document.getElementById('rhoLabel').textContent='close to r — linear pattern likely'; }
+
+  document.getElementById('partialVal').textContent='n/a';
+  document.getElementById('partialLabel').textContent='(Lesson 5 only)';
+  document.getElementById('partialVal').style.color='var(--gray)';
+
+  document.getElementById('r2Val').textContent=(r2*100).toFixed(1)+'%';
+  document.getElementById('r2Label').textContent='of variance explained';
+
+  // 4th cell repurposed for p-value
+  document.getElementById('r2Val').textContent = p===null?'n/a':p<0.001?'< .001':p.toFixed(3);
+  document.getElementById('r2Val').style.color  = p===null?'var(--gray)':p<0.05?'var(--green)':p<0.10?'var(--amber)':'var(--red)';
+  document.getElementById('r2Label').textContent = p===null?'n < 5 for p-value':`p-value at n = ${n}`;
+  document.getElementById('stat4name').childNodes[0].textContent='p-value ';
+
+  // actually keep R2 in its cell (3rd slot is partial, 4th is p)
+  // Re-route: slot3=partial(n/a), slot4=R²+p hybrid... let me just show R² in 4th
+  // Fix: show R² in cell4 for lessons 1-4
+  document.getElementById('r2Val').textContent=(r2*100).toFixed(1)+'%';
+  document.getElementById('r2Val').style.color='var(--text)';
+  document.getElementById('r2Label').textContent=`explains ${(r2*100).toFixed(1)}% of variance`;
+  document.getElementById('stat4name').childNodes[0].textContent='R² ';
+
+  updateSpearmanVerdict(r,rho);
+  updateObsPanel(r,rho,r2,p,n,null,null,null);
+}
+
+function updateStatsPartial() {
+  const data=partialData;
+  if(!data||data.length<3) return;
+  const rxy = pearson(data,'x','y');
+  const rxz = pearson(data,'x','z');
+  const ryz = pearson(data,'y','z');
+  const pr  = partialCorr(data);
+  const n   = data.length;
+  const p   = pValue(rxy,n);
+
+  const rEl=document.getElementById('rVal');
+  rEl.textContent=rxy.toFixed(3); rEl.style.color=rCol(rxy);
+  document.getElementById('rLabel').textContent='raw X–Y correlation';
+
+  document.getElementById('rhoVal').textContent=rxz.toFixed(3);
+  document.getElementById('rhoVal').style.color=rCol(rxz);
+  document.getElementById('rhoLabel').textContent='r(X,Z) — confound on X';
+
+  const prEl=document.getElementById('partialVal');
+  prEl.textContent=pr.toFixed(3); prEl.style.color=rCol(pr);
+  document.getElementById('partialLabel').textContent='after removing Z from X and Y';
+
+  document.getElementById('r2Val').textContent=ryz.toFixed(3);
+  document.getElementById('r2Val').style.color=rCol(ryz);
+  document.getElementById('r2Label').textContent='r(Y,Z) — confound on Y';
+  document.getElementById('stat4name').childNodes[0].textContent='r(Y,Z) ';
+
+  // Update breakdown panel
+  document.getElementById('pcRaw').textContent=rxy.toFixed(3);
+  document.getElementById('pcPartial').textContent=pr.toFixed(3);
+  document.getElementById('pcRxz').textContent=rxz.toFixed(3);
+  document.getElementById('pcRyz').textContent=ryz.toFixed(3);
+  document.getElementById('pcRaw').style.color=rCol(rxy);
+  document.getElementById('pcPartial').style.color=rCol(pr);
+  document.getElementById('pcRxz').style.color=rCol(rxz);
+  document.getElementById('pcRyz').style.color=rCol(ryz);
+
+  updateObsPanel(rxy,null,rxy*rxy,p,n,pr,rxz,ryz);
+}
+
+function updateObsPanel(r,rho,r2,p,n,pr,rxz,ryz) {
+  const panel=document.getElementById('observationPanel');
+  const curved  =document.getElementById('cbCurve').checked;
+  const outlierOn=document.getElementById('cbOutlier').checked;
+  const noise   =+document.getElementById('noiseSlider').value;
+  let cls='obs-card blue', text='';
+
+  if(currentLesson==='partial' && pr!==null){
+    const gap=Math.abs(r-pr);
+    const xy=+document.getElementById('xySlider').value;
+    if(gap>0.20){
+      cls='obs-card amber';
+      text=`⚠ Raw r(X,Y) = ${r.toFixed(2)} but partial r(X,Y|Z) = ${pr.toFixed(2)} — a collapse of ${gap.toFixed(2)}. The confound Z is responsible for most of the X–Y correlation. When you control for Z, the direct connection between X and Y is much weaker${xy<0.1?' — almost entirely spurious':''}.`;
+    } else if(gap<0.06 && Math.abs(pr)>0.3){
+      cls='obs-card green';
+      text=`✓ Raw r = ${r.toFixed(2)}, partial r = ${pr.toFixed(2)} — nearly identical. Controlling for Z changes very little, which means the X–Y relationship is genuine and not explained by the confound. This is the signature of a real direct association.`;
+    } else {
+      cls='obs-card blue';
+      text=`Raw r(X,Y) = ${r.toFixed(2)}, partial r(X,Y|Z) = ${pr.toFixed(2)}. Gap = ${gap.toFixed(2)}. Adjust the Z-influence sliders to create or remove spurious correlation, or increase the X→Y direct slider to add a genuine effect.`;
+    }
+  } else if(rho!==null && curved && Math.abs(r-rho)>0.15){
+    cls='obs-card amber';
+    text=`⚠ Pearson's r = ${r.toFixed(2)} but Spearman's ρ = ${rho.toFixed(2)} — a gap of ${Math.abs(r-rho).toFixed(2)}. The curved pattern is monotone, so Spearman detects it; Pearson only sees the linear component and understates the strength of the association.`;
+  } else if(rho!==null && outlierOn && storedOutlier){
+    const rBase=pearson(basePoints);
+    const delta=r-rBase;
+    if(Math.abs(delta)>0.08){
+      cls='obs-card red';
+      text=`🔴 The outlier shifted Pearson's r by ${(delta>=0?'+':'')}${delta.toFixed(2)} (from ${rBase.toFixed(2)} to ${r.toFixed(2)}). Spearman's ρ barely moved. One point is driving the correlation — toggle the outlier off to see the underlying pattern.`;
+    } else {
+      cls='obs-card green';
+      text=`✓ The outlier had a small effect this time (Δr ≈ ${delta.toFixed(2)}). The result is relatively robust. Try New data to see how different samples behave — robustness varies.`;
+    }
+  } else if(currentLesson==='n'){
+    const pTxt=p===null?'n/a':p<0.001?'< .001':p.toFixed(3);
+    if(p!==null&&p<0.05){
+      cls='obs-card green';
+      text=`✓ At n = ${n}, r = ${r.toFixed(2)} is statistically significant (p = ${pTxt}). Drag n down and watch p cross .05 — the correlation barely changes, only the verdict does.`;
+    } else if(p!==null){
+      cls='obs-card amber';
+      text=`⚠ At n = ${n}, r = ${r.toFixed(2)} is not significant (p = ${pTxt}). The correlation isn't zero — but the design is too small to confirm it. Drag n upward and watch p drop below .05 without r changing.`;
+    }
+  } else if(noise>12&&Math.abs(r)<0.25){
+    cls='obs-card amber';
+    text=`⚠ Heavy noise has brought r down to ${r.toFixed(2)}. The trend direction may still be real — the regression line still slopes — but there's too much scatter to detect a clear linear association.`;
+  } else if(Math.abs(r)>=0.70){
+    cls='obs-card green';
+    text=`✓ Strong association (r = ${r.toFixed(2)}). The fitted line accounts for ${(r2*100).toFixed(0)}% of the variance in Y.`;
+  } else {
+    cls='obs-card blue';
+    text=`Current r = ${r.toFixed(2)} (${rStrength(r)}). Adjust controls to see how the statistics respond.`;
+  }
+
+  panel.className=cls; panel.innerHTML=text;
+}
+
+function updateSpearmanVerdict(r,rho){
+  const card=document.getElementById('spearmanCard');
+  if(!card||card.style.display==='none') return;
+  const v=document.getElementById('spearmanVerdict');
+  const gap=Math.abs(r-rho);
+  const curved=document.getElementById('cbCurve').checked;
+  const outlierOn=document.getElementById('cbOutlier').checked;
+  if(gap>0.15){
+    v.className='verdict warn';
+    if(curved) v.textContent=`Gap = ${gap.toFixed(2)}. Large divergence. The curved pattern produces a monotone association Spearman detects (ρ = ${rho.toFixed(2)}) that Pearson misses (r = ${r.toFixed(2)}).`;
+    else if(outlierOn) v.textContent=`Gap = ${gap.toFixed(2)}. Large divergence. The outlier is pulling Pearson's r. Spearman's ρ = ${rho.toFixed(2)} gives the more stable picture of the remaining pattern.`;
+    else v.textContent=`Gap = ${gap.toFixed(2)}. Pearson and Spearman disagree — inspect the plot for outliers or curvature.`;
+  } else if(gap>0.06){
+    v.className='verdict info';
+    v.textContent=`Gap = ${gap.toFixed(2)}. Modest divergence. Both measures tell broadly the same story.`;
+  } else {
+    v.className='verdict good';
+    v.textContent=`Gap = ${gap.toFixed(2)}. Pearson and Spearman agree closely — the pattern is approximately linear and robust to ranking.`;
+  }
+}
+
+/* ═══════════════════════════════════
+   PLOTLY
+═══════════════════════════════════ */
+function drawPlotNormal() {
+  const fit=ols(points);
+  const xs=points.map(p=>p.x), ys=points.map(p=>p.y);
+  const xMax=Math.max(...xs), yMax=Math.max(...ys), yMin=Math.min(...ys);
+  const xRange=[0,Math.max(28,xMax+3)];
+  const yRange=[Math.max(0,yMin-4),Math.max(45,yMax+5)];
+  const base=points.filter(p=>!p.isOutlier), outlier=points.filter(p=>p.isOutlier);
+  const traces=[];
+
+  traces.push({
+    x:base.map(p=>p.x), y:base.map(p=>p.y),
+    mode:'markers', type:'scatter', name:'Data',
+    marker:{color:'#2563eb',size:8,opacity:0.75,line:{color:'#1e40af',width:1}},
+    hovertemplate:'(%{x:.2f}, %{y:.2f})<extra>Data</extra>'
+  });
+
+  if(outlier.length) traces.push({
+    x:outlier.map(p=>p.x), y:outlier.map(p=>p.y),
+    mode:'markers', type:'scatter', name:'Outlier',
+    marker:{color:'#dc2626',size:14,symbol:'diamond',line:{color:'#7f1d1d',width:1.5}},
+    hovertemplate:'(%{x:.2f}, %{y:.2f})<extra>Outlier</extra>'
+  });
+
+  if(document.getElementById('cbFit').checked){
+    const [x0,x1]=xRange;
+    traces.push({
+      x:[x0,x1], y:[fit.intercept+fit.slope*x0, fit.intercept+fit.slope*x1],
+      mode:'lines', type:'scatter', name:'Regression line',
+      line:{color:'#111827',width:2}, hoverinfo:'none'
+    });
+  }
+
+  Plotly.react(document.getElementById('plot'),traces,{
+    margin:{t:16,r:16,b:48,l:52},
+    xaxis:{title:'X',range:xRange},
+    yaxis:{title:'Y',range:yRange},
+    showlegend:true,
+    legend:{orientation:'h',x:0,y:1.06,xanchor:'left',yanchor:'bottom'},
+    uirevision:'keep'
+  },{responsive:true});
+
+  updateStatsNormal();
+}
+
+function drawPlotPartial() {
+  const data=partialData;
+  if(!data||!data.length) return;
+
+  // Color points by Z value (blue=low, red=high)
+  const zVals=data.map(p=>p.z);
+  const zMin=Math.min(...zVals), zMax=Math.max(...zVals);
+  const zNorm=zVals.map(z=>zMax>zMin?(z-zMin)/(zMax-zMin):0.5);
+
+  // Interpolate low-Z (blue #3b82f6) → high-Z (red #ef4444)
+  const colors=zNorm.map(t=>{
+    const r=Math.round(59+t*(239-59));
+    const g=Math.round(130+t*(68-130));
+    const b=Math.round(246+t*(68-246));
+    return `rgb(${r},${g},${b})`;
+  });
+
+  const xs=data.map(p=>p.x), ys=data.map(p=>p.y);
+  const xRange=[Math.min(...xs)-2, Math.max(...xs)+2];
+  const yRange=[Math.min(...ys)-3, Math.max(...ys)+3];
+  const traces=[];
+
+  traces.push({
+    x:xs, y:ys,
+    mode:'markers', type:'scatter', name:'Data (color = Z)',
+    marker:{color:colors, size:9, opacity:0.85, line:{color:'rgba(0,0,0,0.2)',width:1}},
+    hovertemplate:('x=%{x:.2f}, y=%{y:.2f}<extra></extra>')
+  });
+
+  // Add a colorscale legend via a dummy trace
+  traces.push({
+    x:[null], y:[null], mode:'markers', type:'scatter',
+    name:'Low Z',
+    marker:{color:'#3b82f6',size:9,symbol:'circle'},showlegend:true
+  });
+  traces.push({
+    x:[null], y:[null], mode:'markers', type:'scatter',
+    name:'High Z',
+    marker:{color:'#ef4444',size:9,symbol:'circle'},showlegend:true
+  });
+
+  if(document.getElementById('cbFit').checked){
+    const fit=ols(data,'x','y');
+    traces.push({
+      x:[xRange[0],xRange[1]],
+      y:[fit.intercept+fit.slope*xRange[0], fit.intercept+fit.slope*xRange[1]],
+      mode:'lines', type:'scatter', name:'Regression line',
+      line:{color:'#111827',width:2}, hoverinfo:'none'
+    });
+  }
+
+  Plotly.react(document.getElementById('plot'),traces,{
+    margin:{t:16,r:16,b:48,l:52},
+    xaxis:{title:'X',range:xRange},
+    yaxis:{title:'Y',range:yRange},
+    showlegend:true,
+    legend:{orientation:'h',x:0,y:1.06,xanchor:'left',yanchor:'bottom'},
+    uirevision:'keep'
+  },{responsive:true});
+
+  updateStatsPartial();
+}
+
+/* ═══════════════════════════════════
+   LESSON SWITCHING
+═══════════════════════════════════ */
+function setLesson(key){
+  currentLesson=key;
+  const L=LESSONS[key];
+
+  // Rail
+  document.querySelectorAll('.lesson-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.lesson-btn[data-lesson="${key}"]`).classList.add('active');
+
+  // Narrative
+  document.getElementById('lessonTitle').innerHTML=L.title;
+  document.getElementById('lessonBody').innerHTML=L.body;
+
+  // Spearman card
+  const sc=document.getElementById('spearmanCard');
+  sc.style.display=L.showSpearman?'block':'none';
+
+  // Partial panel
+  const pp=document.getElementById('partialPanel');
+  pp.style.display=L.showPartial?'block':'none';
+
+  // Show/hide partial controls vs scatter controls
+  const pc=document.getElementById('partialCtrl');
+  const scc=document.getElementById('scatterCard');
+  const dc=document.getElementById('dirSection');
+  const ov=document.getElementById('overlayCard');
+  if(L.showPartial){
+    pc.style.display='block'; scc.style.display='none';
+    dc.style.display='none';  ov.style.display='block';
+    // Show partial stat slot, hide Spearman slot
+    document.getElementById('cellRho').style.display='';
+    document.getElementById('cellPartial').style.display='';
+    document.getElementById('stat4name').childNodes[0].textContent='r(Y,Z) ';
+  } else {
+    pc.style.display='none'; scc.style.display='block';
+    dc.style.display='block'; ov.style.display='block';
+    document.getElementById('cellRho').style.display='';
+    document.getElementById('cellPartial').style.display='';
+    document.getElementById('stat4name').childNodes[0].textContent='R² ';
+    document.getElementById('partialVal').textContent='n/a';
+    document.getElementById('partialVal').style.color='var(--gray)';
+    document.getElementById('partialLabel').textContent='(Lesson 5 only)';
+  }
+
+  // Apply preset
+  const pr=L.preset;
+  document.querySelector(`input[name="dir"][value="${pr.dir}"]`).checked=true;
+  syncRadioChips();
+  document.getElementById('nSlider').value=pr.n;
+  document.getElementById('noiseSlider').value=pr.noise;
+  document.getElementById('cbCurve').checked=pr.curve;
+  document.getElementById('cbOutlier').checked=pr.outlier;
+  syncAllChips();
+  updateLabels();
+
+  if(L.showPartial){
+    document.getElementById('zxSlider').value=1.0;
+    document.getElementById('zySlider').value=1.0;
+    document.getElementById('xySlider').value=0.0;
+    document.getElementById('partialNoiseSlider').value=3.0;
+    updatePartialLabels();
+    partialData=generatePartialData();
+    drawPlotPartial();
+  } else {
+    regenerate();
+  }
+}
+
+/* ═══════════════════════════════════
+   ACTIONS
+═══════════════════════════════════ */
+function regenerate(){
+  if(currentLesson==='partial'){
+    partialData=generatePartialData();
+    drawPlotPartial();
+  } else {
+    basePoints=generateBaseData();
+    storedOutlier=generateOutlier();
+    points=buildPoints();
+    drawPlotNormal();
+  }
+}
+
+function refreshDisplay(){
+  if(currentLesson==='partial'){ drawPlotPartial(); return; }
+  points=buildPoints(); drawPlotNormal();
+}
+
+function resetLesson(){ setLesson(currentLesson); }
+
+/* ═══════════════════════════════════
+   SYNC UI
+═══════════════════════════════════ */
+function syncRadioChips(){
+  document.querySelectorAll('#dirRow .radio-chip').forEach(chip=>{
+    chip.classList.toggle('checked',chip.querySelector('input').checked);
+  });
+}
+
+function syncToggleChip(cbId,chipId){
+  const cb=document.getElementById(cbId), chip=document.getElementById(chipId);
+  if(cb&&chip) chip.classList.toggle('checked',cb.checked);
+}
+
+function syncAllChips(){
+  syncToggleChip('cbCurve','chipCurve');
+  syncToggleChip('cbFit','chipFit');
+  syncToggleChip('cbOutlier','chipOutlier');
+}
+
+function updateLabels(){
+  const n=document.getElementById('nSlider').value;
+  const noise=(+document.getElementById('noiseSlider').value).toFixed(1);
+  document.getElementById('nLabel').textContent=`n = ${n}`;
+  document.getElementById('nDisp').textContent=n;
+  document.getElementById('noiseLabel').textContent=noise;
+  document.getElementById('noiseDisp').textContent=noise;
+}
+
+function updatePartialLabels(){
+  const zx=(+document.getElementById('zxSlider').value).toFixed(2);
+  const zy=(+document.getElementById('zySlider').value).toFixed(2);
+  const xy=(+document.getElementById('xySlider').value).toFixed(2);
+  const pn=(+document.getElementById('partialNoiseSlider').value).toFixed(1);
+  document.getElementById('zxLabel').textContent=zx; document.getElementById('zxDisp').textContent=zx;
+  document.getElementById('zyLabel').textContent=zy; document.getElementById('zyDisp').textContent=zy;
+  document.getElementById('xyLabel').textContent=xy; document.getElementById('xyDisp').textContent=xy;
+  document.getElementById('partialNoiseLabel').textContent=pn; document.getElementById('partialNoiseDisp').textContent=pn;
+}
+
+/* ═══════════════════════════════════
+   EVENT HANDLERS
+═══════════════════════════════════ */
+function onNChange()      { updateLabels(); regenerate(); }
+function onNoiseChange()  { updateLabels(); regenerate(); }
+function onDirChange()    { syncRadioChips(); regenerate(); }
+function onCurveChange()  { syncToggleChip('cbCurve','chipCurve'); regenerate(); }
+function onFitChange()    { syncToggleChip('cbFit','chipFit'); refreshDisplay(); }
+function onOutlierChange(){ syncToggleChip('cbOutlier','chipOutlier'); refreshDisplay(); }
+function onPartialChange(which){
+  updatePartialLabels();
+  if(which==='noise') { partialData=generatePartialData(); drawPlotPartial(); }
+  else                { partialData=generatePartialData(); drawPlotPartial(); }
+}
+
+/* Guide & Reference toggles */
+document.getElementById('btnGuide').addEventListener('click',()=>{
+  const g=document.getElementById('guideSection');
+  const btn=document.getElementById('btnGuide');
+  const open=g.classList.toggle('open');
+  btn.textContent=open?'▲ Hide Guide':'▼ Quick-Start Guide';
+});
+
+document.getElementById('btnRef').addEventListener('click',()=>{
+  const rc=document.getElementById('refCard');
+  const btn=document.getElementById('btnRef');
+  const open=rc.classList.toggle('open');
+  btn.textContent=open?'▲ Hide Reference':'📖 Full Reference';
+});
+
+/* ═══════════════════════════════════
+   INIT
+═══════════════════════════════════ */
+updateLabels();
+setLesson('noise');
+</script><svg id="js-plotly-tester" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="position: absolute; left: -10000px; top: -10000px; width: 9000px; height: 9000px; z-index: 1;"><path class="js-reference-point" d="M0,0H1V1H0Z" style="stroke-width: 0; fill: black;"></path></svg>
+
+
+</body></html>

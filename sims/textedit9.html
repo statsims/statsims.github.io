@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AmberDOS Editor</title>
+  <style>
+    :root{
+      --bg:#050402;
+      --fg:#ffb347;
+      --fg-dim:#b9771b;
+      --fg-soft:rgba(255,179,71,.18);
+      --fg-glow:rgba(255,179,71,.42);
+      --border:#7a4a09;
+      --menu-bg:#120d06;
+      --menu-hover:rgba(255,179,71,.16);
+      --select-bg:rgba(255,179,71,.85);
+      --select-fg:#221607;
+      --modal-bg:rgba(5,4,2,.96);
+      --scan-opacity:.72;
+      --scan-step:3px;
+      --scan-dark:rgba(0,0,0,.18);
+      --bezel-outer:#1a1208;
+      --bezel-inner:#2a1a0a;
+    }
+
+    *{box-sizing:border-box}
+    html,body{
+      height:100%;
+      margin:0;
+      background:#000;
+      color:var(--fg);
+      font-family:"Consolas","Lucida Console","DejaVu Sans Mono","Courier New",monospace;
+      overflow:hidden;
+      text-rendering:geometricPrecision;
+    }
+
+    body{
+      position:relative;
+      background:
+        radial-gradient(circle at center, color-mix(in srgb, var(--fg) 12%, transparent) 0%, transparent 58%),
+        linear-gradient(180deg, color-mix(in srgb, var(--fg) 5%, transparent), rgba(0,0,0,.02));
+    }
+
+    .crt::before,.crt::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:50;
+    }
+
+    .crt::before{
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          color-mix(in srgb, var(--fg) 8%, transparent) 0px,
+          color-mix(in srgb, var(--fg) 8%, transparent) 1px,
+          var(--scan-dark) 2px,
+          var(--scan-dark) var(--scan-step)
+        );
+      opacity:var(--scan-opacity);
+      mix-blend-mode:screen;
+    }
+
+    .crt::after{
+      background:
+        radial-gradient(circle at center, transparent 58%, rgba(0,0,0,.42) 100%),
+        linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.09));
+      animation:flicker .12s infinite alternate;
+      opacity:.24;
+    }
+
+    @keyframes flicker{from{opacity:.19}to{opacity:.28}}
+
+    .bezel{
+      height:100vh;
+      padding:14px;
+      background:
+        linear-gradient(145deg, var(--bezel-inner), var(--bezel-outer));
+      box-shadow:
+        inset 0 0 0 2px rgba(255,255,255,.04),
+        inset 0 0 0 6px rgba(0,0,0,.25),
+        inset 0 0 35px rgba(0,0,0,.45);
+    }
+
+    .screen{
+      height:100%;
+      border-radius:16px;
+      padding:10px;
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,.04), transparent 40%),
+        linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.15)),
+        var(--bg);
+      box-shadow:
+        inset 0 0 0 2px rgba(255,255,255,.03),
+        inset 0 0 80px rgba(0,0,0,.35),
+        0 0 40px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+
+    .shell{
+      height:100%;
+      padding:12px;
+      display:grid;
+      grid-template-rows:auto auto 1fr auto;
+      gap:8px;
+    }
+
+    .titlebar,.menubar,.statusbar{
+      border:2px solid var(--border);
+      background:linear-gradient(180deg, color-mix(in srgb, var(--fg) 8%, transparent), color-mix(in srgb, var(--fg) 2%, transparent));
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--fg) 8%, transparent) inset,
+        0 0 18px color-mix(in srgb, var(--fg) 8%, transparent);
+      padding:8px 12px;
+      letter-spacing:.04em;
+      text-shadow:0 0 8px var(--fg-glow);
+      user-select:none;
+    }
+
+    .titlebar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-weight:bold;
+    }
+
+    .menubar{
+      display:flex;
+      gap:0;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:20;
+      padding:0;
+    }
+
+    .menu{position:relative}
+
+    .menu-button{
+      appearance:none;
+      border:0;
+      background:transparent;
+      color:var(--fg);
+      padding:8px 14px;
+      font:16px/1.2 inherit;
+      letter-spacing:.05em;
+      cursor:pointer;
+      text-shadow:0 0 8px var(--fg-glow);
+    }
+
+    .menu-button:hover,.menu-button:focus,.menu.open>.menu-button{
+      background:var(--menu-hover);
+      outline:none;
+    }
+
+    .dropdown{
+      position:absolute;
+      top:calc(100% + 2px);
+      left:0;
+      min-width:310px;
+      border:2px solid var(--border);
+      background:var(--menu-bg);
+      box-shadow:0 0 20px color-mix(in srgb, var(--fg) 12%, transparent);
+      padding:4px 0;
+      display:none;
+      max-height:min(70vh,560px);
+      overflow:auto;
+    }
+
+    .menu.open .dropdown{display:block}
+
+    .menu-item,.menu-static{
+      width:100%;
+      padding:8px 12px;
+      font:15px/1.2 inherit;
+      letter-spacing:.04em;
+    }
+
+    .menu-item{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:18px;
+      background:transparent;
+      border:0;
+      color:var(--fg);
+      text-align:left;
+      cursor:pointer;
+    }
+
+    .menu-item:hover,.menu-item:focus{
+      background:var(--select-bg);
+      color:var(--select-fg);
+      outline:none;
+      text-shadow:none;
+    }
+
+    .menu-static{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:18px;
+      color:var(--fg);
+      opacity:.95;
+      cursor:default;
+    }
+
+    .menu-sep{
+      height:0;
+      border-top:1px solid color-mix(in srgb, var(--fg) 24%, transparent);
+      margin:4px 10px;
+    }
+
+    .editor-wrap{
+      position:relative;
+      border:2px solid var(--border);
+      background:linear-gradient(180deg, color-mix(in srgb, var(--fg) 3%, transparent), rgba(0,0,0,.02));
+      box-shadow:
+        inset 0 0 30px color-mix(in srgb, var(--fg) 5%, transparent),
+        0 0 24px color-mix(in srgb, var(--fg) 8%, transparent);
+      min-height:0;
+      overflow:hidden;
+    }
+
+    .editor{
+      width:100%;
+      height:100%;
+      padding:16px 18px;
+      border:0;
+      outline:none;
+      resize:none;
+      background:transparent;
+      color:var(--fg);
+      font:21px/1 "Consolas","Lucida Console","DejaVu Sans Mono","Courier New",monospace;
+      letter-spacing:0;
+      word-spacing:0;
+      font-weight:normal;
+      caret-color:var(--fg);
+      text-shadow:0 0 4px var(--fg-soft);
+      white-space:pre-wrap;
+      overflow:auto;
+      tab-size:4;
+      overflow-wrap:break-word;
+      word-break:break-word;
+      font-variant-ligatures:none;
+      display:block;
+    }
+
+    .editor::selection{
+      background:color-mix(in srgb, var(--fg) 30%, transparent);
+      color:#120e08;
+      text-shadow:none;
+    }
+
+    .editor-wrap::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      box-shadow:inset 0 0 90px color-mix(in srgb, var(--fg) 6%, transparent);
+    }
+
+    .statusbar{
+      display:grid;
+      grid-template-columns:1fr auto auto auto;
+      gap:16px;
+      align-items:center;
+      font-size:14px;
+    }
+
+    .hint{opacity:.92}
+    input[type="file"]{display:none}
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.4);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:40;
+      padding:20px;
+    }
+    .modal-backdrop.show{display:flex}
+
+    .modal{
+      width:min(980px,100%);
+      max-height:85vh;
+      overflow:auto;
+      border:2px solid var(--border);
+      background:var(--modal-bg);
+      box-shadow:0 0 30px color-mix(in srgb, var(--fg) 12%, transparent);
+      padding:14px;
+      text-shadow:0 0 8px var(--fg-glow);
+    }
+
+    .modal-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+      gap:12px;
+    }
+
+    .modal-title{font-weight:bold;letter-spacing:.05em}
+
+    .modal-close,.action-btn,.char-btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--fg);
+      font:inherit;
+      cursor:pointer;
+    }
+    .modal-close,.action-btn{padding:6px 10px}
+    .modal-close:hover,.action-btn:hover,.char-btn:hover,
+    .modal-close:focus,.action-btn:focus,.char-btn:focus{
+      background:var(--menu-hover);
+      outline:none;
+    }
+
+    .char-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(54px,1fr));
+      gap:8px;
+      margin-bottom:14px;
+    }
+
+    .char-btn{
+      min-height:50px;
+      padding:6px;
+      display:grid;
+      place-items:center;
+      font-size:24px;
+      line-height:1;
+      text-shadow:0 0 6px var(--fg-soft);
+    }
+
+    .builder-grid,.replace-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+      gap:10px;
+      margin:12px 0;
+    }
+    .replace-grid{grid-template-columns:1fr 1fr}
+
+    .field label{
+      display:block;
+      margin-bottom:4px;
+      font-size:14px;
+    }
+
+    .field input,.field select,.field textarea{
+      width:100%;
+      padding:8px;
+      border:1px solid var(--border);
+      background:#0b0703;
+      color:var(--fg);
+      font:inherit;
+    }
+
+    .field textarea{
+      min-height:90px;
+      resize:vertical;
+      white-space:pre-wrap;
+    }
+
+    .preview{
+      border:1px solid color-mix(in srgb, var(--fg) 28%, transparent);
+      padding:10px;
+      min-height:140px;
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+      margin-top:10px;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    .small-note{font-size:13px;opacity:.9;margin:8px 0 0}
+
+    .splash{
+      position:fixed;
+      inset:0;
+      z-index:80;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:
+        radial-gradient(circle at center, color-mix(in srgb, var(--fg) 10%, transparent), transparent 55%),
+        var(--bg);
+      transition:opacity .5s ease, visibility .5s ease;
+    }
+
+    .splash.hidden{
+      opacity:0;
+      visibility:hidden;
+      pointer-events:none;
+    }
+
+    .splash-box{
+      width:min(760px,90vw);
+      border:3px solid var(--border);
+      padding:28px;
+      text-align:center;
+      background:rgba(0,0,0,.65);
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--fg) 8%, transparent) inset,
+        0 0 32px color-mix(in srgb, var(--fg) 14%, transparent);
+      text-shadow:0 0 10px var(--fg-glow);
+    }
+
+    .splash-title{
+      font-size:32px;
+      margin-bottom:8px;
+      letter-spacing:.08em;
+    }
+
+    .splash-sub{
+      font-size:16px;
+      opacity:.9;
+      margin-bottom:16px;
+    }
+
+    .splash-rule{
+      height:2px;
+      margin:16px 0;
+      background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--fg) 60%, transparent), transparent);
+    }
+
+    .splash-msg{
+      font-size:14px;
+      opacity:.9;
+      min-height:1.2em;
+    }
+
+    @media (max-width:720px){
+      .shell{padding:8px;gap:8px}
+      .editor{font-size:18px;padding:14px}
+      .statusbar{grid-template-columns:1fr}
+      .dropdown{min-width:220px}
+      .replace-grid{grid-template-columns:1fr}
+      .splash-title{font-size:24px}
+    }
+  </style>
+</head>
+<body class="crt theme-amber">
+  <div class="splash" id="splash">
+    <div class="splash-box">
+      <div class="splash-title">AMBERDOS EDITOR</div>
+      <div class="splash-sub">RETRO CRT TEXT SYSTEM</div>
+      <div class="splash-rule"></div>
+      <div class="splash-msg" id="splashMsg">Initializing display...</div>
+    </div>
+  </div>
+
+  <div class="bezel">
+    <div class="screen">
+      <div class="shell">
+        <div class="titlebar">
+          <div>AMBERDOS TEXT EDITOR v1.8</div>
+          <div id="themeLabel">AMBER THEME</div>
+        </div>
+
+        <div class="menubar" id="menubar">
+          <div class="menu">
+            <button class="menu-button" type="button"><u>F</u>ile</button>
+            <div class="dropdown" role="menu">
+              <button class="menu-item" type="button" data-action="new"><span>New</span><span>Ctrl+N</span></button>
+              <button class="menu-item" type="button" data-action="open"><span>Open...</span><span>Ctrl+O</span></button>
+              <button class="menu-item" type="button" data-action="save"><span>Save</span><span>Ctrl+S</span></button>
+              <button class="menu-item" type="button" data-action="saveas"><span>Save As...</span><span>Ctrl+Shift+S</span></button>
+              <div class="menu-sep"></div>
+              <button class="menu-item" type="button" data-action="insertdate"><span>Insert Date/Time</span><span>F5</span></button>
+            </div>
+          </div>
+
+          <div class="menu">
+            <button class="menu-button" type="button"><u>E</u>dit</button>
+            <div class="dropdown" role="menu">
+              <button class="menu-item" type="button" data-action="undo"><span>Undo</span><span>Ctrl+Z</span></button>
+              <button class="menu-item" type="button" data-action="redo"><span>Redo</span><span>Ctrl+Y</span></button>
+              <div class="menu-sep"></div>
+              <button class="menu-item" type="button" data-action="cut"><span>Cut</span><span>Ctrl+X</span></button>
+              <button class="menu-item" type="button" data-action="copy"><span>Copy</span><span>Ctrl+C</span></button>
+              <button class="menu-item" type="button" data-action="paste"><span>Paste</span><span>Ctrl+V</span></button>
+              <button class="menu-item" type="button" data-action="selectall"><span>Select All</span><span>Ctrl+A</span></button>
+              <button class="menu-item" type="button" data-action="clear"><span>Clear</span><span>Del</span></button>
+              <div class="menu-sep"></div>
+              <button class="menu-item" type="button" data-action="comment-dashes"><span>Comment Selection</span><span>Ctrl+/</span></button>
+              <button class="menu-item" type="button" data-action="uncomment-dashes"><span>Uncomment Selection</span><span>Ctrl+Shift+/</span></button>
+            </div>
+          </div>
+
+          <div class="menu">
+            <button class="menu-button" type="button"><u>S</u>earch</button>
+            <div class="dropdown" role="menu">
+              <button class="menu-item" type="button" data-action="find"><span>Find...</span><span>Ctrl+F</span></button>
+              <button class="menu-item" type="button" data-action="findnext"><span>Find Next</span><span>F3</span></button>
+              <button class="menu-item" type="button" data-action="replace"><span>Find / Replace...</span><span>Ctrl+H</span></button>
+              <button class="menu-item" type="button" data-action="goto"><span>Go To Line...</span><span>Ctrl+G</span></button>
+            </div>
+          </div>
+
+          <div class="menu">
+            <button class="menu-button" type="button"><u>S</u>tats</button>
+            <div class="dropdown" role="menu">
+              <div class="menu-static"><span>Characters</span><span id="viewChars">0</span></div>
+              <div class="menu-static"><span>Words</span><span id="viewWords">0</span></div>
+              <div class="menu-static"><span>Lines</span><span id="viewLines">1</span></div>
+              <div class="menu-static"><span>Selection</span><span id="viewSelection">0</span></div>
+              <div class="menu-static"><span>Cursor</span><span id="viewCursor">1:1</span></div>
+            </div>
+          </div>
+
+          <div class="menu">
+            <button class="menu-button" type="button"><u>T</u>heme</button>
+            <div class="dropdown" role="menu">
+              <button class="menu-item" type="button" data-action="theme-amber"><span>Amber</span><span></span></button>
+              <button class="menu-item" type="button" data-action="theme-green"><span>Green Phosphor</span><span></span></button>
+              <button class="menu-item" type="button" data-action="theme-white"><span>White Phosphor</span><span></span></button>
+              <div class="menu-sep"></div>
+              <button class="menu-item" type="button" data-action="toggle-sound"><span>Mechanical Key Sound</span><span id="soundStatus">OFF</span></button>
+              <button class="menu-item" type="button" data-action="toggle-scanlines"><span>Strong Scanlines</span><span id="scanStatus">ON</span></button>
+              <button class="menu-item" type="button" data-action="show-splash"><span>Replay Startup Splash</span><span></span></button>
+            </div>
+          </div>
+
+          <div class="menu">
+            <button class="menu-button" type="button"><u>A</u>SCII</button>
+            <div class="dropdown" role="menu">
+              <button class="menu-item" type="button" data-action="charmap"><span>Character Map...</span><span>Alt+A</span></button>
+              <button class="menu-item" type="button" data-action="windowbuilder"><span>Window Builder...</span><span>Alt+W</span></button>
+              <div class="menu-sep"></div>
+              <button class="menu-item" type="button" data-action="insert-heading-1"><span>Insert Heading 1</span><span></span></button>
+              <button class="menu-item" type="button" data-action="insert-heading-2"><span>Insert Heading 2</span><span></span></button>
+              <button class="menu-item" type="button" data-action="insert-heading-3"><span>Insert Heading 3</span><span></span></button>
+              <div class="menu-sep"></div>
+              <button class="menu-item" type="button" data-action="insert-single-box"><span>Insert Single Box</span><span></span></button>
+              <button class="menu-item" type="button" data-action="insert-double-box"><span>Insert Double Box</span><span></span></button>
+              <button class="menu-item" type="button" data-action="insert-single-rule"><span>Insert Single Rule</span><span></span></button>
+              <button class="menu-item" type="button" data-action="insert-double-rule"><span>Insert Double Rule</span><span></span></button>
+            </div>
+          </div>
+
+          <div class="menu">
+            <button class="menu-button" type="button"><u>H</u>elp</button>
+            <div class="dropdown" role="menu">
+              <button class="menu-item" type="button" data-action="about"><span>About</span><span></span></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="editor-wrap">
+          <textarea id="editor" class="editor" spellcheck="false" wrap="soft" aria-label="Amber DOS style text editor"></textarea>
+        </div>
+
+        <div class="statusbar">
+          <div id="message" class="hint">READY</div>
+          <div id="position">Ln 1, Col 1</div>
+          <div id="stats">0 chars</div>
+          <div id="themeShort">AMBER</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept=".txt,.md,.csv,.log,.json,.html,.js,.css" />
+
+  <div class="modal-backdrop" id="asciiModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="asciiModalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="asciiModalTitle">ASCII CHARACTER MAP</div>
+        <button class="modal-close" type="button" id="closeAsciiModal">Close</button>
+      </div>
+      <div class="char-grid" id="charGrid"></div>
+      <div class="small-note">Click characters repeatedly to keep inserting them. The map stays open until you close it.</div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="builderModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="builderModalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="builderModalTitle">ASCII WINDOW BUILDER</div>
+        <button class="modal-close" type="button" id="closeBuilderModal">Close</button>
+      </div>
+
+      <div class="builder-grid">
+        <div class="field">
+          <label for="boxWidth">Width</label>
+          <input id="boxWidth" type="number" min="8" max="120" value="36" />
+        </div>
+        <div class="field">
+          <label for="boxHeight">Height</label>
+          <input id="boxHeight" type="number" min="3" max="40" value="8" />
+        </div>
+        <div class="field">
+          <label for="boxStyle">Border Style</label>
+          <select id="boxStyle">
+            <option value="single">Single Line</option>
+            <option value="double">Double Line</option>
+            <option value="mixed1">Double Outer / Single Vertical</option>
+            <option value="mixed2">Single Outer / Double Vertical</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="boxTitle">Title</label>
+          <input id="boxTitle" type="text" maxlength="60" value="WINDOW" />
+        </div>
+        <div class="field">
+          <label for="headerStyle">Header Style</label>
+          <select id="headerStyle">
+            <option value="none">None</option>
+            <option value="rule">Header Rule</option>
+            <option value="banner">Centered Banner</option>
+            <option value="tab">Left Tab</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="bodyText">Body Text</label>
+          <textarea id="bodyText"></textarea>
+        </div>
+      </div>
+
+      <div class="preview" id="boxPreview"></div>
+
+      <div class="actions">
+        <button class="action-btn" type="button" id="insertBoxBtn">Insert Window</button>
+        <button class="action-btn" type="button" id="copyBoxBtn">Copy Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="replaceModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="replaceModalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="replaceModalTitle">FIND AND REPLACE</div>
+        <button class="modal-close" type="button" id="closeReplaceModal">Close</button>
+      </div>
+
+      <div class="replace-grid">
+        <div class="field">
+          <label for="findText">Find</label>
+          <input id="findText" type="text" />
+        </div>
+        <div class="field">
+          <label for="replaceText">Replace With</label>
+          <input id="replaceText" type="text" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="action-btn" type="button" id="findFromModalBtn">Find Next</button>
+        <button class="action-btn" type="button" id="replaceOneBtn">Replace</button>
+        <button class="action-btn" type="button" id="replaceAllBtn">Replace All</button>
+      </div>
+      <div class="small-note">Case-sensitive plain text replace.</div>
+    </div>
+  </div>
+
+  <script>
+    const editor = document.getElementById('editor');
+    const fileInput = document.getElementById('fileInput');
+    const message = document.getElementById('message');
+    const position = document.getElementById('position');
+    const stats = document.getElementById('stats');
+    const themeShort = document.getElementById('themeShort');
+    const themeLabel = document.getElementById('themeLabel');
+    const soundStatus = document.getElementById('soundStatus');
+    const scanStatus = document.getElementById('scanStatus');
+    const splash = document.getElementById('splash');
+    const splashMsg = document.getElementById('splashMsg');
+    const menus = Array.from(document.querySelectorAll('.menu'));
+    const menubar = document.getElementById('menubar');
+
+    const viewChars = document.getElementById('viewChars');
+    const viewWords = document.getElementById('viewWords');
+    const viewLines = document.getElementById('viewLines');
+    const viewSelection = document.getElementById('viewSelection');
+    const viewCursor = document.getElementById('viewCursor');
+
+    const asciiModalBackdrop = document.getElementById('asciiModalBackdrop');
+    const builderModalBackdrop = document.getElementById('builderModalBackdrop');
+    const replaceModalBackdrop = document.getElementById('replaceModalBackdrop');
+
+    const closeAsciiModal = document.getElementById('closeAsciiModal');
+    const closeBuilderModal = document.getElementById('closeBuilderModal');
+    const closeReplaceModal = document.getElementById('closeReplaceModal');
+
+    const charGrid = document.getElementById('charGrid');
+    const boxWidth = document.getElementById('boxWidth');
+    const boxHeight = document.getElementById('boxHeight');
+    const boxStyle = document.getElementById('boxStyle');
+    const boxTitle = document.getElementById('boxTitle');
+    const headerStyle = document.getElementById('headerStyle');
+    const bodyText = document.getElementById('bodyText');
+    const boxPreview = document.getElementById('boxPreview');
+    const insertBoxBtn = document.getElementById('insertBoxBtn');
+    const copyBoxBtn = document.getElementById('copyBoxBtn');
+
+    const findText = document.getElementById('findText');
+    const replaceText = document.getElementById('replaceText');
+    const findFromModalBtn = document.getElementById('findFromModalBtn');
+    const replaceOneBtn = document.getElementById('replaceOneBtn');
+    const replaceAllBtn = document.getElementById('replaceAllBtn');
+
+    let currentFileName = 'untitled.txt';
+    let dirty = false;
+    let lastSearch = '';
+    let savedSelectionStart = 0;
+    let savedSelectionEnd = 0;
+    let soundEnabled = false;
+    let strongScanlines = true;
+    let audioCtx = null;
+
+    const THEMES = {
+      amber: {
+        name: 'AMBER',
+        label: 'AMBER THEME',
+        vars: {
+          '--bg':'#050402','--fg':'#ffb347','--fg-dim':'#b9771b','--fg-soft':'rgba(255,179,71,.18)',
+          '--fg-glow':'rgba(255,179,71,.42)','--border':'#7a4a09','--menu-bg':'#120d06','--menu-hover':'rgba(255,179,71,.16)',
+          '--select-bg':'rgba(255,179,71,.85)','--select-fg':'#221607','--modal-bg':'rgba(5,4,2,.96)',
+          '--bezel-outer':'#1a1208','--bezel-inner':'#2a1a0a'
+        }
+      },
+      green: {
+        name: 'GREEN',
+        label: 'GREEN PHOSPHOR',
+        vars: {
+          '--bg':'#010502','--fg':'#7CFF7A','--fg-dim':'#3c9f3e','--fg-soft':'rgba(124,255,122,.16)',
+          '--fg-glow':'rgba(124,255,122,.42)','--border':'#2b7b2b','--menu-bg':'#071107','--menu-hover':'rgba(124,255,122,.16)',
+          '--select-bg':'rgba(124,255,122,.82)','--select-fg':'#071307','--modal-bg':'rgba(1,5,2,.96)',
+          '--bezel-outer':'#081208','--bezel-inner':'#102010'
+        }
+      },
+      white: {
+        name: 'WHITE',
+        label: 'WHITE PHOSPHOR',
+        vars: {
+          '--bg':'#040404','--fg':'#F2F2F2','--fg-dim':'#a8a8a8','--fg-soft':'rgba(242,242,242,.12)',
+          '--fg-glow':'rgba(242,242,242,.28)','--border':'#8a8a8a','--menu-bg':'#121212','--menu-hover':'rgba(242,242,242,.12)',
+          '--select-bg':'rgba(242,242,242,.82)','--select-fg':'#111111','--modal-bg':'rgba(5,5,5,.96)',
+          '--bezel-outer':'#141414','--bezel-inner':'#222222'
+        }
+      }
+    };
+
+    const BOX_SETS = {
+      single: { tl:'┌', tr:'┐', bl:'└', br:'┘', h:'─', v:'│', t:'┬', b:'┴', l:'├', r:'┤', c:'┼' },
+      double: { tl:'╔', tr:'╗', bl:'╚', br:'╝', h:'═', v:'║', t:'╦', b:'╩', l:'╠', r:'╣', c:'╬' },
+      mixed1: { tl:'╒', tr:'╕', bl:'╘', br:'╛', h:'═', v:'│', t:'╤', b:'╧', l:'╞', r:'╡', c:'╪' },
+      mixed2: { tl:'┌', tr:'┐', bl:'└', br:'┘', h:'─', v:'║', t:'╥', b:'╨', l:'╟', r:'╢', c:'╫' }
+    };
+
+    const CHAR_MAP = [
+      '─','│','┌','┐','└','┘','├','┤','┬','┴','┼',
+      '═','║','╔','╗','╚','╝','╠','╣','╦','╩','╬',
+      '╒','╕','╘','╛','╓','╖','╙','╜','╞','╡','╟','╢','╤','╧','╥','╨','╪','╫',
+      '█','▓','▒','░','■','·'
+    ];
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+
+    function playKeySound() {
+      if (!soundEnabled) return;
+      try {
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const gain = ctx.createGain();
+        gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(0.0001, now);
+
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.02, ctx.sampleRate);
+        const data = noiseBuf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.45;
+        const noise = ctx.createBufferSource();
+        const noiseGain = ctx.createGain();
+
+        osc1.type = 'square';
+        osc1.frequency.setValueAtTime(180, now);
+        osc1.frequency.exponentialRampToValueAtTime(120, now + 0.04);
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(420, now);
+        osc2.frequency.exponentialRampToValueAtTime(220, now + 0.03);
+
+        noise.buffer = noiseBuf;
+        noiseGain.gain.setValueAtTime(0.05, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.025);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        noise.connect(noiseGain).connect(gain);
+
+        gain.gain.exponentialRampToValueAtTime(0.04, now + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+
+        osc1.start(now); osc2.start(now); noise.start(now);
+        osc1.stop(now + 0.065); osc2.stop(now + 0.055); noise.stop(now + 0.03);
+      } catch {}
+    }
+
+    function rememberSelection() {
+      savedSelectionStart = editor.selectionStart;
+      savedSelectionEnd = editor.selectionEnd;
+    }
+
+    function restoreSelection() {
+      editor.focus();
+      editor.setSelectionRange(savedSelectionStart, savedSelectionEnd);
+    }
+
+    function setMessage(text) { message.textContent = text; }
+
+    function updateStats() {
+      const value = editor.value;
+      const caretPos = editor.selectionStart;
+      const before = value.slice(0, caretPos);
+      const lines = before.split('\n');
+      const line = lines.length;
+      const col = lines[lines.length - 1].length + 1;
+      const totalLines = value.length ? value.split('\n').length : 1;
+      const words = value.trim() ? value.trim().split(/\s+/).length : 0;
+      const selectionCount = Math.abs(editor.selectionEnd - editor.selectionStart);
+
+      position.textContent = `Ln ${line}, Col ${col}`;
+      stats.textContent = `${value.length} chars`;
+      viewChars.textContent = String(value.length);
+      viewWords.textContent = String(words);
+      viewLines.textContent = String(totalLines);
+      viewSelection.textContent = String(selectionCount);
+      viewCursor.textContent = `${line}:${col}`;
+      document.title = `${dirty ? '*' : ''}${currentFileName} - AmberDOS Editor`;
+      rememberSelection();
+    }
+
+    function insertAtSelection(text, selectMode='end') {
+      restoreSelection();
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      editor.setRangeText(text, start, end, selectMode);
+      dirty = true;
+      rememberSelection();
+      updateStats();
+      editor.focus();
+      playKeySound();
+    }
+
+    function handleHardReturn() {
+      restoreSelection();
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      editor.setRangeText('\n', start, end, 'end');
+      dirty = true;
+      rememberSelection();
+      updateStats();
+      editor.focus();
+      playKeySound();
+    }
+
+    function getSelectedLineRange() {
+      restoreSelection();
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      const value = editor.value;
+      const lineStart = value.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+      let lineEnd = value.indexOf('\n', end);
+      if (lineEnd === -1) lineEnd = value.length;
+      return { lineStart, lineEnd };
+    }
+
+    function commentSelectionWithDashes() {
+      const { lineStart, lineEnd } = getSelectedLineRange();
+      const block = editor.value.slice(lineStart, lineEnd);
+      const commented = block.split('\n').map(line => `--${line}`).join('\n');
+      editor.setRangeText(commented, lineStart, lineEnd, 'select');
+      dirty = true;
+      rememberSelection();
+      updateStats();
+      setMessage('COMMENTED');
+      editor.focus();
+      playKeySound();
+    }
+
+    function uncommentSelectionWithDashes() {
+      const { lineStart, lineEnd } = getSelectedLineRange();
+      const block = editor.value.slice(lineStart, lineEnd);
+      const uncommented = block.split('\n').map(line => line.replace(/^--/, '')).join('\n');
+      editor.setRangeText(uncommented, lineStart, lineEnd, 'select');
+      dirty = true;
+      rememberSelection();
+      updateStats();
+      setMessage('UNCOMMENTED');
+      editor.focus();
+      playKeySound();
+    }
+
+    function applyTheme(name) {
+      const theme = THEMES[name];
+      if (!theme) return;
+      for (const [k,v] of Object.entries(theme.vars)) {
+        document.documentElement.style.setProperty(k, v);
+      }
+      themeShort.textContent = theme.name;
+      themeLabel.textContent = theme.label;
+      setMessage(`${theme.label} LOADED`);
+    }
+
+    function toggleScanlines() {
+      strongScanlines = !strongScanlines;
+      document.documentElement.style.setProperty('--scan-opacity', strongScanlines ? '.72' : '.34');
+      document.documentElement.style.setProperty('--scan-step', strongScanlines ? '3px' : '4px');
+      scanStatus.textContent = strongScanlines ? 'ON' : 'OFF';
+      setMessage(strongScanlines ? 'SCANLINES ON' : 'SCANLINES OFF');
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      soundStatus.textContent = soundEnabled ? 'ON' : 'OFF';
+      if (soundEnabled) playKeySound();
+      setMessage(soundEnabled ? 'KEY SOUND ON' : 'KEY SOUND OFF');
+    }
+
+    async function runSplash() {
+      const msgs = ['Initializing display...', 'Calibrating phosphor...', 'Loading editor core...', 'Ready.'];
+      splash.classList.remove('hidden');
+      for (const msg of msgs) {
+        splashMsg.textContent = msg;
+        await new Promise(r => setTimeout(r, 500));
+      }
+      await new Promise(r => setTimeout(r, 250));
+      splash.classList.add('hidden');
+    }
+
+    function downloadFile(forcePrompt=false) {
+      let fileName = currentFileName;
+      if (forcePrompt || currentFileName === 'untitled.txt') {
+        const proposed = prompt('Save file as:', currentFileName);
+        if (!proposed) { setMessage('SAVE CANCELLED'); return; }
+        fileName = proposed.trim() || 'untitled.txt';
+        currentFileName = fileName;
+      }
+      const blob = new Blob([editor.value], { type:'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      dirty = false;
+      updateStats();
+      setMessage(`SAVED ${currentFileName.toUpperCase()}`);
+      playKeySound();
+    }
+
+    function newDocument() {
+      if (dirty) {
+        const proceed = confirm('Discard current unsaved changes?');
+        if (!proceed) return;
+      }
+      editor.value = '';
+      currentFileName = 'untitled.txt';
+      dirty = false;
+      savedSelectionStart = 0;
+      savedSelectionEnd = 0;
+      editor.focus();
+      updateStats();
+      setMessage('NEW DOCUMENT');
+      playKeySound();
+    }
+
+    function openDocument() {
+      fileInput.value = '';
+      fileInput.click();
+      playKeySound();
+    }
+
+    function insertDateTime() {
+      insertAtSelection(new Date().toLocaleString());
+      setMessage('DATE/TIME INSERTED');
+    }
+
+    function clearSelectionOrAll() {
+      restoreSelection();
+      if (editor.selectionStart !== editor.selectionEnd) {
+        editor.setRangeText('', editor.selectionStart, editor.selectionEnd, 'start');
+      } else {
+        editor.value = '';
+      }
+      dirty = true;
+      rememberSelection();
+      updateStats();
+      setMessage('CLEARED');
+      editor.focus();
+      playKeySound();
+    }
+
+    function doFind(next=false) {
+      let term = lastSearch;
+      if (!next || !term) {
+        const input = prompt('Find:', lastSearch || '');
+        if (input === null) { setMessage('FIND CANCELLED'); return; }
+        term = input;
+        lastSearch = term;
+      }
+      if (!term) { setMessage('NO SEARCH TEXT'); return; }
+      const haystack = editor.value;
+      const startFrom = next ? editor.selectionEnd : editor.selectionStart;
+      let idx = haystack.indexOf(term, startFrom);
+      if (idx === -1 && startFrom > 0) idx = haystack.indexOf(term, 0);
+      if (idx === -1) { setMessage('TEXT NOT FOUND'); return; }
+      editor.focus();
+      editor.setSelectionRange(idx, idx + term.length);
+      rememberSelection();
+      updateStats();
+      setMessage(`FOUND "${term.toUpperCase()}"`);
+      playKeySound();
+    }
+
+    function openReplaceModal() {
+      rememberSelection();
+      findText.value = lastSearch;
+      replaceModalBackdrop.classList.add('show');
+      closeMenus();
+      findText.focus();
+      setMessage('FIND / REPLACE');
+      playKeySound();
+    }
+
+    function closeReplaceDialog() {
+      replaceModalBackdrop.classList.remove('show');
+      restoreSelection();
+    }
+
+    function replaceCurrent() {
+      restoreSelection();
+      const findVal = findText.value;
+      const replaceVal = replaceText.value;
+      if (!findVal) { setMessage('NO FIND TEXT'); return; }
+      const selected = editor.value.slice(editor.selectionStart, editor.selectionEnd);
+      if (selected === findVal) {
+        editor.setRangeText(replaceVal, editor.selectionStart, editor.selectionEnd, 'select');
+        dirty = true;
+        rememberSelection();
+        updateStats();
+        setMessage('REPLACED');
+        playKeySound();
+        return true;
+      }
+      lastSearch = findVal;
+      doFind(false);
+      return false;
+    }
+
+    function replaceAll() {
+      const findVal = findText.value;
+      const replaceVal = replaceText.value;
+      if (!findVal) { setMessage('NO FIND TEXT'); return; }
+      const count = editor.value.split(findVal).length - 1;
+      if (count === 0) { setMessage('TEXT NOT FOUND'); return; }
+      editor.value = editor.value.split(findVal).join(replaceVal);
+      dirty = true;
+      lastSearch = findVal;
+      rememberSelection();
+      updateStats();
+      setMessage(`REPLACED ${count}`);
+      editor.focus();
+      playKeySound();
+    }
+
+    function gotoLine() {
+      const input = prompt('Go to line:');
+      if (input === null) { setMessage('GO TO CANCELLED'); return; }
+      const target = Math.max(1, parseInt(input, 10) || 1);
+      const lines = editor.value.split('\n');
+      let pos = 0;
+      for (let i = 0; i < Math.min(target - 1, lines.length - 1); i++) pos += lines[i].length + 1;
+      editor.focus();
+      editor.setSelectionRange(pos, pos);
+      rememberSelection();
+      updateStats();
+      setMessage(`LINE ${target}`);
+      playKeySound();
+    }
+
+    function showAbout() {
+      alert('AMBERDOS TEXT EDITOR v1.8\n\nAdded: green phosphor theme, white theme, stronger scanlines, bezel frame, startup splash, and optional mechanical key sound.');
+      setMessage('ABOUT');
+      editor.focus();
+      playKeySound();
+    }
+
+    function doClipboard(action) {
+      restoreSelection();
+      try {
+        if (action === 'cut') document.execCommand('cut');
+        if (action === 'copy') document.execCommand('copy');
+        if (action === 'paste') document.execCommand('paste');
+        rememberSelection();
+        updateStats();
+        setMessage(action.toUpperCase());
+        playKeySound();
+      } catch {
+        setMessage(`${action.toUpperCase()} NOT AVAILABLE`);
+      }
+    }
+
+    function closeMenus() { menus.forEach(m => m.classList.remove('open')); }
+    function toggleMenu(menu) {
+      const open = menu.classList.contains('open');
+      closeMenus();
+      if (!open) menu.classList.add('open');
+    }
+
+    function openAsciiModal() {
+      rememberSelection();
+      asciiModalBackdrop.classList.add('show');
+      closeMenus();
+      setMessage('CHARACTER MAP');
+      playKeySound();
+    }
+
+    function closeAsciiDialog() {
+      asciiModalBackdrop.classList.remove('show');
+      restoreSelection();
+    }
+
+    function openBuilderModal() {
+      rememberSelection();
+      builderModalBackdrop.classList.add('show');
+      renderBoxPreview();
+      closeMenus();
+      setMessage('WINDOW BUILDER');
+      playKeySound();
+    }
+
+    function closeBuilderDialog() {
+      builderModalBackdrop.classList.remove('show');
+      restoreSelection();
+    }
+
+    function clipText(text, max) {
+      return String(text || '').replace(/[\r]/g, '').slice(0, max);
+    }
+
+    function wrapTextToWidth(text, width) {
+      const rawLines = String(text || '').split('\n');
+      const out = [];
+      for (const raw of rawLines) {
+        if (raw === '') { out.push(''); continue; }
+        let line = raw;
+        while (line.length > width) {
+          out.push(line.slice(0, width));
+          line = line.slice(width);
+        }
+        out.push(line);
+      }
+      return out;
+    }
+
+    function buildAsciiWindow(width, height, style, title='', header='none', body='') {
+      const w = Math.max(8, Math.min(120, Number(width) || 8));
+      const h = Math.max(3, Math.min(40, Number(height) || 3));
+      const box = BOX_SETS[style] || BOX_SETS.single;
+      const innerW = w - 2;
+      const titleText = clipText(title.trim(), Math.max(0, innerW - 2));
+
+      let top;
+      if (titleText) {
+        const decorated = ` ${titleText} `;
+        const remaining = Math.max(0, innerW - decorated.length);
+        const leftFill = Math.floor(remaining / 2);
+        const rightFill = remaining - leftFill;
+        top = box.tl + box.h.repeat(leftFill) + decorated + box.h.repeat(rightFill) + box.tr;
+      } else {
+        top = box.tl + box.h.repeat(innerW) + box.tr;
+      }
+
+      const contentLines = [];
+      const bodyLines = wrapTextToWidth(body, innerW).map(line => line.padEnd(innerW, ' '));
+
+      if (header === 'rule' && titleText) {
+        contentLines.push(titleText.padEnd(innerW, ' '));
+        contentLines.push(box.h.repeat(innerW));
+      } else if (header === 'banner' && titleText) {
+        const banner = `[ ${clipText(titleText, Math.max(0, innerW - 4))} ]`;
+        const padLeft = Math.max(0, Math.floor((innerW - banner.length) / 2));
+        const bannerLine = ' '.repeat(padLeft) + banner;
+        contentLines.push(bannerLine.slice(0, innerW).padEnd(innerW, ' '));
+      } else if (header === 'tab' && titleText) {
+        const tab = `${box.v} ${clipText(titleText, Math.max(0, innerW - 2))}`;
+        contentLines.push(tab.slice(0, innerW).padEnd(innerW, ' '));
+      }
+
+      contentLines.push(...bodyLines);
+      const usableInnerRows = h - 2;
+      const shown = contentLines.slice(0, usableInnerRows);
+      while (shown.length < usableInnerRows) shown.push(' '.repeat(innerW));
+
+      const middle = shown.map(line => box.v + line.slice(0, innerW).padEnd(innerW, ' ') + box.v);
+      const bottom = box.bl + box.h.repeat(innerW) + box.br;
+      return [top, ...middle, bottom].join('\n');
+    }
+
+    function makeHeading1(text='SECTION TITLE') {
+      const title = clipText(text.trim() || 'SECTION TITLE', 60);
+      return [
+        '╔' + '═'.repeat(title.length + 2) + '╗',
+        '║ ' + title + ' ║',
+        '╚' + '═'.repeat(title.length + 2) + '╝'
+      ].join('\n');
+    }
+
+    function makeHeading2(text='SUBSECTION') {
+      const title = clipText(text.trim() || 'SUBSECTION', 60);
+      return [title, '─'.repeat(title.length)].join('\n');
+    }
+
+    function makeHeading3(text='DETAIL') {
+      const title = clipText(text.trim() || 'DETAIL', 60);
+      return '[ ' + title + ' ]';
+    }
+
+    function renderBoxPreview() {
+      boxPreview.textContent = buildAsciiWindow(
+        boxWidth.value, boxHeight.value, boxStyle.value,
+        boxTitle.value, headerStyle.value, bodyText.value
+      );
+    }
+
+    function populateCharMap() {
+      charGrid.innerHTML = '';
+      CHAR_MAP.forEach(ch => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'char-btn';
+        btn.textContent = ch;
+        btn.title = `Insert ${ch}`;
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          insertAtSelection(ch);
+          setMessage(`INSERTED ${ch}`);
+        });
+        charGrid.appendChild(btn);
+      });
+    }
+
+    function handleAction(action) {
+      closeMenus();
+      switch (action) {
+        case 'new': return newDocument();
+        case 'open': return openDocument();
+        case 'save': return downloadFile(false);
+        case 'saveas': return downloadFile(true);
+        case 'insertdate': return insertDateTime();
+        case 'undo': restoreSelection(); document.execCommand('undo'); rememberSelection(); updateStats(); setMessage('UNDO'); playKeySound(); return;
+        case 'redo': restoreSelection(); document.execCommand('redo'); rememberSelection(); updateStats(); setMessage('REDO'); playKeySound(); return;
+        case 'cut': return doClipboard('cut');
+        case 'copy': return doClipboard('copy');
+        case 'paste': return doClipboard('paste');
+        case 'selectall': editor.focus(); editor.select(); rememberSelection(); updateStats(); setMessage('SELECT ALL'); playKeySound(); return;
+        case 'clear': return clearSelectionOrAll();
+        case 'comment-dashes': return commentSelectionWithDashes();
+        case 'uncomment-dashes': return uncommentSelectionWithDashes();
+        case 'find': return doFind(false);
+        case 'findnext': return doFind(true);
+        case 'replace': return openReplaceModal();
+        case 'goto': return gotoLine();
+        case 'about': return showAbout();
+        case 'charmap': return openAsciiModal();
+        case 'windowbuilder': return openBuilderModal();
+        case 'insert-heading-1': return insertAtSelection(makeHeading1(prompt('Heading 1 text:', 'SECTION TITLE') || 'SECTION TITLE'));
+        case 'insert-heading-2': return insertAtSelection(makeHeading2(prompt('Heading 2 text:', 'SUBSECTION') || 'SUBSECTION'));
+        case 'insert-heading-3': return insertAtSelection(makeHeading3(prompt('Heading 3 text:', 'DETAIL') || 'DETAIL'));
+        case 'insert-single-box': return insertAtSelection(buildAsciiWindow(36, 8, 'single', 'WINDOW', 'none', ''));
+        case 'insert-double-box': return insertAtSelection(buildAsciiWindow(36, 8, 'double', 'WINDOW', 'none', ''));
+        case 'insert-single-rule': return insertAtSelection('─'.repeat(40));
+        case 'insert-double-rule': return insertAtSelection('═'.repeat(40));
+        case 'theme-amber': return applyTheme('amber');
+        case 'theme-green': return applyTheme('green');
+        case 'theme-white': return applyTheme('white');
+        case 'toggle-sound': return toggleSound();
+        case 'toggle-scanlines': return toggleScanlines();
+        case 'show-splash': return runSplash();
+      }
+    }
+
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        editor.value = String(reader.result || '');
+        currentFileName = file.name || 'untitled.txt';
+        dirty = false;
+        savedSelectionStart = 0;
+        savedSelectionEnd = 0;
+        updateStats();
+        setMessage(`OPENED ${currentFileName.toUpperCase()}`);
+        editor.focus();
+      };
+      reader.onerror = () => setMessage('READ ERROR');
+      reader.readAsText(file);
+    });
+
+    menus.forEach(menu => {
+      const btn = menu.querySelector('.menu-button');
+      btn.addEventListener('mousedown', () => rememberSelection());
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMenu(menu);
+        playKeySound();
+      });
+    });
+
+    menubar.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-action]');
+      if (!item) return;
+      handleAction(item.dataset.action);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.menu') && !e.target.closest('.modal')) closeMenus();
+    });
+
+    editor.addEventListener('input', () => {
+      dirty = true;
+      rememberSelection();
+      updateStats();
+      setMessage('EDITING');
+      playKeySound();
+    });
+
+    ['click','keyup','select','mouseup','scroll'].forEach(evt => editor.addEventListener(evt, () => {
+      rememberSelection();
+      updateStats();
+    }));
+
+    editor.addEventListener('keydown', (event) => {
+      rememberSelection();
+      if (event.key === 'Tab') { event.preventDefault(); insertAtSelection('    '); return; }
+      if (event.key === 'Enter') { event.preventDefault(); handleHardReturn(); return; }
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 's') { event.preventDefault(); downloadFile(false); return; }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 's') { event.preventDefault(); downloadFile(true); return; }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'o') { event.preventDefault(); openDocument(); return; }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'n') { event.preventDefault(); newDocument(); return; }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') { event.preventDefault(); doFind(false); return; }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'h') { event.preventDefault(); openReplaceModal(); return; }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'g') { event.preventDefault(); gotoLine(); return; }
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key === '/') { event.preventDefault(); commentSelectionWithDashes(); return; }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === '?') { event.preventDefault(); uncommentSelectionWithDashes(); return; }
+      if (event.altKey && event.key.toLowerCase() === 'a') { event.preventDefault(); openAsciiModal(); return; }
+      if (event.altKey && event.key.toLowerCase() === 'w') { event.preventDefault(); openBuilderModal(); return; }
+      if (event.key === 'F3') { event.preventDefault(); doFind(true); return; }
+      if (event.key === 'F5') { event.preventDefault(); insertDateTime(); return; }
+    });
+
+    closeAsciiModal.addEventListener('click', closeAsciiDialog);
+    closeBuilderModal.addEventListener('click', closeBuilderDialog);
+    closeReplaceModal.addEventListener('click', closeReplaceDialog);
+
+    asciiModalBackdrop.addEventListener('click', (e) => { if (e.target === asciiModalBackdrop) closeAsciiDialog(); });
+    builderModalBackdrop.addEventListener('click', (e) => { if (e.target === builderModalBackdrop) closeBuilderDialog(); });
+    replaceModalBackdrop.addEventListener('click', (e) => { if (e.target === replaceModalBackdrop) closeReplaceDialog(); });
+
+    [boxWidth, boxHeight, boxStyle, boxTitle, headerStyle, bodyText].forEach(el => el.addEventListener('input', renderBoxPreview));
+
+    insertBoxBtn.addEventListener('click', () => {
+      insertAtSelection(boxPreview.textContent);
+      setMessage('WINDOW INSERTED');
+      closeBuilderDialog();
+    });
+
+    copyBoxBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(boxPreview.textContent);
+        setMessage('PREVIEW COPIED');
+        playKeySound();
+      } catch {
+        setMessage('COPY FAILED');
+      }
+    });
+
+    findFromModalBtn.addEventListener('click', () => { lastSearch = findText.value; doFind(false); });
+    replaceOneBtn.addEventListener('click', () => { lastSearch = findText.value; replaceCurrent(); });
+    replaceAllBtn.addEventListener('click', () => { lastSearch = findText.value; replaceAll(); });
+
+    window.addEventListener('beforeunload', (event) => {
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    });
+
+    applyTheme('amber');
+    populateCharMap();
+    renderBoxPreview();
+    rememberSelection();
+    updateStats();
+    runSplash();
+    editor.focus();
+  </script>
+</body>
+</html>
