@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Grade 4 FAST Math Practice Quiz</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .hidden { display: none; }
+    .question { margin-bottom: 25px; }
+    .answers label { display: block; }
+    button { padding: 10px 15px; margin-top: 10px; }
+    .summary { margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<h2>Grade 4 FAST Math Practice Quiz</h2>
+
+<div id="start">
+    <label>Enter Student ID:</label>
+    <input type="text" id="studentId">
+    <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+<form id="quiz" class="hidden">
+
+<div class="question">
+    <p>1. Select all numbers that are multiples of 4:</p>
+    <div class="answers">
+        <label><input type="checkbox" name="q1" value="8">8</label>
+        <label><input type="checkbox" name="q1" value="12">12</label>
+        <label><input type="checkbox" name="q1" value="14">14</label>
+        <label><input type="checkbox" name="q1" value="20">20</label>
+    </div>
+</div>
+
+<div class="question">
+    <p>2. 3/4 is closest to which decimal?</p>
+    <select name="q2">
+        <option value="">Select</option>
+        <option value="0.25">0.25</option>
+        <option value="0.5">0.5</option>
+        <option value="0.75">0.75</option>
+        <option value="1.0">1.0</option>
+    </select>
+</div>
+
+<div class="question">
+    <p>3. Solve: 245 + 178 =</p>
+    <input type="number" name="q3">
+</div>
+
+<div class="question">
+    <p>4. Which shape has exactly 4 right angles?</p>
+    <div class="answers">
+        <label><input type="radio" name="q4" value="triangle">Triangle</label>
+        <label><input type="radio" name="q4" value="rectangle">Rectangle</label>
+        <label><input type="radio" name="q4" value="pentagon">Pentagon</label>
+    </div>
+</div>
+
+<div class="question">
+    <p>5. Match the expression to the value (type correct number):  
+    6 × 7 =</p>
+    <input type="number" name="q5">
+</div>
+
+<button type="button" onclick="submitQuiz()">Submit</button>
+
+</form>
+
+<div id="results" class="hidden"></div>
+
+<script>
+let studentID = "";
+
+function startQuiz() {
+    studentID = document.getElementById("studentId").value.trim();
+    if (!studentID) {
+        alert("Please enter a student ID.");
+        return;
+    }
+    document.getElementById("start").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+}
+
+function submitQuiz() {
+    const form = document.forms["quiz"];
+
+    let score = 0;
+    let interventions = [];
+
+    // Q1
+    const q1 = Array.from(form.q1).filter(c => c.checked).map(c => c.value);
+    if (q1.includes("8") && q1.includes("12") && q1.includes("20") && q1.length === 3) {
+        score++;
+    } else {
+        interventions.push("Review multiples and factors (MA.4.AR.1)");
+    }
+
+    // Q2
+    if (form.q2.value === "0.75") score++;
+    else interventions.push("Practice fraction to decimal conversion");
+
+    // Q3
+    if (Number(form.q3.value) === 423) score++;
+    else interventions.push("Review multi-digit addition strategies");
+
+    // Q4
+    if (form.q4.value === "rectangle") score++;
+    else interventions.push("Review geometric properties of shapes");
+
+    // Q5
+    if (Number(form.q5.value) === 42) score++;
+    else interventions.push("Practice multiplication facts");
+
+    const resultData = {
+        studentID,
+        score,
+        total: 5,
+        interventions
+    };
+
+    displayResults(resultData);
+    downloadResults(resultData);
+}
+
+function displayResults(data) {
+    const div = document.getElementById("results");
+    div.classList.remove("hidden");
+    div.innerHTML = `
+        <h3>Results</h3>
+        <p>Student ID: ${data.studentID}</p>
+        <p>Score: ${data.score}/5</p>
+        <h4>Recommended Interventions:</h4>
+        <ul>${data.interventions.map(i => `<li>${i}</li>`).join("")}</ul>
+    `;
+}
+
+function downloadResults(data) {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `results_${data.studentID}.json`;
+    a.click();
+}
+</script>
+
+</body>
+</html>
