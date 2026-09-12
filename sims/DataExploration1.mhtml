@@ -1,0 +1,706 @@
+From: <Saved by Blink>
+Snapshot-Content-Location: file:///Users/psimac/Documents/Codex/2026-07-11/use/outputs/DataExplorationLab.html
+Subject: =?utf-8?Q?Data=20Exploration=20Lab=20=E2=80=94=20From=20Raw=20Data=20to?=
+ =?utf-8?Q?=20a=20Defensible=20Story?=
+Date: Sat, 11 Jul 2026 20:24:09 -0400
+MIME-Version: 1.0
+Content-Type: multipart/related;
+	type="text/html";
+	boundary="----MultipartBoundary--mF8VPKNBwGozEWWrm8VlHoDwqmIIn0J7NcXOCLbcyn----"
+
+
+------MultipartBoundary--mF8VPKNBwGozEWWrm8VlHoDwqmIIn0J7NcXOCLbcyn----
+Content-Type: text/html
+Content-ID: <frame-050A6CF4CB76D67E4BFFA760E4708BBE@mhtml.blink>
+Content-Transfer-Encoding: quoted-printable
+Content-Location: file:///Users/psimac/Documents/Codex/2026-07-11/use/outputs/DataExplorationLab.html
+
+<!DOCTYPE html><html lang=3D"en"><head><meta http-equiv=3D"Content-Type" co=
+ntent=3D"text/html; charset=3DUTF-8"><link rel=3D"stylesheet" type=3D"text/=
+css" href=3D"cid:css-a30556eb-23bf-4987-9c01-18e404182766@mhtml.blink" />
+
+<meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=3D1.=
+0">
+<title>Data Exploration Lab =E2=80=94 From Raw Data to a Defensible Story</=
+title>
+
+</head>
+<body><div class=3D"container">
+<section class=3D"card"><div class=3D"intro-header"><div class=3D"intro-tit=
+le"><h1>Data Exploration Lab</h1><p class=3D"intro-subtitle">A guided, hand=
+s-on path from an unfamiliar dataset to a careful, defensible analysis. Sta=
+rt with context and data quality=E2=80=94then choose a technique that match=
+es the question.</p></div><div class=3D"header-btns"><button id=3D"guideBtn=
+">=E2=96=BC Quick-Start Guide</button><button id=3D"resetBtn">=E2=86=BB Res=
+et Scenario</button></div></div><div class=3D"guide" id=3D"guide"><div clas=
+s=3D"guide-cols"><div><h3>1. Explore before testing</h3><p>Choose a scenari=
+o, state what one row represents, inspect missing values and distributions,=
+ and look for values that deserve investigation.</p></div><div><h3>2. Match=
+ method to question</h3><p>Compare groups for differences, use a scatterplo=
+t for relationships, and always pair a numerical summary with a visual.</p>=
+</div><div><h3>3. Communicate limits</h3><p>Describe size, direction, uncer=
+tainty, data quality, and plausible alternatives. Association alone does no=
+t establish causation.</p></div></div></div></section>
+<nav class=3D"tab-bar" aria-label=3D"Lab sections"><button class=3D"tab-btn=
+ active" data-tab=3D"0">Scenarios</button><button class=3D"tab-btn" data-ta=
+b=3D"1">1. Understand &amp; Inspect</button><button class=3D"tab-btn" data-=
+tab=3D"2">2. Explore Visually</button><button class=3D"tab-btn" data-tab=3D=
+"3">3. Analyze</button><button class=3D"tab-btn" data-tab=3D"4">4. Tell the=
+ Story</button><span class=3D"tab-hint">Start with a scenario, then move le=
+ft to right.</span></nav>
+
+<main>
+<section class=3D"tab-content active" id=3D"tab0"><div class=3D"two-panel">=
+<div class=3D"card"><div class=3D"panel-header"><h2>Choose a teaching scena=
+rio</h2><span class=3D"badge">synthetic data</span></div><p class=3D"intro-=
+subtitle">Each dataset contains a different lesson. The values are generate=
+d in your browser and never leave this file.</p><div class=3D"scenario-grid=
+" id=3D"scenarioGrid"><div class=3D"sc-card active"><div class=3D"sc-name">=
+Student achievement</div><div class=3D"sc-desc">Explore math scores across =
+three instructional programs.</div><span class=3D"sc-tag">education data</s=
+pan></div><div class=3D"sc-card "><div class=3D"sc-name">Store promotion</d=
+iv><div class=3D"sc-desc">Explore sales, foot traffic, and a tempting causa=
+l claim.</div><span class=3D"sc-tag">confounding</span></div><div class=3D"=
+sc-card "><div class=3D"sc-name">Air-quality sensors</div><div class=3D"sc-=
+desc">Find skew, missing readings, and one extreme measurement.</div><span =
+class=3D"sc-tag">data quality</span></div><div class=3D"sc-card "><div clas=
+s=3D"sc-name">Customer support</div><div class=3D"sc-desc">Study resolution=
+ time and the danger of relying on averages.</div><span class=3D"sc-tag">sk=
+ewed outcome</span></div></div></div><aside class=3D"card"><div class=3D"pa=
+nel-header"><h2>Current investigation</h2><span class=3D"badge" id=3D"scena=
+rioBadge">education data</span></div><div class=3D"question-box" id=3D"scen=
+arioQuestion"><strong>Guiding question:</strong> Which instructional group =
+tends to score higher, and how are study time and attendance related to ach=
+ievement?</div><ul class=3D"checklist"><li><div class=3D"check">1</div><div=
+><strong>Define the unit</strong><span id=3D"unitText">One middle-school st=
+udent</span></div></li><li><div class=3D"check">2</div><div><strong>Name th=
+e outcome</strong><span id=3D"outcomeText">End-of-term math score</span></d=
+iv></li><li><div class=3D"check">3</div><div><strong>Identify the compariso=
+n</strong><span id=3D"comparisonText">Traditional, project-based, or blende=
+d instruction</span></div></li></ul><div class=3D"watch-box" id=3D"misleadi=
+ngNote"><strong>What could mislead us?</strong> Prior achievement, attendan=
+ce policies, and how students entered each program could create apparent pr=
+ogram differences.</div><div class=3D"action-row"><button class=3D"btn-prim=
+ary">Begin inspection =E2=86=92</button></div></aside></div></section>
+
+<section class=3D"tab-content" id=3D"tab1"><div class=3D"two-panel"><div><s=
+ection class=3D"card"><div class=3D"panel-header"><h2>First rows and variab=
+le types</h2><span class=3D"badge" id=3D"rowBadge">60 rows =C2=B7 5 variabl=
+es</span></div><div class=3D"table-wrap"><table><thead id=3D"dataHead"><tr>=
+<th>ID<br><small>identifier</small></th><th>Group<br><small>categorical</sm=
+all></th><th>Weekly study hours<br><small>numeric</small></th><th>Attendanc=
+e rate<br><small>numeric</small></th><th>End-of-term math score<br><small>n=
+umeric</small></th></tr></thead><tbody id=3D"dataBody"><tr><td>001</td><td>=
+Traditional</td><td>8.4</td><td>94.6</td><td class=3D"">65.4</td></tr><tr><=
+td>002</td><td>Project-based</td><td>4.7</td><td>91</td><td class=3D"">59.8=
+</td></tr><tr><td>003</td><td>Blended</td><td>11.4</td><td>82.8</td><td cla=
+ss=3D"">84.6</td></tr><tr><td>004</td><td>Traditional</td><td>9.6</td><td>8=
+7.8</td><td class=3D"">63.8</td></tr><tr><td>005</td><td>Project-based</td>=
+<td>10.5</td><td>80.7</td><td class=3D"">67.8</td></tr><tr><td>006</td><td>=
+Blended</td><td>8</td><td>96.9</td><td class=3D"">94.7</td></tr><tr><td>007=
+</td><td>Traditional</td><td>4.8</td><td>90.2</td><td class=3D"">62.8</td><=
+/tr><tr><td>008</td><td>Project-based</td><td>10.5</td><td>95.3</td><td cla=
+ss=3D"missing">missing</td></tr><tr><td>009</td><td>Blended</td><td>12.4</t=
+d><td>90</td><td class=3D"">75.3</td></tr><tr><td>010</td><td>Traditional</=
+td><td>4</td><td>97.1</td><td class=3D"">53.2</td></tr><tr><td>011</td><td>=
+Project-based</td><td>6.5</td><td>85.2</td><td class=3D"">71.1</td></tr><tr=
+><td>012</td><td>Blended</td><td>6</td><td>88.4</td><td class=3D"outlier">1=
+20.6</td></tr><tr><td>013</td><td>Traditional</td><td>10.8</td><td>92.2</td=
+><td class=3D"">70.4</td></tr><tr><td>014</td><td>Project-based</td><td>3.1=
+</td><td>95.2</td><td class=3D"">73.3</td></tr><tr><td>015</td><td>Blended<=
+/td><td>6.3</td><td>80.8</td><td class=3D"">77.8</td></tr><tr><td>016</td><=
+td>Traditional</td><td>12.6</td><td>99</td><td class=3D"">74.8</td></tr><tr=
+><td>017</td><td>Project-based</td><td>10.2</td><td>94.1</td><td class=3D""=
+>78.3</td></tr><tr><td>018</td><td>Blended</td><td>4.6</td><td>85.6</td><td=
+ class=3D"">94.9</td></tr></tbody></table></div></section></div><aside><sec=
+tion class=3D"card"><div class=3D"panel-header"><h2>Data-quality scan</h2><=
+span class=3D"badge">before modeling</span></div><div class=3D"metric-grid"=
+ style=3D"grid-template-columns:1fr 1fr"><div class=3D"metric"><div class=
+=3D"metric-label">Missing cells</div><div class=3D"metric-value" id=3D"miss=
+ingMetric">3</div></div><div class=3D"metric"><div class=3D"metric-label">F=
+lagged values</div><div class=3D"metric-value" id=3D"outlierMetric">1</div>=
+</div><div class=3D"metric"><div class=3D"metric-label">Duplicate IDs</div>=
+<div class=3D"metric-value" id=3D"duplicateMetric">0</div></div><div class=
+=3D"metric"><div class=3D"metric-label">Range violations</div><div class=3D=
+"metric-value" id=3D"rangeMetric">0</div></div></div><div class=3D"watch-bo=
+x" id=3D"qualityNote"><strong>Investigate:</strong> the red outcome is extr=
+eme. Identifier and plausible-range checks found 0 structural issues. A zer=
+o is useful evidence, but only for the rules checked here.</div><div class=
+=3D"control-box"><label class=3D"control-title" for=3D"missingChoice">How s=
+hould missing outcomes be handled?</label><select id=3D"missingChoice"><opt=
+ion value=3D"exclude">Exclude only from calculations needing them</option><=
+option value=3D"median">Fill with the median (demonstration)</option></sele=
+ct></div><button class=3D"btn-primary">Apply decision</button></section><se=
+ction class=3D"card"><h2 style=3D"font-size:1rem;margin-bottom:8px">Best-pr=
+actice checkpoint</h2><ul class=3D"checklist"><li><div class=3D"check">=E2=
+=9C=93</div><div><strong>Keep raw data unchanged</strong><span>Cleaning cre=
+ates an analysis view; it does not erase the source.</span></div></li><li><=
+div class=3D"check">=E2=9C=93</div><div><strong>Investigate, do not auto-de=
+lete</strong><span>An extreme value can be an error or the most important o=
+bservation.</span></div></li></ul></section></aside></div></section>
+
+<section class=3D"tab-content" id=3D"tab2"><div class=3D"equal-panel"><sect=
+ion class=3D"card"><div class=3D"panel-header"><h2>Outcome distribution</h2=
+><span class=3D"badge" id=3D"distributionBadge">n =3D 57</span></div><div c=
+lass=3D"equal-panel"><div class=3D"control-box"><label class=3D"control-tit=
+le" for=3D"groupFilter">Show group</label><select id=3D"groupFilter"><optio=
+n value=3D"all">All groups</option><option>Traditional</option><option>Proj=
+ect-based</option><option>Blended</option></select></div><div class=3D"cont=
+rol-box"><span class=3D"control-title">Reference lines</span><label class=
+=3D"check-row"><input type=3D"checkbox" id=3D"showMean" checked=3D""> Mean<=
+/label><label class=3D"check-row"><input type=3D"checkbox" id=3D"showMedian=
+" checked=3D""> Median</label></div></div><div class=3D"chart-title" id=3D"=
+histTitle">End-of-term math score</div><div class=3D"chart" id=3D"histChart=
+"><svg viewBox=3D"0 0 620 270" role=3D"img"><rect width=3D"100%" height=3D"=
+100%" fill=3D"white"></rect><line x1=3D"45" y1=3D"220" x2=3D"595" y2=3D"220=
+" stroke=3D"#9ca3af"></line><text x=3D"45" y=3D"245" font-size=3D"11" fill=
+=3D"#6b7280">53.2</text><text x=3D"570" y=3D"245" font-size=3D"11" fill=3D"=
+#6b7280">120.6</text><rect x=3D"47" y=3D"200.47619047619048" width=3D"41.83=
+3333333333336" height=3D"19.523809523809522" rx=3D"2" fill=3D"#93c5fd"><tit=
+le>2 observations</title></rect><rect x=3D"92.83333333333334" y=3D"171.1904=
+761904762" width=3D"41.833333333333336" height=3D"48.80952380952381" rx=3D"=
+2" fill=3D"#93c5fd"><title>5 observations</title></rect><rect x=3D"138.6666=
+6666666669" y=3D"122.38095238095238" width=3D"41.833333333333336" height=3D=
+"97.61904761904762" rx=3D"2" fill=3D"#93c5fd"><title>10 observations</title=
+></rect><rect x=3D"184.5" y=3D"15" width=3D"41.833333333333336" height=3D"2=
+05" rx=3D"2" fill=3D"#93c5fd"><title>21 observations</title></rect><rect x=
+=3D"230.33333333333334" y=3D"132.14285714285717" width=3D"41.83333333333333=
+6" height=3D"87.85714285714285" rx=3D"2" fill=3D"#93c5fd"><title>9 observat=
+ions</title></rect><rect x=3D"276.1666666666667" y=3D"190.71428571428572" w=
+idth=3D"41.833333333333336" height=3D"29.285714285714285" rx=3D"2" fill=3D"=
+#93c5fd"><title>3 observations</title></rect><rect x=3D"322" y=3D"190.71428=
+571428572" width=3D"41.833333333333336" height=3D"29.285714285714285" rx=3D=
+"2" fill=3D"#93c5fd"><title>3 observations</title></rect><rect x=3D"367.833=
+33333333337" y=3D"190.71428571428572" width=3D"41.833333333333336" height=
+=3D"29.285714285714285" rx=3D"2" fill=3D"#93c5fd"><title>3 observations</ti=
+tle></rect><rect x=3D"413.6666666666667" y=3D"220" width=3D"41.833333333333=
+336" height=3D"0" rx=3D"2" fill=3D"#93c5fd"><title>0 observations</title></=
+rect><rect x=3D"459.5" y=3D"220" width=3D"41.833333333333336" height=3D"0" =
+rx=3D"2" fill=3D"#93c5fd"><title>0 observations</title></rect><rect x=3D"50=
+5.33333333333337" y=3D"220" width=3D"41.833333333333336" height=3D"0" rx=3D=
+"2" fill=3D"#93c5fd"><title>0 observations</title></rect><rect x=3D"551.166=
+6666666667" y=3D"210.23809523809524" width=3D"41.833333333333336" height=3D=
+"9.761904761904761" rx=3D"2" fill=3D"#dc2626"><title>1 observations</title>=
+</rect><line x1=3D"218.9419022333281" y1=3D"15" x2=3D"218.9419022333281" y2=
+=3D"220" stroke=3D"#7c3aed" stroke-width=3D"2" stroke-dasharray=3D"6 4"></l=
+ine><line x1=3D"211.46884272997028" y1=3D"15" x2=3D"211.46884272997028" y2=
+=3D"220" stroke=3D"#16a34a" stroke-width=3D"2"></line></svg></div><div clas=
+s=3D"legend"><span><i class=3D"dot" style=3D"background:#93c5fd"></i>observ=
+ations</span><span><i class=3D"dot" style=3D"background:#dc2626"></i>flagge=
+d value</span><span><i class=3D"dot" style=3D"background:#7c3aed"></i>mean<=
+/span><span><i class=3D"dot" style=3D"background:#16a34a"></i>median</span>=
+</div><div class=3D"decision"><h3>What to notice</h3><p id=3D"histInsight">=
+The median is 73.6 and the mean is 74.5. They are fairly close, but the dis=
+tribution still shows information a single average cannot.</p></div></secti=
+on><section class=3D"card"><div class=3D"panel-header"><h2>Relationship vie=
+w</h2><span class=3D"badge">visual first</span></div><div class=3D"control-=
+box"><label class=3D"control-title" for=3D"xSelect">Horizontal variable</la=
+bel><select id=3D"xSelect"><option value=3D"X">Weekly study hours</option><=
+option value=3D"X2">Attendance rate</option></select></div><div class=3D"ch=
+art" id=3D"scatterChart"><svg viewBox=3D"0 0 620 270" role=3D"img"><rect wi=
+dth=3D"100%" height=3D"100%" fill=3D"white"></rect><line x1=3D"48" y1=3D"20=
+" x2=3D"48" y2=3D"220" stroke=3D"#9ca3af"></line><line x1=3D"48" y1=3D"220"=
+ x2=3D"595" y2=3D"220" stroke=3D"#9ca3af"></line><text x=3D"48" y=3D"245" f=
+ont-size=3D"11" fill=3D"#6b7280">2.1</text><text x=3D"565" y=3D"245" font-s=
+ize=3D"11" fill=3D"#6b7280">13.9</text><line x1=3D"48" y1=3D"169.9167483138=
+9597" x2=3D"583" y2=3D"151.72052281874335" stroke=3D"#7c3aed" stroke-width=
+=3D"2"></line><circle cx=3D"333.635593220339" cy=3D"186.513353115727" r=3D"=
+4" fill=3D"#2563eb" opacity=3D".72"><title>Traditional; Weekly study hours:=
+ 8.4; outcome: 65.4</title></circle><circle cx=3D"165.8813559322034" cy=3D"=
+201.88427299703267" r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project=
+-based; Weekly study hours: 4.7; outcome: 59.8</title></circle><circle cx=
+=3D"469.6525423728814" cy=3D"133.81305637982197" r=3D"4" fill=3D"#16a34a" o=
+pacity=3D".72"><title>Blended; Weekly study hours: 11.4; outcome: 84.6</tit=
+le></circle><circle cx=3D"388.0423728813559" cy=3D"190.90504451038578" r=3D=
+"4" fill=3D"#2563eb" opacity=3D".72"><title>Traditional; Weekly study hours=
+: 9.6; outcome: 63.8</title></circle><circle cx=3D"428.8474576271186" cy=3D=
+"179.9258160237389" r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project=
+-based; Weekly study hours: 10.5; outcome: 67.8</title></circle><circle cx=
+=3D"315.5" cy=3D"106.09050445103856" r=3D"4" fill=3D"#16a34a" opacity=3D".7=
+2"><title>Blended; Weekly study hours: 8; outcome: 94.7</title></circle><ci=
+rcle cx=3D"170.41525423728814" cy=3D"193.6498516320475" r=3D"4" fill=3D"#25=
+63eb" opacity=3D".72"><title>Traditional; Weekly study hours: 4.8; outcome:=
+ 62.8</title></circle><circle cx=3D"514.9915254237288" cy=3D"159.3397626112=
+7597" r=3D"4" fill=3D"#16a34a" opacity=3D".72"><title>Blended; Weekly study=
+ hours: 12.4; outcome: 75.3</title></circle><circle cx=3D"134.1440677966101=
+6" cy=3D"220" r=3D"4" fill=3D"#2563eb" opacity=3D".72"><title>Traditional; =
+Weekly study hours: 4; outcome: 53.2</title></circle><circle cx=3D"247.4915=
+254237288" cy=3D"170.86795252225522" r=3D"4" fill=3D"#dc2626" opacity=3D".7=
+2"><title>Project-based; Weekly study hours: 6.5; outcome: 71.1</title></ci=
+rcle><circle cx=3D"224.82203389830505" cy=3D"35" r=3D"4" fill=3D"#16a34a" o=
+pacity=3D".72"><title>Blended; Weekly study hours: 6; outcome: 120.6</title=
+></circle><circle cx=3D"442.4491525423729" cy=3D"172.7893175074184" r=3D"4"=
+ fill=3D"#2563eb" opacity=3D".72"><title>Traditional; Weekly study hours: 1=
+0.8; outcome: 70.4</title></circle><circle cx=3D"93.33898305084745" cy=3D"1=
+64.82937685459942" r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-=
+based; Weekly study hours: 3.1; outcome: 73.3</title></circle><circle cx=3D=
+"238.42372881355928" cy=3D"152.47774480712167" r=3D"4" fill=3D"#16a34a" opa=
+city=3D".72"><title>Blended; Weekly study hours: 6.3; outcome: 77.8</title>=
+</circle><circle cx=3D"524.0593220338983" cy=3D"160.71216617210683" r=3D"4"=
+ fill=3D"#2563eb" opacity=3D".72"><title>Traditional; Weekly study hours: 1=
+2.6; outcome: 74.8</title></circle><circle cx=3D"415.24576271186436" cy=3D"=
+151.1053412462908" r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-=
+based; Weekly study hours: 10.2; outcome: 78.3</title></circle><circle cx=
+=3D"161.34745762711862" cy=3D"105.54154302670621" r=3D"4" fill=3D"#16a34a" =
+opacity=3D".72"><title>Blended; Weekly study hours: 4.6; outcome: 94.9</tit=
+le></circle><circle cx=3D"88.80508474576271" cy=3D"181.29821958456975" r=3D=
+"4" fill=3D"#2563eb" opacity=3D".72"><title>Traditional; Weekly study hours=
+: 3; outcome: 67.3</title></circle><circle cx=3D"283.76271186440675" cy=3D"=
+165.37833827893178" r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project=
+-based; Weekly study hours: 7.3; outcome: 73.1</title></circle><circle cx=
+=3D"519.5254237288136" cy=3D"120.08902077151335" r=3D"4" fill=3D"#2563eb" o=
+pacity=3D".72"><title>Traditional; Weekly study hours: 12.5; outcome: 89.6<=
+/title></circle><circle cx=3D"356.3050847457627" cy=3D"156.32047477744806" =
+r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-based; Weekly study=
+ hours: 8.9; outcome: 76.4</title></circle><circle cx=3D"138.6779661016949"=
+ cy=3D"179.1023738872404" r=3D"4" fill=3D"#16a34a" opacity=3D".72"><title>B=
+lended; Weekly study hours: 4.1; outcome: 68.1</title></circle><circle cx=
+=3D"197.61864406779662" cy=3D"191.72848664688428" r=3D"4" fill=3D"#2563eb" =
+opacity=3D".72"><title>Traditional; Weekly study hours: 5.4; outcome: 63.5<=
+/title></circle><circle cx=3D"106.94067796610169" cy=3D"175.8086053412463" =
+r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-based; Weekly study=
+ hours: 3.4; outcome: 69.3</title></circle><circle cx=3D"184.01694915254234=
+" cy=3D"163.45697329376856" r=3D"4" fill=3D"#16a34a" opacity=3D".72"><title=
+>Blended; Weekly study hours: 5.1; outcome: 73.8</title></circle><circle cx=
+=3D"369.9067796610169" cy=3D"170.04451038575667" r=3D"4" fill=3D"#2563eb" o=
+pacity=3D".72"><title>Traditional; Weekly study hours: 9.2; outcome: 71.4</=
+title></circle><circle cx=3D"378.97457627118644" cy=3D"162.0845697329377" r=
+=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-based; Weekly study =
+hours: 9.4; outcome: 74.3</title></circle><circle cx=3D"48" cy=3D"156.04599=
+40652819" r=3D"4" fill=3D"#16a34a" opacity=3D".72"><title>Blended; Weekly s=
+tudy hours: 2.1; outcome: 76.5</title></circle><circle cx=3D"197.6186440677=
+9662" cy=3D"216.43175074183978" r=3D"4" fill=3D"#2563eb" opacity=3D".72"><t=
+itle>Traditional; Weekly study hours: 5.4; outcome: 54.5</title></circle><c=
+ircle cx=3D"533.1271186440679" cy=3D"169.22106824925817" r=3D"4" fill=3D"#d=
+c2626" opacity=3D".72"><title>Project-based; Weekly study hours: 12.8; outc=
+ome: 71.7</title></circle><circle cx=3D"57.06779661016948" cy=3D"170.593471=
+81008903" r=3D"4" fill=3D"#16a34a" opacity=3D".72"><title>Blended; Weekly s=
+tudy hours: 2.3; outcome: 71.2</title></circle><circle cx=3D"501.3898305084=
+746" cy=3D"187.06231454005933" r=3D"4" fill=3D"#dc2626" opacity=3D".72"><ti=
+tle>Project-based; Weekly study hours: 12.1; outcome: 65.2</title></circle>=
+<circle cx=3D"188.5508474576271" cy=3D"106.36498516320475" r=3D"4" fill=3D"=
+#16a34a" opacity=3D".72"><title>Blended; Weekly study hours: 5.2; outcome: =
+94.6</title></circle><circle cx=3D"419.77966101694915" cy=3D"164.0059347181=
+0092" r=3D"4" fill=3D"#2563eb" opacity=3D".72"><title>Traditional; Weekly s=
+tudy hours: 10.3; outcome: 73.6</title></circle><circle cx=3D"583" cy=3D"15=
+4.67359050445106" r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-b=
+ased; Weekly study hours: 13.9; outcome: 77</title></circle><circle cx=3D"3=
+01.89830508474574" cy=3D"133.2640949554896" r=3D"4" fill=3D"#16a34a" opacit=
+y=3D".72"><title>Blended; Weekly study hours: 7.7; outcome: 84.8</title></c=
+ircle><circle cx=3D"147.7457627118644" cy=3D"174.16172106824925" r=3D"4" fi=
+ll=3D"#2563eb" opacity=3D".72"><title>Traditional; Weekly study hours: 4.3;=
+ outcome: 69.9</title></circle><circle cx=3D"229.35593220338978" cy=3D"150.=
+55637982195844" r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-bas=
+ed; Weekly study hours: 6.1; outcome: 78.5</title></circle><circle cx=3D"10=
+6.94067796610169" cy=3D"158.51632047477744" r=3D"4" fill=3D"#16a34a" opacit=
+y=3D".72"><title>Blended; Weekly study hours: 3.4; outcome: 75.6</title></c=
+ircle><circle cx=3D"242.95762711864407" cy=3D"159.33976261127597" r=3D"4" f=
+ill=3D"#2563eb" opacity=3D".72"><title>Traditional; Weekly study hours: 6.4=
+; outcome: 75.3</title></circle><circle cx=3D"456.0508474576271" cy=3D"164.=
+00593471810092" r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-bas=
+ed; Weekly study hours: 11.1; outcome: 73.6</title></circle><circle cx=3D"3=
+01.89830508474574" cy=3D"115.14836795252224" r=3D"4" fill=3D"#16a34a" opaci=
+ty=3D".72"><title>Blended; Weekly study hours: 7.7; outcome: 91.4</title></=
+circle><circle cx=3D"383.50847457627117" cy=3D"170.59347181008903" r=3D"4" =
+fill=3D"#2563eb" opacity=3D".72"><title>Traditional; Weekly study hours: 9.=
+5; outcome: 71.2</title></circle><circle cx=3D"424.3135593220339" cy=3D"162=
+.63353115727006" r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-ba=
+sed; Weekly study hours: 10.4; outcome: 74.1</title></circle><circle cx=3D"=
+583" cy=3D"128.87240356083083" r=3D"4" fill=3D"#16a34a" opacity=3D".72"><ti=
+tle>Blended; Weekly study hours: 13.9; outcome: 86.4</title></circle><circl=
+e cx=3D"456.0508474576271" cy=3D"182.39614243323442" r=3D"4" fill=3D"#2563e=
+b" opacity=3D".72"><title>Traditional; Weekly study hours: 11.1; outcome: 6=
+6.9</title></circle><circle cx=3D"233.88983050847455" cy=3D"156.59495548961=
+425" r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-based; Weekly =
+study hours: 6.2; outcome: 76.3</title></circle><circle cx=3D"546.728813559=
+322" cy=3D"126.12759643916912" r=3D"4" fill=3D"#16a34a" opacity=3D".72"><ti=
+tle>Blended; Weekly study hours: 13.1; outcome: 87.4</title></circle><circl=
+e cx=3D"138.6779661016949" cy=3D"187.6112759643917" r=3D"4" fill=3D"#2563eb=
+" opacity=3D".72"><title>Traditional; Weekly study hours: 4.1; outcome: 65<=
+/title></circle><circle cx=3D"188.5508474576271" cy=3D"163.45697329376856" =
+r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-based; Weekly study=
+ hours: 5.2; outcome: 73.8</title></circle><circle cx=3D"75.20338983050848"=
+ cy=3D"172.24035608308606" r=3D"4" fill=3D"#16a34a" opacity=3D".72"><title>=
+Blended; Weekly study hours: 2.7; outcome: 70.6</title></circle><circle cx=
+=3D"102.40677966101694" cy=3D"194.19881305637983" r=3D"4" fill=3D"#2563eb" =
+opacity=3D".72"><title>Traditional; Weekly study hours: 3.3; outcome: 62.6<=
+/title></circle><circle cx=3D"106.94067796610169" cy=3D"168.39762611275964"=
+ r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-based; Weekly stud=
+y hours: 3.4; outcome: 72</title></circle><circle cx=3D"514.9915254237288" =
+cy=3D"153.30118694362017" r=3D"4" fill=3D"#16a34a" opacity=3D".72"><title>B=
+lended; Weekly study hours: 12.4; outcome: 77.5</title></circle><circle cx=
+=3D"428.8474576271186" cy=3D"173.33827893175072" r=3D"4" fill=3D"#2563eb" o=
+pacity=3D".72"><title>Traditional; Weekly study hours: 10.5; outcome: 70.2<=
+/title></circle><circle cx=3D"152.27966101694915" cy=3D"156.0459940652819" =
+r=3D"4" fill=3D"#dc2626" opacity=3D".72"><title>Project-based; Weekly study=
+ hours: 4.4; outcome: 76.5</title></circle><circle cx=3D"310.96610169491527=
+" cy=3D"179.1023738872404" r=3D"4" fill=3D"#16a34a" opacity=3D".72"><title>=
+Blended; Weekly study hours: 7.9; outcome: 68.1</title></circle></svg></div=
+><div class=3D"legend"><span><i class=3D"dot" style=3D"background:#2563eb">=
+</i>Group 1</span><span><i class=3D"dot" style=3D"background:#dc2626"></i>G=
+roup 2</span><span><i class=3D"dot" style=3D"background:#16a34a"></i>Group =
+3</span><span><i class=3D"dot" style=3D"background:#7c3aed"></i>trend</span=
+></div><div class=3D"decision"><h3>Ask before interpreting</h3><p id=3D"sca=
+tterInsight">For Weekly study hours, the correlation is r =3D 0.18. Describ=
+e this as a weak association, then check group clusters and influential poi=
+nts before summarizing it.</p></div></section></div><section class=3D"card"=
+><div class=3D"panel-header"><h2>Cross-tab: group by outcome band</h2><span=
+ class=3D"badge">counts and row percentages</span></div><div class=3D"table=
+-wrap" style=3D"max-height:none"><table class=3D"cross-tab" id=3D"crossTab"=
+><thead><tr><th>Group</th><th>Low</th><th>Middle</th><th>High</th><th>Total=
+</th></tr></thead><tbody><tr><td>Traditional</td><td>13<br><small>68%</smal=
+l></td><td>5<br><small>26%</small></td><td>1<br><small>5%</small></td><td c=
+lass=3D"cross-total">19</td></tr><tr><td>Project-based</td><td>4<br><small>=
+21%</small></td><td>9<br><small>47%</small></td><td>6<br><small>32%</small>=
+</td><td class=3D"cross-total">19</td></tr><tr><td>Blended</td><td>2<br><sm=
+all>11%</small></td><td>5<br><small>26%</small></td><td>12<br><small>63%</s=
+mall></td><td class=3D"cross-total">19</td></tr></tbody></table></div><div =
+class=3D"decision"><h3>Why bin a numeric outcome?</h3><p id=3D"crossInsight=
+">Outcome bands use this dataset's 33rd and 67th percentiles (70.5 and 76.0=
+). Compare row percentages across groups; remember that binning simplifies =
+a numeric variable and should supplement=E2=80=94not replace=E2=80=94the or=
+iginal distribution.</p></div></section></section>
+
+<section class=3D"tab-content" id=3D"tab3"><div class=3D"two-panel"><div><s=
+ection class=3D"card"><div class=3D"panel-header"><h2>Choose the analytical=
+ path</h2><span class=3D"badge">question =E2=86=92 method</span></div><div =
+class=3D"control-box"><label class=3D"control-title" for=3D"methodSelect">A=
+nalysis question</label><select id=3D"methodSelect"><option value=3D"groups=
+">Do two groups differ in their typical outcome?</option><option value=3D"r=
+elationship">Are two numeric variables related?</option></select></div><div=
+ class=3D"equal-panel" id=3D"groupSelectors" style=3D"display: grid;"><div =
+class=3D"control-box"><label class=3D"control-title" for=3D"groupASelect">R=
+eference group</label><select id=3D"groupASelect"><option>Traditional</opti=
+on><option>Project-based</option><option>Blended</option></select></div><di=
+v class=3D"control-box"><label class=3D"control-title" for=3D"groupBSelect"=
+>Comparison group</label><select id=3D"groupBSelect"><option>Traditional</o=
+ption><option selected=3D"">Project-based</option><option>Blended</option><=
+/select></div></div><div class=3D"metric-grid" id=3D"analysisMetrics"><div =
+class=3D"metric"><div class=3D"metric-label">Traditional mean</div><div cla=
+ss=3D"metric-value">68.0</div><div class=3D"metric-note">n=3D19; median 67.=
+3</div></div><div class=3D"metric"><div class=3D"metric-label">Project-base=
+d mean</div><div class=3D"metric-value">72.7</div><div class=3D"metric-note=
+">n=3D19; median 73.6</div></div><div class=3D"metric"><div class=3D"metric=
+-label">Mean difference</div><div class=3D"metric-value">+4.8</div><div cla=
+ss=3D"metric-note">Project-based =E2=88=92 Traditional</div></div></div><di=
+v class=3D"chart" id=3D"analysisChart"><svg viewBox=3D"0 0 620 270" role=3D=
+"img"><rect width=3D"100%" height=3D"100%" fill=3D"white"></rect><text x=3D=
+"15" y=3D"85" font-size=3D"12" fill=3D"#374151">Traditional</text><line x1=
+=3D"153.39449541284404" y1=3D"80" x2=3D"412.4770642201837" y2=3D"80" stroke=
+=3D"#9ca3af"></line><rect x=3D"226.7889908256881" y=3D"60" width=3D"112.293=
+57798165157" height=3D"40" rx=3D"5" fill=3D"#dbeafe" stroke=3D"#2563eb"></r=
+ect><line x1=3D"280.3669724770642" y1=3D"60" x2=3D"280.3669724770642" y2=3D=
+"100" stroke=3D"#111827" stroke-width=3D"3"></line><text x=3D"15" y=3D"190"=
+ font-size=3D"12" fill=3D"#374151">Project-based</text><line x1=3D"267.1559=
+633027524" y1=3D"185" x2=3D"486.60550458715596" y2=3D"185" stroke=3D"#9ca3a=
+f"></line><rect x=3D"340.55045871559645" y=3D"165" width=3D"72.660550458715=
+42" height=3D"40" rx=3D"5" fill=3D"#fee2e2" stroke=3D"#dc2626"></rect><line=
+ x1=3D"372.84403669724765" y1=3D"165" x2=3D"372.84403669724765" y2=3D"205" =
+stroke=3D"#111827" stroke-width=3D"3"></line></svg></div><div class=3D"form=
+ula" id=3D"formulaBox">difference =3D mean(Project-based) =E2=88=92 mean(Tr=
+aditional) =3D 4.8</div><div class=3D"decision"><h3>Flagged-value sensitivi=
+ty check</h3><p id=3D"sensitivityText">With flagged values, the mean differ=
+ence is 4.8; without them, it is 4.8. The change is 0.0 units. This compari=
+son diagnoses influence=E2=80=94it does not decide whether exclusion is jus=
+tified.</p></div></section></div><aside><section class=3D"card"><div class=
+=3D"panel-header"><h2>Interpretation</h2><span class=3D"badge">plain langua=
+ge</span></div><div id=3D"analysisInterpretation"><div class=3D"question-bo=
+x"><strong>Result:</strong> Project-based is 4.8 units higher on average th=
+an Traditional in this sample.</div><div class=3D"watch-box"><strong>Do not=
+ stop at =E2=80=9Cdifferent.=E2=80=9D</strong> Judge whether 4.8 units is p=
+ractically meaningful, and remember that choosing a pair after seeing all t=
+hree groups is exploratory.</div></div></section><section class=3D"card"><h=
+2 style=3D"font-size:1rem;margin-bottom:8px">Method guardrails</h2><ul clas=
+s=3D"checklist" id=3D"guardrails"><li><div class=3D"check">=E2=9C=93</div><=
+div><strong>Show both group distributions</strong></div></li><li><div class=
+=3D"check">=E2=9C=93</div><div><strong>Report effect in original units</str=
+ong></div></li><li><div class=3D"check">=E2=9C=93</div><div><strong>Account=
+ for all three groups in confirmatory work</strong></div></li><li><div clas=
+s=3D"check">=E2=9C=93</div><div><strong>Check whether conclusions change wi=
+th flagged values</strong></div></li></ul></section></aside></div></section=
+>
+
+<section class=3D"tab-content" id=3D"tab4"><div class=3D"two-panel"><sectio=
+n class=3D"card"><div class=3D"panel-header"><h2>Build the final message</h=
+2><span class=3D"badge">claim + evidence + limits</span></div><div id=3D"st=
+oryBlocks"><div class=3D"success-box"><strong>Claim:</strong> In this sampl=
+e, Project-based had a 4.8-unit higher average end-of-term math score than =
+Traditional.</div><div class=3D"question-box"><strong>Evidence:</strong> Gr=
+oup means were 68.0 and 72.7. The cross-tab provides a three-group view, wh=
+ile the plots show the full spread behind these summaries.</div><div class=
+=3D"watch-box"><strong>Limits:</strong> 3 outcomes were missing and 1 value=
+s were flagged for review. This exploratory sample supports an association,=
+ not necessarily a causal effect or a population-wide conclusion.</div><div=
+ class=3D"decision"><h3>Recommended next step</h3><p>Confirm how observatio=
+ns were selected, learn why values are missing, define a practically meanin=
+gful effect, and use a design-aware uncertainty method before making a cons=
+equential decision.</p></div></div><div class=3D"control-box" style=3D"marg=
+in-top:12px"><label class=3D"control-title" for=3D"conclusionText">Editable=
+, copy-ready conclusion</label><textarea id=3D"conclusionText" aria-label=
+=3D"Editable conclusion"></textarea><div class=3D"action-row" style=3D"marg=
+in-top:8px"><button class=3D"btn-primary" id=3D"copyConclusion">Copy conclu=
+sion</button><span class=3D"copy-status" id=3D"copyStatus"></span></div></d=
+iv></section><aside><section class=3D"card"><div class=3D"panel-header"><h2=
+>Reusable workflow</h2><span class=3D"badge">for any dataset</span></div><o=
+l class=3D"checklist"><li><div class=3D"check">1</div><div><strong>Frame</s=
+trong><span>What decision, population, unit, and outcome?</span></div></li>=
+<li><div class=3D"check">2</div><div><strong>Audit</strong><span>Types, ran=
+ges, duplicates, missingness, provenance.</span></div></li><li><div class=
+=3D"check">3</div><div><strong>Explore</strong><span>Distributions, groups,=
+ relationships, anomalies.</span></div></li><li><div class=3D"check">4</div=
+><div><strong>Analyze</strong><span>Match the method; quantify effect and u=
+ncertainty.</span></div></li><li><div class=3D"check">5</div><div><strong>C=
+ommunicate</strong><span>Answer the question and state important limitation=
+s.</span></div></li></ol></section></aside></div><section class=3D"card"><d=
+iv class=3D"panel-header"><h2>Technique quick reference</h2><span class=3D"=
+badge">starting points, not rigid rules</span></div><div class=3D"reference=
+-grid"><div class=3D"ref-card"><h3>One numeric variable</h3><p>Histogram + =
+median/IQR for skewed data; mean/SD when the distribution is reasonably sym=
+metric and the mean answers the question.</p></div><div class=3D"ref-card">=
+<h3>Numeric outcome by group</h3><p>Side-by-side distributions + group summ=
+aries. Report the difference in practical units, not only a threshold or p-=
+value.</p></div><div class=3D"ref-card"><h3>Two numeric variables</h3><p>Sc=
+atterplot + correlation or a simple fitted line. Check curvature, clusters,=
+ influential points, and shared causes.</p></div></div></section></section>
+</main></div>
+
+</body></html>
+------MultipartBoundary--mF8VPKNBwGozEWWrm8VlHoDwqmIIn0J7NcXOCLbcyn----
+Content-Type: text/css
+Content-Transfer-Encoding: quoted-printable
+Content-Location: cid:css-a30556eb-23bf-4987-9c01-18e404182766@mhtml.blink
+
+@charset "utf-8";
+
+:root { --bg: #f6f7f9; --card: #fff; --border: #d9dde3; --text: #1f2937; --=
+muted: #6b7280; --soft: #f3f4f6; --blue: #2563eb; --blue2: #dbeafe; --red: =
+#dc2626; --red2: #fee2e2; --green: #16a34a; --green2: #dcfce7; --amber: #d9=
+7706; --amber2: #fff7ed; --purple: #7c3aed; }
+
+* { box-sizing: border-box; margin: 0px; padding: 0px; }
+
+body { font-family: Arial, sans-serif; background: var(--bg); color: var(--=
+text); padding: 20px; font-size: 14px; line-height: 1.5; }
+
+.container { max-width: 1380px; margin: auto; }
+
+.card { background: var(--card); border: 1px solid var(--border); border-ra=
+dius: 12px; padding: 16px; margin-bottom: 16px; }
+
+.intro-header { display: flex; justify-content: space-between; align-items:=
+ flex-start; gap: 16px; flex-wrap: wrap; }
+
+.intro-title { flex: 1 1 520px; }
+
+.intro-title h1 { font-size: 1.25rem; margin-bottom: 5px; }
+
+.intro-subtitle { font-size: 0.9rem; color: var(--muted); max-width: 850px;=
+ }
+
+.header-btns, .action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+button, select, textarea { padding: 8px 13px; border: 1px solid rgb(191, 19=
+8, 209); border-radius: 9px; background: rgb(255, 255, 255); font: inherit;=
+ color: var(--text); }
+
+button { cursor: pointer; font-weight: 600; }
+
+button:hover { background: rgb(248, 250, 252); }
+
+.btn-primary { background: var(--blue); border-color: var(--blue); color: r=
+gb(255, 255, 255); }
+
+.btn-primary:hover { background: rgb(29, 78, 216); }
+
+.btn-small { padding: 5px 9px; font-size: 0.78rem; }
+
+.guide { display: none; margin-top: 14px; border-top: 1px solid var(--borde=
+r); padding-top: 14px; }
+
+.guide.open { display: block; }
+
+.guide-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16=
+px; }
+
+.guide h3 { font-size: 0.9rem; margin-bottom: 5px; }
+
+.guide p, .guide li { font-size: 0.82rem; color: var(--muted); }
+
+.guide ol { padding-left: 18px; }
+
+.check-row { display: flex; align-items: center; gap: 8px; font-size: 0.8re=
+m; color: var(--muted); }
+
+.check-row input { accent-color: var(--blue); }
+
+textarea { width: 100%; min-height: 150px; resize: vertical; line-height: 1=
+.5; }
+
+.copy-status { font-size: 0.76rem; color: var(--green); align-self: center;=
+ }
+
+.tab-bar { display: flex; align-items: center; border-bottom: 2px solid var=
+(--border); margin-bottom: 16px; overflow-x: auto; }
+
+.tab-btn { padding: 10px 18px; border-width: 0px 0px 2px; border-style: non=
+e none solid; border-color: currentcolor currentcolor transparent; border-i=
+mage: initial; border-radius: 0px; background: none; color: var(--muted); m=
+argin-bottom: -2px; white-space: nowrap; }
+
+.tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+.tab-hint { font-size: 0.76rem; color: rgb(156, 163, 175); font-style: ital=
+ic; margin-left: auto; white-space: nowrap; padding: 0px 6px; }
+
+.tab-content { display: none; }
+
+.tab-content.active { display: block; }
+
+.two-panel { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+
+.equal-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; =
+margin-top: 12px; }
+
+.sc-card { border: 1px solid var(--border); border-radius: 10px; padding: 1=
+2px; background: var(--soft); cursor: pointer; }
+
+.sc-card:hover, .sc-card.active { border-color: var(--blue); background: rg=
+b(239, 246, 255); }
+
+.sc-name { font-weight: 700; margin-bottom: 3px; }
+
+.sc-desc { font-size: 0.78rem; color: var(--muted); }
+
+.sc-tag { display: inline-block; margin-top: 7px; padding: 2px 7px; border-=
+radius: 99px; background: rgb(255, 255, 255); border: 1px solid var(--borde=
+r); font-size: 0.7rem; color: var(--muted); }
+
+#tab0 aside .action-row { margin-top: 14px; }
+
+.cross-tab td, .cross-tab th { text-align: center; }
+
+.cross-tab th:first-child, .cross-tab td:first-child { text-align: left; fo=
+nt-family: Arial, sans-serif; font-weight: 700; }
+
+.cross-total { background: var(--soft); font-weight: 700; }
+
+.panel-header { display: flex; justify-content: space-between; align-items:=
+ baseline; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+
+.panel-header h2 { font-size: 1rem; }
+
+.badge { font-size: 0.73rem; padding: 3px 9px; border-radius: 99px; backgro=
+und: var(--soft); border: 1px solid var(--border); color: var(--muted); }
+
+.question-box, .watch-box, .success-box { border: 1px solid rgb(186, 230, 2=
+53); background: rgb(240, 249, 255); color: rgb(7, 89, 133); border-radius:=
+ 8px; padding: 10px 12px; font-size: 0.83rem; margin-bottom: 12px; }
+
+.watch-box { border-color: rgb(253, 186, 116); background: var(--amber2); c=
+olor: rgb(154, 52, 18); }
+
+.success-box { border-color: rgb(134, 239, 172); background: rgb(240, 253, =
+244); color: rgb(22, 101, 52); }
+
+.question-box strong { color: rgb(12, 74, 110); }
+
+.control-box { background: var(--soft); padding: 10px; border: 1px solid va=
+r(--border); border-radius: 10px; margin-bottom: 10px; }
+
+.control-title { display: block; font-size: 0.8rem; font-weight: 700; margi=
+n-bottom: 6px; }
+
+.control-box select { width: 100%; }
+
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8=
+px; margin-bottom: 12px; }
+
+.metric { background: var(--soft); border: 1px solid var(--border); border-=
+radius: 8px; padding: 8px 10px; }
+
+.metric-label { font-size: 0.7rem; color: var(--muted); }
+
+.metric-value { font-family: ui-monospace, monospace; font-weight: 700; fon=
+t-size: 0.94rem; }
+
+.metric-note { font-size: 0.67rem; color: var(--muted); }
+
+.chart { width: 100%; min-height: 270px; border: 1px solid var(--border); b=
+order-radius: 10px; background: rgb(255, 255, 255); }
+
+.chart svg { width: 100%; display: block; }
+
+.chart-title { font-size: 0.8rem; font-weight: 700; margin-bottom: 7px; }
+
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.72rem; co=
+lor: var(--muted); margin-top: 6px; }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; =
+margin-right: 4px; }
+
+.table-wrap { overflow: auto; max-height: 360px; border: 1px solid var(--bo=
+rder); border-radius: 9px; }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.78rem; }
+
+th { position: sticky; top: 0px; background: var(--soft); text-align: left;=
+ padding: 7px; border-bottom: 1px solid var(--border); }
+
+td { padding: 6px 7px; border-bottom: 1px solid rgb(237, 240, 243); font-fa=
+mily: ui-monospace, monospace; }
+
+.missing { background: var(--amber2); color: var(--amber); }
+
+.outlier { background: var(--red2); color: var(--red); font-weight: 700; }
+
+.checklist { list-style: none; }
+
+.checklist li { padding: 9px 0px; border-bottom: 1px solid var(--border); d=
+isplay: flex; gap: 9px; }
+
+.check { width: 19px; height: 19px; flex: 0 0 19px; border-radius: 50%; bac=
+kground: var(--green2); color: var(--green); font-weight: 700; text-align: =
+center; line-height: 19px; }
+
+.checklist strong { display: block; font-size: 0.83rem; }
+
+.checklist span { font-size: 0.76rem; color: var(--muted); }
+
+.decision { border-left: 5px solid var(--blue); background: rgb(239, 246, 2=
+55); border-radius: 9px; padding: 12px; margin-top: 12px; }
+
+.decision h3 { font-size: 0.9rem; margin-bottom: 4px; }
+
+.decision p { font-size: 0.81rem; color: var(--muted); }
+
+.formula { font-family: ui-monospace, monospace; background: rgb(17, 24, 39=
+); color: rgb(229, 231, 235); border-radius: 8px; padding: 11px; font-size:=
+ 0.78rem; overflow: auto; margin-top: 8px; }
+
+.reference-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap=
+: 10px; }
+
+.ref-card { border: 1px solid var(--border); background: var(--soft); borde=
+r-radius: 10px; padding: 12px; }
+
+.ref-card h3 { font-size: 0.86rem; margin-bottom: 5px; }
+
+.ref-card p { font-size: 0.76rem; color: var(--muted); }
+
+@media (max-width: 900px) {
+  .two-panel, .equal-panel, .guide-cols, .reference-grid { grid-template-co=
+lumns: 1fr; }
+  .metric-grid { grid-template-columns: 1fr 1fr; }
+  .scenario-grid { grid-template-columns: 1fr; }
+  .tab-hint { display: none; }
+}
+
+@media (max-width: 520px) {
+  body { padding: 10px; }
+  .metric-grid { grid-template-columns: 1fr; }
+  .step { font-size: 0.66rem; }
+  .step span { display: none; }
+}
+------MultipartBoundary--mF8VPKNBwGozEWWrm8VlHoDwqmIIn0J7NcXOCLbcyn------

@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Random Numbers and Distribution Explorer</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root {
+  --bg:#f6f7f9; --card:#ffffff; --border:#d9dde3;
+  --text:#1f2937; --muted:#6b7280; --soft:#f3f4f6;
+  --blue:#2563eb; --red:#dc2626; --green:#16a34a;
+  --amber:#d97706; --gray:#9ca3af; --purple:#7c3aed;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px;font-size:14px;line-height:1.5}
+.container{max-width:1380px;margin:auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+.small{font-size:.87rem;color:var(--muted);line-height:1.6}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+/* Tab bar */
+.tab-bar{display:flex;align-items:center;border-bottom:2px solid var(--border);margin-bottom:16px}
+.tab-btn{padding:10px 18px;border:none;border-bottom:2px solid transparent;background:none;font-family:Arial,sans-serif;font-size:.85rem;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:-2px;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-hint{font-size:.76rem;color:var(--gray);font-style:italic;margin-left:auto;padding-right:6px}
+
+/* Header */
+.intro-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.intro-title{flex:1 1 400px}
+.intro-title h2{margin:0 0 5px;font-size:1.2rem}
+.intro-subtitle{font-size:.9rem;color:var(--muted);margin:0;line-height:1.5}
+.header-btns{display:flex;flex-direction:column;gap:8px;flex-shrink:0;margin-top:2px}
+
+/* Concept strip */
+.concept-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.concept-card{border:1px solid var(--border);border-radius:10px;padding:11px 13px;background:var(--soft)}
+.concept-label{font-weight:700;font-size:.84rem;color:var(--text)}
+.concept-desc{font-size:.76rem;color:var(--muted);margin-top:4px;line-height:1.4}
+
+/* Guide */
+.guide-section{display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.guide-section.open{display:block}
+.guide-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.guide-col h4{margin:0 0 7px;font-size:.9rem;color:var(--text)}
+.guide-col ol,.guide-col ul{padding-left:18px;margin:0}
+.guide-col li{font-size:.83rem;color:var(--muted);line-height:1.5;margin-bottom:4px}
+.guide-col li strong{color:var(--text)}
+
+/* Reference card */
+.ref-card{display:none;margin-bottom:16px}
+.ref-card.open{display:block}
+.ref-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.ref-sec{margin-bottom:16px}
+.ref-sec h4{margin:0 0 6px;font-size:.9rem;font-weight:700;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px}
+.ref-sec p{font-size:.83rem;color:var(--muted);line-height:1.6;margin-bottom:5px}
+.ref-sec p strong{color:var(--text)}
+.ref-sec ul{padding-left:18px;margin:4px 0}
+.ref-sec li{font-size:.83rem;color:var(--muted);line-height:1.55;margin-bottom:4px}
+.ref-sec li strong{color:var(--text)}
+.formula-box{background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:ui-monospace,monospace;font-size:.83rem;color:var(--text);margin:8px 0;line-height:1.7}
+
+/* Buttons */
+button{padding:8px 13px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;font-family:Arial,sans-serif;font-size:.84rem;color:var(--text);transition:background .15s}
+button:hover{background:#f8fafc}
+button:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--blue);border-color:var(--blue);color:white}
+.btn-primary:hover{background:#1d4ed8}
+.btn-sm{padding:5px 10px;font-size:.79rem}
+
+/* Layouts */
+.two-panel{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start}
+.two-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* Scenario cards */
+.sc-card{border:1px solid var(--border);border-radius:10px;padding:11px 13px;background:var(--soft);cursor:pointer;transition:all .15s}
+.sc-card:hover{border-color:var(--blue);background:#eff6ff}
+.sc-card.active{border-color:var(--blue);background:#eff6ff}
+.sc-name{font-weight:700;font-size:.88rem;margin-bottom:4px}
+.sc-desc{font-size:.78rem;color:var(--muted);line-height:1.4}
+
+/* Controls */
+.control-box{background:var(--soft);padding:10px;border-radius:10px;border:1px solid var(--border);margin-bottom:10px}
+.control-title{font-size:.82rem;font-weight:700;display:block;margin-bottom:6px}
+input[type=range]{width:100%;accent-color:var(--blue)}
+input[type=range]:disabled{opacity:.4;cursor:not-allowed}
+select{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:Arial,sans-serif;font-size:.84rem;background:white}
+.val-display{font-size:.8rem;color:var(--muted);margin-top:3px}
+.param-note{font-size:.76rem;color:var(--amber);margin-top:5px;line-height:1.4;display:none}
+.param-note.show{display:block}
+
+/* Panel header */
+.panel-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.panel-header h3{margin:0;font-size:1rem}
+.panel-badge{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:var(--soft);color:var(--muted)}
+
+/* What-to-watch */
+.wtw{margin:0 0 8px;padding:8px 11px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:.82rem;color:#075985;line-height:1.4}
+.wtw strong{color:#0c4a6e}
+
+/* Metrics */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{border:1px solid var(--border);background:var(--soft);border-radius:8px;padding:8px 10px;min-width:0}
+.metric-label{font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric-value{font-weight:700;font-size:.95rem;font-family:ui-monospace,monospace;margin-top:1px}
+
+/* Interpretation */
+.interp-box{padding:12px 14px;border:1px solid;border-left:5px solid;border-radius:10px;transition:all .35s;margin-bottom:10px}
+.interp-box.pending{background:#eff6ff;border-color:#c7d2fe;border-left-color:var(--blue)}
+.interp-box.converging{background:#fff7ed;border-color:#fdba74;border-left-color:var(--amber)}
+.interp-box.converged{background:#ecfdf5;border-color:#86efac;border-left-color:var(--green)}
+.interp-verdict{font-weight:700;margin-bottom:4px}
+.interp-ctx{font-size:.84rem;color:var(--muted)}
+
+/* Display toggles */
+.display-list{display:grid;gap:6px}
+.display-row{display:flex;align-items:center;gap:8px;font-size:.84rem}
+.display-row input[type=checkbox]{accent-color:var(--blue);margin:0}
+
+/* Action row */
+.action-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;align-items:center}
+
+/* Scenario detail */
+.sc-detail{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--soft);margin-top:12px}
+.sc-detail-label{font-size:.78rem;font-weight:700;color:var(--muted);margin-bottom:4px}
+.sc-detail-text{font-size:.83rem;color:var(--text);line-height:1.55}
+
+/* Plot containers — fixed height so Plotly always has a known size */
+.plot-wrap{width:100%;overflow:hidden}
+#plotHistogram,#plotECDF,#plotQQ,#plotSequence,#plotLLN{height:295px;width:100%}
+
+@media(max-width:900px){
+  .two-panel,.two-grid,.concept-row,.ref-2col,.metric-grid,.scenario-grid{grid-template-columns:1fr}
+  .guide-cols{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){.guide-cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER CARD -->
+<div class="card">
+  <div class="intro-header">
+    <div class="intro-title">
+      <h2>Random Numbers and Distribution Explorer</h2>
+      <p class="intro-subtitle">Generate random draws and watch a sample build toward its theoretical distribution. The same numbers appear four ways simultaneously so you can connect random draws to histograms, cumulative curves, Q-Q plots, and mean convergence.</p>
+    </div>
+    <div class="header-btns">
+      <button id="btnGuide">&#9660; Quick-Start Guide</button>
+      <button id="btnRef">&#128218; Full Reference</button>
+    </div>
+  </div>
+
+  <div class="concept-row">
+    <div class="concept-card">
+      <div class="concept-label">Sample vs. Population</div>
+      <div class="concept-desc">Random draws are observations from a generating rule. The sample histogram converges toward the theoretical shape as n grows but never matches it exactly.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-label">Four Representations</div>
+      <div class="concept-desc">Histogram, ECDF, Q-Q plot, and running-mean chart display the same data. Connecting these views is the core skill this tool is designed to build.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-label">Law of Large Numbers</div>
+      <div class="concept-desc">The sample mean is noisy at small n but converges toward the theoretical expected value as draws accumulate. Convergence is gradual, not instant.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-label">Shape Determines Story</div>
+      <div class="concept-desc">Skew, modality, and discreteness change what the mean and median communicate. A single number can describe a distribution poorly or miss its structure entirely.</div>
+    </div>
+  </div>
+
+  <div class="guide-section" id="guideSection">
+    <div class="guide-cols">
+      <div class="guide-col">
+        <h4>Start Here</h4>
+        <ol>
+          <li>On <strong>Scenarios</strong>, click a preset card to load a distribution and see its teaching purpose.</li>
+          <li>Click <strong>Generate</strong> to draw the initial sample.</li>
+          <li>Switch to <strong>Explore</strong> to see all four chart representations at once.</li>
+        </ol>
+      </div>
+      <div class="guide-col">
+        <h4>Key Interactions</h4>
+        <ul>
+          <li>Use <strong>+1 / +10 / +100</strong> to add draws one at a time and watch the sample build.</li>
+          <li>Move the <strong>Probe</strong> slider in Explore to read cumulative proportions from the ECDF.</li>
+          <li>Toggle <strong>Show theoretical</strong> to compare your sample to the population rule.</li>
+        </ul>
+      </div>
+      <div class="guide-col">
+        <h4>What to Look For</h4>
+        <ul>
+          <li>At small n, all charts are noisy and irregular. That is expected, not an error.</li>
+          <li>On <strong>Convergence</strong>, watch the running mean narrow and settle toward the theoretical value.</li>
+          <li>For bimodal data, notice where the single mean lands relative to the two peaks.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REFERENCE CARD -->
+<div class="card ref-card" id="refCard">
+  <h3 style="margin-bottom:14px;font-size:1rem;font-weight:700">Full Reference</h3>
+  <div class="ref-2col">
+    <div>
+      <div class="ref-sec">
+        <h4>Histogram</h4>
+        <p><strong>Frequency</strong> is the raw count of draws in each bin. <strong>Relative frequency</strong> is count divided by n, and converges to the theoretical density as n grows. For discrete distributions each bar represents one exact outcome; bin count does not apply.</p>
+      </div>
+      <div class="ref-sec">
+        <h4>ECDF (Empirical Cumulative Distribution Function)</h4>
+        <p>The ECDF answers: what fraction of draws are at or below x? It rises in steps of 1/n, one step per observation. The probe drops a marker at a chosen x and reads the cumulative proportion from the y-axis.</p>
+        <div class="formula-box">ECDF(x) = (number of values &le; x) / n</div>
+        <p>The upper-tail proportion is 1 minus the cumulative proportion at the same value.</p>
+      </div>
+      <div class="ref-sec">
+        <h4>Spread Parameter by Distribution</h4>
+        <ul>
+          <li><strong>Normal:</strong> spread = standard deviation σ.</li>
+          <li><strong>Uniform:</strong> spread = half-range; values span 50 ± 2·spread.</li>
+          <li><strong>Right-skewed:</strong> spread = scale; larger values lengthen the right tail.</li>
+          <li><strong>Binomial:</strong> slider sets success probability p, not variability directly.</li>
+          <li><strong>Fair six-sided die:</strong> always fixed on {1,2,3,4,5,6}; no spread parameter.</li>
+          <li><strong>Bimodal:</strong> spread = within-group SD; mode separation is a separate slider.</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="ref-sec">
+        <h4>Q-Q Plot</h4>
+        <p>A <strong>quantile-quantile plot</strong> places observed quantiles on the y-axis and theoretical quantiles on the x-axis. Points on the 45-degree reference line indicate the sample matches the theoretical distribution.</p>
+        <p><strong>Common departures:</strong> an upward bow at the right end signals a longer right tail than theory predicts (right skew). An S-shape indicates heavier or lighter tails. Stepped patterns are normal for discrete distributions.</p>
+        <p>Plotting positions use the Hazen formula (i &minus; 0.5)/n for order statistic i.</p>
+      </div>
+      <div class="ref-sec">
+        <h4>Draws and Running Mean</h4>
+        <p>Each individual draw is plotted as a dot against its draw number. The <strong>running mean</strong> (red line) is the sample mean of all draws up to that point. The dashed blue line is the theoretical expected value.</p>
+        <p>By the <strong>Law of Large Numbers</strong>, the running mean converges to the theoretical mean as n increases. The convergence is not monotone; it oscillates and narrows.</p>
+        <div class="formula-box">Running mean(k) = (x&#8321; + ... + x&#8342;) / k &rarr; &mu;</div>
+      </div>
+      <div class="ref-sec">
+        <h4>Skewness</h4>
+        <p>The bias-corrected third standardized moment. Positive = right tail; negative = left tail; near zero = approximate symmetry.</p>
+        <div class="formula-box">g&#8321; = [n/((n&minus;1)(n&minus;2))] &sdot; &sum;((x&minus;&#x0305;x)/s)&#179;</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="0">Scenarios &amp; Setup</button>
+  <button class="tab-btn" data-tab="1">Explore</button>
+  <button class="tab-btn" data-tab="2">Convergence</button>
+  <span class="tab-hint">Start on Scenarios, then Explore</span>
+</div>
+
+<!-- ======================================================== -->
+<!-- TAB 0: SCENARIOS & SETUP                                  -->
+<!-- ======================================================== -->
+<div class="tab-content" data-tab="0">
+  <div class="two-panel">
+    <div>
+      <div class="card">
+        <div class="panel-header">
+          <h3>Teaching Scenarios</h3>
+          <span class="panel-badge" id="activeScenarioBadge">None selected</span>
+        </div>
+        <p class="wtw" style="margin-bottom:12px"><strong>Each preset</strong> targets a specific statistical idea. Read the description before generating so you know what to look for.</p>
+        <div class="scenario-grid" id="scenarioGrid"></div>
+        <div class="sc-detail" id="scDetail" style="display:none">
+          <div class="sc-detail-label" id="scDetailName"></div>
+          <div class="sc-detail-text" id="scDetailText"></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3 style="margin-bottom:12px;font-size:.95rem;font-weight:700">Parameters</h3>
+        <div class="control-box">
+          <span class="control-title">Number of draws</span>
+          <input type="range" id="nDraws" min="5" max="5000" step="5" value="200">
+          <div class="val-display" id="nDrawsVal">200</div>
+        </div>
+        <div class="control-box" id="spreadBox">
+          <span class="control-title" id="spreadLabel">Standard deviation (σ)</span>
+          <input type="range" id="spread" min="1" max="20" step="1" value="8">
+          <div class="val-display" id="spreadVal">8</div>
+          <div class="param-note" id="paramNote"></div>
+        </div>
+        <div class="control-box" id="modeGapBox" style="display:none">
+          <span class="control-title">Mode separation</span>
+          <input type="range" id="modeGap" min="5" max="60" step="1" value="24">
+          <div class="val-display" id="modeGapVal">24</div>
+        </div>
+        <div class="control-box" id="binCountBox">
+          <span class="control-title">Histogram bins</span>
+          <input type="range" id="binCount" min="5" max="60" step="1" value="25">
+          <div class="val-display" id="binCountVal">25</div>
+        </div>
+        <div class="control-box">
+          <span class="control-title">Display options</span>
+          <div class="display-list">
+            <div class="display-row"><input type="checkbox" id="showTheoretical" checked><span>Show theoretical curve</span></div>
+            <div class="display-row"><input type="checkbox" id="showMeanMedian" checked><span>Show mean and median markers</span></div>
+            <div class="display-row"><input type="checkbox" id="relativeScale"><span>Relative frequency scale</span></div>
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn-primary" id="btnGenerate">Generate</button>
+          <button class="btn-sm" id="btnAdd1">+1</button>
+          <button class="btn-sm" id="btnAdd10">+10</button>
+          <button class="btn-sm" id="btnAdd100">+100</button>
+          <button class="btn-sm" id="btnReset" style="margin-left:auto">Reset</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="panel-header">
+          <h3>Current Sample</h3>
+          <span class="panel-badge" id="setupNBadge">No data</span>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Draws (n)</div><div class="metric-value mono" id="setupN">--</div></div>
+          <div class="metric"><div class="metric-label">Observed mean</div><div class="metric-value mono" id="setupMean">--</div></div>
+          <div class="metric"><div class="metric-label">Theoretical mean</div><div class="metric-value mono" id="setupTheorMean">--</div></div>
+          <div class="metric"><div class="metric-label">Observed SD</div><div class="metric-value mono" id="setupSd">--</div></div>
+          <div class="metric"><div class="metric-label">Theoretical SD</div><div class="metric-value mono" id="setupTheorSd">--</div></div>
+          <div class="metric"><div class="metric-label">Skewness</div><div class="metric-value mono" id="setupSkew">--</div></div>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn-primary" onclick="switchTab(1)" style="width:100%">Go to Explore &#8594;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- TAB 1: EXPLORE                                            -->
+<!-- ======================================================== -->
+<div class="tab-content" data-tab="1" style="display:none">
+  <div class="two-panel">
+    <div>
+      <div class="two-grid">
+        <div class="card">
+          <div class="panel-header">
+            <h3>Frequency Distribution</h3>
+            <span class="panel-badge" id="histBadge">n = --</span>
+          </div>
+          <div class="wtw" id="wtwHist">Loading...</div>
+          <div class="plot-wrap"><div id="plotHistogram"></div></div>
+        </div>
+        <div class="card">
+          <div class="panel-header">
+            <h3>Cumulative Frequency (ECDF)</h3>
+            <span class="panel-badge" id="ecdfBadge">probe: --</span>
+          </div>
+          <div class="wtw" id="wtwECDF">Loading...</div>
+          <div class="plot-wrap"><div id="plotECDF"></div></div>
+        </div>
+        <div class="card">
+          <div class="panel-header">
+            <h3>Q-Q Plot</h3>
+            <span class="panel-badge" id="qqBadge">vs. theoretical</span>
+          </div>
+          <div class="wtw" id="wtwQQ">Loading...</div>
+          <div class="plot-wrap"><div id="plotQQ"></div></div>
+        </div>
+        <div class="card">
+          <div class="panel-header">
+            <h3 id="seqTitle">Draws and Running Mean</h3>
+            <span class="panel-badge" id="seqBadge">draw order</span>
+          </div>
+          <div class="wtw" id="wtwSeq">Loading...</div>
+          <div class="plot-wrap"><div id="plotSequence"></div></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="panel-header"><h3>Probe</h3><span class="panel-badge">ECDF reader</span></div>
+        <div class="wtw">Move the probe to read cumulative and upper-tail proportions at any value from the ECDF.</div>
+        <div class="control-box">
+          <span class="control-title">Probe value</span>
+          <input type="range" id="probe" min="0" max="100" step="0.1" value="50">
+          <div class="val-display" id="probeValDisplay">50.0</div>
+        </div>
+        <div class="metric-grid" style="margin-bottom:10px">
+          <div class="metric"><div class="metric-label">Probe value</div><div class="metric-value mono" id="probeMetricVal">--</div></div>
+          <div class="metric"><div class="metric-label">P(X &le; probe) obs.</div><div class="metric-value mono" id="probeCumObs">--</div></div>
+          <div class="metric"><div class="metric-label">P(X &gt; probe) obs.</div><div class="metric-value mono" id="probeTailObs">--</div></div>
+          <div class="metric"><div class="metric-label">P(X &le; probe) theor.</div><div class="metric-value mono" id="probeCumTheor">--</div></div>
+        </div>
+        <div class="action-row" style="margin-top:0">
+          <button class="btn-sm" id="btnAdd1E">+1</button>
+          <button class="btn-sm" id="btnAdd10E">+10</button>
+          <button class="btn-sm" id="btnAdd100E">+100</button>
+          <button class="btn-sm btn-primary" id="btnRegenE">Regenerate</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="panel-header">
+          <h3>Summary Statistics</h3>
+          <span class="panel-badge" id="summaryBadge">n = --</span>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Observed mean</div><div class="metric-value mono" id="sumMean">--</div></div>
+          <div class="metric"><div class="metric-label">Theoretical mean</div><div class="metric-value mono" id="sumTheorMean">--</div></div>
+          <div class="metric"><div class="metric-label">Observed median</div><div class="metric-value mono" id="sumMedian">--</div></div>
+          <div class="metric"><div class="metric-label">Observed SD</div><div class="metric-value mono" id="sumSd">--</div></div>
+          <div class="metric"><div class="metric-label">Theoretical SD</div><div class="metric-value mono" id="sumTheorSd">--</div></div>
+          <div class="metric"><div class="metric-label">IQR (Q3 &minus; Q1)</div><div class="metric-value mono" id="sumIqr">--</div></div>
+          <div class="metric"><div class="metric-label">Skewness</div><div class="metric-value mono" id="sumSkew">--</div></div>
+          <div class="metric"><div class="metric-label">Min / Max</div><div class="metric-value mono" id="sumRange">--</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- TAB 2: CONVERGENCE                                        -->
+<!-- ======================================================== -->
+<div class="tab-content" data-tab="2" style="display:none">
+  <div class="two-panel">
+    <div>
+      <div class="card">
+        <div class="panel-header">
+          <h3>Running Mean — Law of Large Numbers</h3>
+          <span class="panel-badge" id="llnBadge">theoretical mean: --</span>
+        </div>
+        <div class="wtw">The running mean after k draws converges to the theoretical expected value as k increases. The shaded band shows &plusmn;1 standard error (&sigma; / &radic;k); the mean should stay inside it with increasing frequency as n grows.</div>
+        <div class="plot-wrap"><div id="plotLLN"></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="panel-header"><h3>Convergence Status</h3></div>
+        <div class="interp-box pending" id="interpBox">
+          <div class="interp-verdict" id="interpVerdict">Waiting for data</div>
+          <div class="interp-ctx" id="interpCtx">Generate a sample to see convergence status.</div>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-label">Draws (n)</div><div class="metric-value mono" id="llnN">--</div></div>
+          <div class="metric"><div class="metric-label">Current mean</div><div class="metric-value mono" id="llnMean">--</div></div>
+          <div class="metric"><div class="metric-label">Theoretical mean (&mu;)</div><div class="metric-value mono" id="llnTheorMean">--</div></div>
+          <div class="metric"><div class="metric-label">|mean &minus; &mu;|</div><div class="metric-value mono" id="llnError">--</div></div>
+          <div class="metric"><div class="metric-label">Std. error (&sigma;/&radic;n)</div><div class="metric-value mono" id="llnSem">--</div></div>
+          <div class="metric"><div class="metric-label">Error / SE</div><div class="metric-value mono" id="llnRatio">--</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="panel-header"><h3 id="distNoteTitle">Distribution Notes</h3></div>
+        <p class="small" id="distNoteText"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ==========================================================
+// UTILITIES
+// ==========================================================
+const el = id => document.getElementById(id);
+const COLORS = {
+  data:'#111827', theory:'#2563eb', mean:'#dc2626', median:'#16a34a',
+  probe:'#d97706', gray:'#6b7280', purple:'#7c3aed'
+};
+
+// ==========================================================
+// MATH
+// ==========================================================
+function randn(){
+  let u=0,v=0;
+  while(!u)u=Math.random();while(!v)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function mean(a){return a.length?a.reduce((s,x)=>s+x,0)/a.length:NaN}
+function sd(a){
+  if(a.length<2)return NaN;
+  const m=mean(a);
+  return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1));
+}
+function quantile(arr,q){
+  if(!arr.length)return NaN;
+  const s=[...arr].sort((a,b)=>a-b);
+  const p=(s.length-1)*q,b=Math.floor(p),r=p-b;
+  return s[b+1]!==undefined?s[b]+r*(s[b+1]-s[b]):s[b];
+}
+function skewness(a){
+  const n=a.length;if(n<3)return NaN;
+  const m=mean(a),s=sd(a);if(!s)return 0;
+  return n/((n-1)*(n-2))*a.reduce((acc,x)=>acc+((x-m)/s)**3,0);
+}
+function erf(x){
+  const sign=x>=0?1:-1;x=Math.abs(x);
+  const a1=.254829592,a2=-.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=.3275911;
+  const t=1/(1+p*x);
+  return sign*(1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x));
+}
+function normalPdf(x,mu,s){return Math.exp(-.5*((x-mu)/s)**2)/(s*Math.sqrt(2*Math.PI))}
+function normalCdf(x,mu,s){return .5*(1+erf((x-mu)/(s*Math.sqrt(2))))}
+function lognormalPdf(x,mu,s){if(x<=0)return 0;return Math.exp(-((Math.log(x)-mu)**2)/(2*s*s))/(x*s*Math.sqrt(2*Math.PI))}
+function lognormalCdf(x,mu,s){if(x<=0)return 0;return normalCdf(Math.log(x),mu,s)}
+function comb(n,k){let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return r}
+function binomPmf(k,n,p){if(k<0||k>n)return 0;return comb(n,k)*p**k*(1-p)**(n-k)}
+
+// Probit — Acklam rational approximation
+function probit(p){
+  if(p<=0)return -Infinity;if(p>=1)return Infinity;
+  const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,
+            1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,
+            6.680131188771972e+01,-1.328068155288572e+01];
+  const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,
+            -2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const plo=0.02425,phi=1-plo;
+  if(p<plo){const q=Math.sqrt(-2*Math.log(p));return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  if(p<=phi){const q=p-.5,r=q*q;return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  const q=Math.sqrt(-2*Math.log(1-p));return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+}
+
+// ==========================================================
+// SCENARIOS
+// ==========================================================
+const SCENARIOS = [
+  {
+    id:'normal', label:'Normal', shortDesc:'Bell curve and percentiles',
+    detail:'Draws gradually form a bell-shaped pattern. The ECDF tracks the theoretical CDF more closely as n increases. Watch the running mean converge to 50 on the Convergence tab.',
+    dist:'normal', n:500, spread:8, bins:25, showSpread:true, showBins:true,
+    spreadLabel:'Standard deviation (σ)', spreadNote:''
+  },
+  {
+    id:'skewed', label:'Right-Skewed', shortDesc:'Means, medians, and tail behavior',
+    detail:'A few large values stretch the right tail. The mean is pulled above the median. Watch the skewness statistic, compare observed to theoretical mean, and observe the upward bow in the Q-Q plot.',
+    dist:'skewed', n:800, spread:9, bins:35, showSpread:true, showBins:true,
+    spreadLabel:'Scale (larger stretches the right tail)',
+    spreadNote:'Larger scale makes the right tail longer and pulls the mean further above the median.'
+  },
+  {
+    id:'uniform', label:'Uniform', shortDesc:'Equal likelihood across a range',
+    detail:'Every value in the range is equally likely. Small samples still look uneven. The ECDF converges to a straight diagonal line. The Q-Q plot has a gentle S-shape at small n that flattens as n grows.',
+    dist:'uniform', n:350, spread:8, bins:20, showSpread:true, showBins:true,
+    spreadLabel:'Half-range (values span 50 ± 2·spread)',
+    spreadNote:'The full range is 4 times the spread. Theoretical SD = 2·spread / sqrt(3).'
+  },
+  {
+    id:'binomial', label:'Binomial Count', shortDesc:'Successes in 20 Bernoulli trials',
+    detail:'Each value is the count of successes in 20 independent trials. The slider controls success probability p, which changes both the center and the shape. The distribution is always discrete.',
+    dist:'binomial', n:500, spread:8, bins:21, showSpread:true, showBins:false,
+    spreadLabel:'Success probability p (= 0.35 + slider/100)',
+    spreadNote:'This slider changes p, not variability. At slider=1: p=0.36; at slider=20: p=0.55.'
+  },
+  {
+    id:'die', label:'Fair Six-Sided Die', shortDesc:'Discrete uniform on {1, 2, 3, 4, 5, 6}',
+    detail:'The die is a discrete uniform distribution on exactly six outcomes. The CDF moves in equal jumps of 1/6 at each integer. There is no probability between categories. Mean = 3.5, SD ≈ 1.71.',
+    dist:'die', n:120, spread:8, bins:6, showSpread:false, showBins:false,
+    spreadLabel:'', spreadNote:''
+  },
+  {
+    id:'bimodal', label:'Bimodal Mixture', shortDesc:'Two groups hiding in one distribution',
+    detail:'Two overlapping normal distributions create two peaks. The mean lands in the low-density valley between them. Use Mode Separation to see when the two peaks blur into a single apparent lump.',
+    dist:'bimodal', n:700, spread:7, bins:35, showSpread:true, showBins:true,
+    spreadLabel:'Within-group SD (spread of each peak)',
+    spreadNote:'When within-group SD is large relative to mode separation, the peaks merge into one.'
+  }
+];
+
+// ==========================================================
+// STATE
+// ==========================================================
+let values = [];
+let runningMeans = [];
+let activeScenario = SCENARIOS[0];
+let activeTab = 0;
+let dirtyTabs = {1:false, 2:false}; // tabs that need redraw on next visit
+
+// ==========================================================
+// DISTRIBUTION PARAMETERS
+// ==========================================================
+function getDist(){ return activeScenario.dist }
+function getSpread(){ return +el('spread').value }
+function getModeGap(){ return +el('modeGap').value }
+function getBinomP(){ return Math.min(0.99,Math.max(0.01,0.35+getSpread()/100)) }
+
+function theorMean(){
+  const d=getDist(),s=getSpread(),g=getModeGap(),w1=0.52,w2=0.48;
+  if(d==='normal')  return 50;
+  if(d==='uniform') return 50;
+  if(d==='skewed')  return 30+Math.exp(1+0.55*0.55/2)*s/2.2;
+  if(d==='binomial')return 20*getBinomP();
+  if(d==='die')     return 3.5;
+  if(d==='bimodal') return w1*(50-g/2)+w2*(50+g/2);
+  return NaN;
+}
+
+function theorSD(){
+  const d=getDist(),s=getSpread(),g=getModeGap(),w1=0.52,w2=0.48;
+  const mu1=50-g/2,mu2=50+g/2;
+  if(d==='normal')  return s;
+  if(d==='uniform') return 2*s/Math.sqrt(3);
+  if(d==='skewed')  return Math.exp(1+0.55*0.55/2)*Math.sqrt(Math.exp(0.55*0.55)-1)*s/2.2;
+  if(d==='binomial'){const p=getBinomP();return Math.sqrt(20*p*(1-p));}
+  if(d==='die')     return Math.sqrt(35/12);
+  if(d==='bimodal'){
+    const mu=w1*mu1+w2*mu2;
+    return Math.sqrt(s*s+w1*mu1*mu1+w2*mu2*mu2-mu*mu);
+  }
+  return NaN;
+}
+
+// ==========================================================
+// DATA GENERATION
+// ==========================================================
+function generateOne(){
+  const d=getDist(),s=getSpread(),g=getModeGap();
+  if(d==='normal')  return 50+randn()*s;
+  if(d==='uniform') return 50+(Math.random()-.5)*4*s;
+  if(d==='skewed')  return 30+Math.exp(1+randn()*0.55)*s/2.2;
+  if(d==='binomial'){let c=0;const p=getBinomP();for(let i=0;i<20;i++)if(Math.random()<p)c++;return c;}
+  if(d==='die')     return Math.floor(Math.random()*6)+1;
+  if(d==='bimodal') return Math.random()<.52?(50-g/2)+randn()*s:(50+g/2)+randn()*s;
+  return Math.random();
+}
+
+function generateMany(n,replace=true){
+  if(replace){values=[];runningMeans=[];}
+  for(let i=0;i<n;i++){
+    const v=generateOne();values.push(v);runningMeans.push(mean(values));
+  }
+  syncProbeLimits();
+  drawAll();
+}
+
+function addDraws(n){
+  for(let i=0;i<n;i++){
+    const v=generateOne();values.push(v);runningMeans.push(mean(values));
+  }
+  syncProbeLimits();
+  drawAll();
+}
+
+function isDiscrete(){ return ['die','binomial'].includes(getDist()) }
+
+// ==========================================================
+// DOMAIN & THEORY
+// ==========================================================
+function getDomain(){
+  const d=getDist(),s=getSpread();
+  if(d==='die')     return [0.5,6.5];
+  if(d==='binomial')return [-0.5,20.5];
+  if(d==='uniform') return [50-2.5*s,50+2.5*s];
+  if(!values.length)return [30,70];
+  const mn=Math.min(...values),mx=Math.max(...values);
+  // 18% padding — gives clear whitespace so theoretical curve doesn't hit edges
+  const pad=(mx-mn)*.18||3;
+  return [mn-pad,mx+pad];
+}
+
+function theorXs(){
+  const d=getDist();
+  if(d==='die')     return [1,2,3,4,5,6];
+  if(d==='binomial')return Array.from({length:21},(_,i)=>i);
+  // Extend 15% beyond domain so curves flow naturally off the edge
+  const [lo,hi]=getDomain();
+  const ext=(hi-lo)*0.15;
+  return Array.from({length:320},(_,i)=>(lo-ext)+(hi-lo+2*ext)*i/319);
+}
+
+function theorPdf(x){
+  const d=getDist(),s=getSpread(),g=getModeGap();
+  if(d==='normal')  return normalPdf(x,50,s);
+  if(d==='uniform') return x>=50-2*s&&x<=50+2*s?1/(4*s):0;
+  if(d==='skewed')  return lognormalPdf((x-30)*2.2/s,1,.55)*2.2/s;
+  if(d==='binomial')return binomPmf(Math.round(x),20,getBinomP());
+  if(d==='die')     return x>=1&&x<=6?1/6:0;
+  if(d==='bimodal') return .52*normalPdf(x,50-g/2,s)+.48*normalPdf(x,50+g/2,s);
+  return 0;
+}
+
+function theorCdf(x){
+  const d=getDist(),s=getSpread(),g=getModeGap();
+  if(d==='normal')  return normalCdf(x,50,s);
+  if(d==='uniform') return Math.max(0,Math.min(1,(x-(50-2*s))/(4*s)));
+  if(d==='skewed')  return lognormalCdf((x-30)*2.2/s,1,.55);
+  if(d==='binomial'){let sum=0;for(let k=0;k<=Math.floor(x);k++)sum+=binomPmf(k,20,getBinomP());return Math.max(0,Math.min(1,sum));}
+  if(d==='die')     return Math.max(0,Math.min(1,Math.floor(x)/6));
+  if(d==='bimodal') return .52*normalCdf(x,50-g/2,s)+.48*normalCdf(x,50+g/2,s);
+  return NaN;
+}
+
+// Inverse CDF for Q-Q plot
+function theorQuantile(p){
+  const d=getDist(),s=getSpread(),g=getModeGap();
+  if(d==='normal')  return 50+probit(p)*s;
+  if(d==='uniform') return (50-2*s)+p*4*s;
+  if(d==='skewed')  return 30+Math.exp(1+0.55*probit(p))*s/2.2;
+  if(d==='binomial'){
+    const pv=getBinomP();let cum=0;
+    for(let k=0;k<=20;k++){cum+=binomPmf(k,20,pv);if(cum>=p)return k;}
+    return 20;
+  }
+  if(d==='die'){for(let k=1;k<=6;k++){if(k/6>=p)return k;}return 6;}
+  if(d==='bimodal'){
+    const [lo,hi]=getDomain();let a=lo,b=hi;
+    for(let i=0;i<60;i++){const m=(a+b)/2;theorCdf(m)<p?a=m:b=m;}
+    return (a+b)/2;
+  }
+  return NaN;
+}
+
+function observedCdf(x){ return values.filter(v=>v<=x).length/values.length }
+
+function syncProbeLimits(){
+  const [lo,hi]=getDomain();
+  const p=el('probe');
+  p.min=lo.toFixed(2);p.max=hi.toFixed(2);
+  if(+p.value<lo||+p.value>hi)p.value=((lo+hi)/2).toFixed(2);
+  el('probeValDisplay').textContent=(+p.value).toFixed(2);
+}
+
+// ==========================================================
+// MEAN/MEDIAN SHAPES
+// ==========================================================
+function mmShapes(yref='paper'){
+  if(!el('showMeanMedian').checked||!values.length)return [];
+  const m=mean(values),med=quantile(values,.5);
+  return [
+    {type:'line',x0:m,x1:m,y0:0,y1:1,xref:'x',yref,line:{color:COLORS.mean,width:2,dash:'dash'}},
+    {type:'line',x0:med,x1:med,y0:0,y1:1,xref:'x',yref,line:{color:COLORS.median,width:2,dash:'dot'}}
+  ];
+}
+
+// ==========================================================
+// CHART: HISTOGRAM
+// ==========================================================
+function drawHistogram(){
+  if(!values.length)return;
+  const histnorm=el('relativeScale').checked?'probability':'';
+  const ytitle=el('relativeScale').checked?'Relative frequency':'Frequency';
+  const bins=+el('binCount').value;
+  const [lo,hi]=getDomain();
+  const traces=[{
+    x:values,type:'histogram',name:'Observed',histnorm,
+    nbinsx:isDiscrete()?undefined:bins,
+    xbins:isDiscrete()?{start:Math.floor(lo)+.5,end:Math.ceil(hi)+.5,size:1}:undefined,
+    marker:{color:COLORS.gray},opacity:.85,hovertemplate:'%{y}<extra></extra>'
+  }];
+  if(el('showTheoretical').checked){
+    const xs=theorXs();
+    if(isDiscrete()){
+      const cats=getDist()==='die'?[1,2,3,4,5,6]:Array.from({length:21},(_,i)=>i);
+      traces.push({x:cats,y:cats.map(x=>theorPdf(x)*values.length),type:'bar',name:'Expected count',
+        marker:{color:'rgba(37,99,235,0.25)',line:{color:COLORS.theory,width:1}},
+        opacity:.65,customdata:cats.map(theorPdf),
+        hovertemplate:'p=%{customdata:.3f}<extra></extra>'});
+    } else {
+      const bw=(hi-lo)/bins;
+      const scale=el('relativeScale').checked?bw:values.length*bw;
+      traces.push({x:xs,y:xs.map(x=>theorPdf(x)*scale),mode:'lines',type:'scatter',
+        name:'Theoretical',line:{color:COLORS.theory,width:2.5}});
+    }
+  }
+  Plotly.react('plotHistogram',traces,{
+    margin:{t:14,r:14,b:44,l:50},
+    bargap:isDiscrete()?.15:0,
+    xaxis:{title:{text:'Value',standoff:6},range:[lo,hi]},
+    yaxis:{title:{text:ytitle,standoff:6}},
+    legend:{orientation:'h',x:0,y:1.12,font:{size:11}},
+    shapes:mmShapes()
+  },{responsive:true,displayModeBar:false});
+  el('histBadge').textContent=`n = ${values.length}`;
+}
+
+// ==========================================================
+// CHART: ECDF
+// ==========================================================
+function drawECDF(){
+  if(!values.length)return;
+  const sorted=[...values].sort((a,b)=>a-b);
+  const n=sorted.length,y=sorted.map((_,i)=>(i+1)/n);
+  const [lo,hi]=getDomain();
+  const traces=[{x:sorted,y,type:'scatter',mode:'lines',
+    line:{shape:'hv',color:COLORS.data,width:2.5},name:'Observed ECDF',
+    hovertemplate:'x=%{x:.2f}, P(X&le;x)=%{y:.3f}<extra></extra>'}];
+  if(el('showTheoretical').checked){
+    const xs=theorXs();
+    traces.push({x:xs,y:xs.map(theorCdf),mode:'lines',type:'scatter',
+      name:'Theoretical CDF',line:{color:COLORS.theory,width:2.5,dash:'dash'}});
+  }
+  const pr=+el('probe').value,c=observedCdf(pr);
+  Plotly.react('plotECDF',traces,{
+    margin:{t:14,r:14,b:44,l:50},
+    xaxis:{title:{text:'Value',standoff:6},range:[lo,hi]},
+    yaxis:{title:{text:'Cumulative proportion',standoff:6},range:[0,1.05],tickformat:'.0%'},
+    legend:{orientation:'h',x:0,y:1.12,font:{size:11}},
+    shapes:[...mmShapes(),
+      {type:'line',x0:pr,x1:pr,y0:0,y1:1,xref:'x',yref:'paper',line:{color:COLORS.probe,width:2}},
+      {type:'line',x0:lo,x1:pr,y0:c,y1:c,xref:'x',yref:'y',line:{color:COLORS.probe,width:1.5,dash:'dot'}}
+    ]
+  },{responsive:true,displayModeBar:false});
+  el('ecdfBadge').textContent=`probe: ${pr.toFixed(2)}`;
+}
+
+// ==========================================================
+// CHART: Q-Q PLOT
+// ==========================================================
+function drawQQ(){
+  if(values.length<3)return;
+  const sorted=[...values].sort((a,b)=>a-b);
+  const n=sorted.length;
+  // Thin for very large n to keep chart responsive (max 1500 pts)
+  let idxs;
+  if(n>1500){
+    idxs=Array.from({length:1500},(_,i)=>Math.round(i*(n-1)/1499));
+  } else {
+    idxs=Array.from({length:n},(_,i)=>i);
+  }
+  const obs=idxs.map(i=>sorted[i]);
+  const pp=idxs.map(i=>(i+0.5)/n);
+  const tq=pp.map(theorQuantile).filter(Number.isFinite);
+  const obsF=obs.slice(0,tq.length);
+  const refLo=theorQuantile(0.01),refHi=theorQuantile(0.99);
+  const allValid=Number.isFinite(refLo)&&Number.isFinite(refHi);
+  const traces=[
+    {x:tq,y:obsF,mode:'markers',type:'scatter',name:'Sample vs. theoretical',
+      marker:{color:COLORS.data,size:4,opacity:.55},
+      hovertemplate:'Theor: %{x:.3f}<br>Obs: %{y:.3f}<extra></extra>'}
+  ];
+  if(allValid){
+    traces.push({x:[refLo,refHi],y:[refLo,refHi],mode:'lines',type:'scatter',name:'y = x (reference)',
+      line:{color:COLORS.theory,width:2,dash:'dash'}});
+  }
+  Plotly.react('plotQQ',traces,{
+    margin:{t:14,r:14,b:44,l:50},
+    xaxis:{title:{text:'Theoretical quantiles',standoff:6}},
+    yaxis:{title:{text:'Observed quantiles',standoff:6}},
+    legend:{orientation:'h',x:0,y:1.12,font:{size:11}}
+  },{responsive:true,displayModeBar:false});
+  el('qqBadge').textContent=`n = ${n}`;
+}
+
+// ==========================================================
+// CHART: DRAWS + RUNNING MEAN (continuous) or COUNT BARS (discrete)
+// ==========================================================
+function drawSequence(){
+  if(!values.length)return;
+  if(isDiscrete()){
+    const d=getDist();
+    const cats=d==='die'?[1,2,3,4,5,6]:Array.from({length:21},(_,i)=>i);
+    const counts=cats.map(c=>values.filter(v=>v===c).length);
+    const traces=[{x:cats,y:counts,type:'bar',name:'Observed count',
+      marker:{color:COLORS.gray},hovertemplate:'Value %{x}: %{y} draws<extra></extra>'}];
+    if(el('showTheoretical').checked){
+      traces.push({x:cats,y:cats.map(c=>theorPdf(c)*values.length),type:'scatter',mode:'markers',
+        name:'Expected count',
+        marker:{color:COLORS.theory,size:11,symbol:'line-ew-open',line:{width:3,color:COLORS.theory}},
+        hovertemplate:'Expected: %{y:.1f}<extra></extra>'});
+    }
+    Plotly.react('plotSequence',traces,{
+      margin:{t:14,r:14,b:44,l:50},
+      xaxis:{title:{text:'Value',standoff:6},dtick:1},
+      yaxis:{title:{text:'Count',standoff:6}},
+      bargap:.15,legend:{orientation:'h',x:0,y:1.12,font:{size:11}}
+    },{responsive:true,displayModeBar:false});
+    el('seqTitle').textContent='Count per Category';
+    el('seqBadge').textContent='discrete outcomes';
+    el('wtwSeq').innerHTML='<strong>Discrete:</strong> Each bar is one possible outcome. Expected-count markers show what equal probability predicts. There is no probability between integer categories.';
+  } else {
+    // x = draw number, y = value -- running mean overlaid
+    const xs=Array.from({length:values.length},(_,i)=>i+1);
+    const thM=theorMean();
+    // Thin draws for very large n
+    let dotXs=xs,dotYs=values;
+    if(values.length>2000){
+      const step=Math.ceil(values.length/1000);
+      dotXs=xs.filter((_,i)=>i%step===0);
+      dotYs=values.filter((_,i)=>i%step===0);
+    }
+    const traces=[
+      {x:dotXs,y:dotYs,mode:'markers',type:'scatter',name:'Draws',
+        marker:{color:COLORS.data,size:4,opacity:.30},showlegend:true,
+        hovertemplate:'Draw %{x}: %{y:.3f}<extra></extra>'},
+      {x:xs,y:runningMeans,mode:'lines',type:'scatter',name:'Running mean',
+        line:{color:COLORS.mean,width:2},
+        hovertemplate:'After %{x} draws<br>Mean=%{y:.4f}<extra></extra>'}
+    ];
+    if(el('showTheoretical').checked&&Number.isFinite(thM)){
+      traces.push({x:[1,values.length],y:[thM,thM],mode:'lines',type:'scatter',
+        name:`Theoretical mean (${thM.toFixed(2)})`,
+        line:{color:COLORS.theory,width:2,dash:'dash'}});
+    }
+    Plotly.react('plotSequence',traces,{
+      margin:{t:14,r:14,b:44,l:50},
+      xaxis:{title:{text:'Draw number',standoff:6}},
+      yaxis:{title:{text:'Value',standoff:6}},
+      legend:{orientation:'h',x:0,y:1.12,font:{size:11}}
+    },{responsive:true,displayModeBar:false});
+    el('seqTitle').textContent='Draws and Running Mean';
+    el('seqBadge').textContent='draw order';
+    el('wtwSeq').innerHTML='<strong>Running mean (red):</strong> the sample mean after each draw. Watch it converge toward the theoretical mean (blue dashed) as n grows — this is the Law of Large Numbers.';
+  }
+}
+
+// ==========================================================
+// CHART: LLN
+// ==========================================================
+function drawLLN(){
+  if(!values.length)return;
+  const thM=theorMean(),thS=theorSD();
+  const xs=runningMeans.map((_,i)=>i+1);
+  const traces=[
+    {x:xs,y:runningMeans,mode:'lines',type:'scatter',name:'Running mean',
+      line:{color:COLORS.data,width:1.5},
+      hovertemplate:'After %{x} draws<br>Mean=%{y:.4f}<extra></extra>'}
+  ];
+  if(Number.isFinite(thM)){
+    traces.push({x:[1,xs.length],y:[thM,thM],mode:'lines',type:'scatter',
+      name:`Theoretical mean = ${thM.toFixed(3)}`,line:{color:COLORS.theory,width:2,dash:'dash'}});
+    if(Number.isFinite(thS)&&thS>0){
+      const upper=xs.map(k=>thM+thS/Math.sqrt(k));
+      const lower=xs.map(k=>thM-thS/Math.sqrt(k));
+      traces.push({x:[...xs,...[...xs].reverse()],y:[...upper,...lower.reverse()],
+        fill:'toself',fillcolor:'rgba(37,99,235,0.07)',line:{width:0},
+        showlegend:false,hoverinfo:'skip'});
+    }
+  }
+  Plotly.react('plotLLN',traces,{
+    margin:{t:14,r:14,b:44,l:55},
+    xaxis:{title:{text:'Number of draws (k)',standoff:6}},
+    yaxis:{title:{text:'Sample mean',standoff:6}},
+    legend:{orientation:'h',x:0,y:1.12,font:{size:11}}
+  },{responsive:true,displayModeBar:false});
+  el('llnBadge').textContent=Number.isFinite(thM)?`theoretical mean: ${thM.toFixed(3)}`:'theoretical mean: --';
+}
+
+// ==========================================================
+// WHAT-TO-WATCH (distribution-adaptive, kept to 1 line each)
+// ==========================================================
+const WTW = {
+  hist:{
+    normal:'Watch the bell shape emerge; the histogram should track the theoretical curve more closely as n grows.',
+    skewed:'The long right tail pulls the mean marker (red dashed) above the median (green dotted).',
+    uniform:'Bars should equalize in height; clumping at small n is sampling noise, not a non-uniform rule.',
+    binomial:'Each bar is one count value (0-20); turn on the expected overlay to compare observed to theoretical.',
+    die:'Each of the six bars should be close to n/6; variability around that target is normal.',
+    bimodal:'Two humps should be visible; the single mean marker lands in the valley between them.'
+  },
+  ecdf:{
+    normal:'The S-shaped step curve should converge to the smooth theoretical CDF; move the probe to find any percentile.',
+    skewed:'The curve rises slowly on the right because the long tail has probability spread thinly over a wide range.',
+    uniform:'The ECDF should converge to a straight diagonal from (min,0) to (max,1); wiggles are sampling noise.',
+    binomial:'The ECDF jumps only at integers and is flat between them — there is no probability between categories.',
+    die:'Six equal jumps of 1/6 each; the curve is completely flat between integer values.',
+    bimodal:'The ECDF rises quickly through each peak and more slowly through the low-density valley between them.'
+  },
+  qq:{
+    normal:'Points should hug the reference line at large n; departures at the ends reveal heavier or lighter tails than normal.',
+    skewed:'The upper right end bows above the line: observed large values are more extreme than a normal reference predicts.',
+    uniform:'Points should align on the diagonal at large n; curvature near the ends at small n reflects the bounded support.',
+    binomial:'Stepped bands at integer values are normal for a discrete distribution, not a sign of poor fit.',
+    die:'Six horizontal bands at values 1-6; points should cluster near the diagonal as n increases.',
+    bimodal:'An S-shape or two-bend pattern reflects the mixture structure that a single distribution reference cannot capture.'
+  }
+};
+
+function updateWTW(){
+  const d=getDist();
+  if(WTW.hist[d]){el('wtwHist').innerHTML=`<strong>Watch:</strong> ${WTW.hist[d]}`;}
+  if(WTW.ecdf[d]){el('wtwECDF').innerHTML=`<strong>Watch:</strong> ${WTW.ecdf[d]}`;}
+  if(WTW.qq[d]){el('wtwQQ').innerHTML=`<strong>Watch:</strong> ${WTW.qq[d]}`;}
+}
+
+// ==========================================================
+// DISTRIBUTION NOTES (Convergence tab)
+// ==========================================================
+const DIST_NOTES = {
+  normal:'Symmetric; mean and median both converge to 50. Skewness stays near zero. The running mean converges quickly because positive and negative deviations cancel symmetrically.',
+  skewed:'The right-skewed lognormal always has mean above median. Skewness is strongly positive. Occasional large values create jumps in the running mean, so convergence can be slower than for a normal with the same SD.',
+  uniform:'No peak, no tails; mean and median both converge to 50. Skewness is near zero. The running mean converges quickly because the support is bounded.',
+  binomial:`Counts successes in 20 trials. Success probability p = ${(0.35+8/100).toFixed(2)} (adjustable by slider). Theoretical mean = 20·p, theoretical variance = 20·p·(1−p). Discrete distribution — always non-negative integer values.`,
+  die:'Discrete uniform on {1,2,3,4,5,6}. Theoretical mean = 3.5, theoretical SD = sqrt(35/12) ≈ 1.708. Skewness is always exactly zero by symmetry. The running mean converges to 3.5.',
+  bimodal:'Two overlapping normals with mixing weights 0.52 and 0.48. When mode separation is small relative to within-group SD, the peaks merge into a single unimodal lump. The mean and median are both near 50, but neither is representative of either subgroup.'
+};
+
+function updateDistNotes(){
+  const d=getDist();
+  const titles={normal:'Normal',skewed:'Right-Skewed',uniform:'Uniform',
+    binomial:'Binomial',die:'Fair Six-Sided Die',bimodal:'Bimodal Mixture'};
+  el('distNoteTitle').textContent=`${titles[d]||''} Distribution Notes`;
+  // For binomial, recompute p dynamically
+  if(d==='binomial'){
+    el('distNoteText').textContent=`Counts successes in 20 trials. Success probability p = ${getBinomP().toFixed(2)} (adjustable by slider). Theoretical mean = 20·p = ${(20*getBinomP()).toFixed(2)}, theoretical SD = sqrt(20·p·(1-p)) = ${theorSD().toFixed(3)}. Discrete distribution — always non-negative integer values.`;
+  } else {
+    el('distNoteText').textContent=DIST_NOTES[d]||'';
+  }
+}
+
+// ==========================================================
+// SUMMARY UPDATE
+// ==========================================================
+function updateSummary(){
+  if(!values.length)return;
+  const pr=+el('probe').value;
+  const m=mean(values),med=quantile(values,.5),s=sd(values);
+  const q1=quantile(values,.25),q3=quantile(values,.75);
+  const sk=skewness(values);
+  const thM=theorMean(),thS=theorSD();
+  const obsC=observedCdf(pr),thC=theorCdf(pr);
+  const n=values.length;
+
+  // Probe panel
+  el('probeMetricVal').textContent=pr.toFixed(3);
+  el('probeCumObs').textContent=`${(100*obsC).toFixed(1)}%`;
+  el('probeTailObs').textContent=`${(100*(1-obsC)).toFixed(1)}%`;
+  el('probeCumTheor').textContent=Number.isFinite(thC)?`${(100*thC).toFixed(1)}%`:'N/A';
+
+  // Explore summary
+  el('sumMean').textContent=m.toFixed(3);
+  el('sumTheorMean').textContent=Number.isFinite(thM)?thM.toFixed(3):'--';
+  el('sumMedian').textContent=med.toFixed(3);
+  el('sumSd').textContent=isNaN(s)?'--':s.toFixed(3);
+  el('sumTheorSd').textContent=Number.isFinite(thS)?thS.toFixed(3):'--';
+  el('sumIqr').textContent=(q3-q1).toFixed(3);
+  el('sumSkew').textContent=isNaN(sk)?'--':sk.toFixed(3);
+  el('sumRange').textContent=`${Math.min(...values).toFixed(2)} / ${Math.max(...values).toFixed(2)}`;
+  el('summaryBadge').textContent=`n = ${n}`;
+
+  // Setup tab quick stats
+  el('setupN').textContent=n;
+  el('setupMean').textContent=m.toFixed(3);
+  el('setupTheorMean').textContent=Number.isFinite(thM)?thM.toFixed(3):'--';
+  el('setupSd').textContent=isNaN(s)?'--':s.toFixed(3);
+  el('setupTheorSd').textContent=Number.isFinite(thS)?thS.toFixed(3):'--';
+  el('setupSkew').textContent=isNaN(sk)?'--':sk.toFixed(3);
+  el('setupNBadge').textContent=`n = ${n}`;
+
+  // Convergence panel
+  el('llnN').textContent=n;
+  el('llnMean').textContent=m.toFixed(4);
+  el('llnTheorMean').textContent=Number.isFinite(thM)?thM.toFixed(4):'--';
+  const err=Number.isFinite(thM)?Math.abs(m-thM):NaN;
+  const sem=Number.isFinite(thS)&&thS>0?thS/Math.sqrt(n):NaN;
+  el('llnError').textContent=isNaN(err)?'--':err.toFixed(4);
+  el('llnSem').textContent=isNaN(sem)?'--':sem.toFixed(4);
+  el('llnRatio').textContent=(isNaN(err)||isNaN(sem)||sem===0)?'--':(err/sem).toFixed(2);
+
+  updateInterp(n,err,sem,thM);
+  updateDistNotes();
+}
+
+function updateInterp(n,err,sem,thM){
+  const box=el('interpBox'),verdict=el('interpVerdict'),ctx=el('interpCtx');
+  if(n<30){
+    box.className='interp-box pending';
+    verdict.textContent=`Small sample (n = ${n}) — high variability`;
+    ctx.textContent='With fewer than 30 draws, the running mean is still highly variable. Add more draws to see the Law of Large Numbers take effect.';
+  } else if(!isNaN(err)&&!isNaN(sem)&&err<0.5*sem){
+    box.className='interp-box converged';
+    verdict.textContent=`Converged: error within half a standard error`;
+    ctx.textContent=`The sample mean (${mean(values).toFixed(3)}) is within half a standard error of the theoretical mean (${Number.isFinite(thM)?thM.toFixed(3):'--'}). The Law of Large Numbers is clearly operating.`;
+  } else {
+    box.className='interp-box converging';
+    verdict.textContent=`Converging (n = ${n})`;
+    ctx.textContent=`The running mean is still narrowing toward ${Number.isFinite(thM)?thM.toFixed(3):'the theoretical value'}. Error/SE = ${(!isNaN(err)&&!isNaN(sem)&&sem>0)?(err/sem).toFixed(2):'--'}; convergence is reached when this falls below 0.5.`;
+  }
+}
+
+// ==========================================================
+// DRAW ALL — tab-aware to avoid sizing issues on hidden divs
+// ==========================================================
+function drawAll(){
+  if(!values.length)return;
+  updateSummary();
+  updateWTW();
+  if(activeTab===1){
+    drawHistogram();drawECDF();drawQQ();drawSequence();
+    dirtyTabs[1]=false;dirtyTabs[2]=true;
+  } else if(activeTab===2){
+    drawLLN();
+    dirtyTabs[2]=false;dirtyTabs[1]=true;
+  } else {
+    // Setup tab — both chart tabs are stale
+    dirtyTabs[1]=true;dirtyTabs[2]=true;
+  }
+}
+
+// ==========================================================
+// SCENARIO GRID
+// ==========================================================
+function buildGrid(){
+  el('scenarioGrid').innerHTML=SCENARIOS.map(sc=>`
+    <div class="sc-card${sc.id===activeScenario.id?' active':''}" onclick="applyScenario('${sc.id}')">
+      <div class="sc-name">${sc.label}</div>
+      <div class="sc-desc">${sc.shortDesc}</div>
+    </div>`).join('');
+}
+
+function applyScenario(id){
+  activeScenario=SCENARIOS.find(s=>s.id===id);
+  const sc=activeScenario;
+  el('nDraws').value=sc.n;   el('nDrawsVal').textContent=sc.n;
+  el('spread').value=sc.spread; el('spreadVal').textContent=sc.spread;
+  el('binCount').value=sc.bins; el('binCountVal').textContent=sc.bins;
+
+  // Show or hide spread control
+  el('spreadBox').style.display=sc.showSpread?'':'none';
+  if(sc.showSpread){
+    el('spreadLabel').textContent=sc.spreadLabel;
+    if(sc.spreadNote){el('paramNote').textContent=sc.spreadNote;el('paramNote').classList.add('show');}
+    else{el('paramNote').classList.remove('show');}
+  }
+
+  // Show or hide bin count (not meaningful for discrete)
+  el('binCountBox').style.display=sc.showBins?'':'none';
+
+  // Show or hide mode gap (bimodal only)
+  el('modeGapBox').style.display=sc.dist==='bimodal'?'':'none';
+
+  el('scDetail').style.display='';
+  el('scDetailName').textContent=sc.label;
+  el('scDetailText').textContent=sc.detail;
+  el('activeScenarioBadge').textContent=sc.label;
+
+  buildGrid();
+  values=[];runningMeans=[];
+  dirtyTabs[1]=false;dirtyTabs[2]=false;
+  updateWTW();
+  updateDistNotes();
+}
+
+// ==========================================================
+// TABS — use requestAnimationFrame so Plotly sees real widths
+// ==========================================================
+function switchTab(i){
+  document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  document.querySelectorAll('.tab-content').forEach((c,j)=>c.style.display=j===i?'':'none');
+  activeTab=i;
+  // Defer chart draw until after browser paints the visible tab
+  requestAnimationFrame(()=>{
+    if(i===1&&values.length&&dirtyTabs[1]){
+      drawHistogram();drawECDF();drawQQ();drawSequence();
+      dirtyTabs[1]=false;
+    } else if(i===1&&values.length){
+      // Force resize in case container width changed
+      ['plotHistogram','plotECDF','plotQQ','plotSequence'].forEach(id=>{
+        const d=document.getElementById(id);
+        if(d&&d._fullLayout)Plotly.relayout(id,{});
+      });
+    }
+    if(i===2&&values.length&&dirtyTabs[2]){
+      drawLLN();dirtyTabs[2]=false;
+    } else if(i===2&&values.length){
+      const d=document.getElementById('plotLLN');
+      if(d&&d._fullLayout)Plotly.relayout('plotLLN',{});
+    }
+    window.dispatchEvent(new Event('resize'));
+  });
+}
+document.querySelectorAll('.tab-btn').forEach((b,i)=>b.addEventListener('click',()=>switchTab(i)));
+
+// ==========================================================
+// EVENTS
+// ==========================================================
+el('nDraws').addEventListener('input',()=>el('nDrawsVal').textContent=el('nDraws').value);
+
+el('spread').addEventListener('input',()=>{
+  el('spreadVal').textContent=el('spread').value;
+  if(values.length){values=[];runningMeans=[];generateMany(+el('nDraws').value,true);}
+});
+
+el('modeGap').addEventListener('input',()=>{
+  el('modeGapVal').textContent=el('modeGap').value;
+  if(values.length){values=[];runningMeans=[];generateMany(+el('nDraws').value,true);}
+});
+
+el('binCount').addEventListener('input',()=>{
+  el('binCountVal').textContent=el('binCount').value;
+  if(values.length&&activeTab===1)drawHistogram();
+  else if(values.length)dirtyTabs[1]=true;
+});
+
+el('probe').addEventListener('input',()=>{
+  el('probeValDisplay').textContent=(+el('probe').value).toFixed(2);
+  if(values.length){if(activeTab===1){drawECDF();}updateSummary();}
+});
+
+el('showTheoretical').addEventListener('change',()=>{if(values.length)drawAll();});
+el('showMeanMedian').addEventListener('change',()=>{if(values.length)drawAll();});
+el('relativeScale').addEventListener('change',()=>{
+  if(values.length){if(activeTab===1)drawHistogram();else dirtyTabs[1]=true;}
+});
+
+el('btnGenerate').addEventListener('click',()=>{
+  generateMany(+el('nDraws').value,true);
+  switchTab(1);
+});
+
+// Setup tab add buttons
+el('btnAdd1').addEventListener('click',()=>addDraws(1));
+el('btnAdd10').addEventListener('click',()=>addDraws(10));
+el('btnAdd100').addEventListener('click',()=>addDraws(100));
+
+// Explore tab add buttons
+el('btnAdd1E').addEventListener('click',()=>addDraws(1));
+el('btnAdd10E').addEventListener('click',()=>addDraws(10));
+el('btnAdd100E').addEventListener('click',()=>addDraws(100));
+el('btnRegenE').addEventListener('click',()=>generateMany(+el('nDraws').value,true));
+
+el('btnReset').addEventListener('click',()=>{
+  values=[];runningMeans=[];
+  dirtyTabs[1]=false;dirtyTabs[2]=false;
+  ['setupN','setupMean','setupTheorMean','setupSd','setupTheorSd','setupSkew'].forEach(id=>el(id).textContent='--');
+  el('setupNBadge').textContent='No data';
+});
+
+el('btnGuide').addEventListener('click',()=>{
+  const g=el('guideSection'),open=g.classList.toggle('open');
+  el('btnGuide').textContent=open?'▲ Hide Guide':'▼ Quick-Start Guide';
+});
+
+el('btnRef').addEventListener('click',()=>{
+  const r=el('refCard'),open=r.classList.toggle('open');
+  el('btnRef').textContent=open?'▲ Hide Reference':'📖 Full Reference';
+  if(open)r.scrollIntoView({behavior:'smooth'});
+});
+
+// ==========================================================
+// INIT
+// ==========================================================
+buildGrid();
+applyScenario('normal');
+switchTab(0);
+</script>
+</body>
+</html>

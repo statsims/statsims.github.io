@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AmberDOS Text Editor v1.9</title>
+  <style>
+    :root{
+      --bg:#050402;
+      --fg:#cf9437;
+      --fg-dim:#8f6321;
+      --fg-soft:rgba(207,148,55,.09);
+      --fg-glow:rgba(207,148,55,.18);
+      --border:#6f4512;
+      --menu-bg:#0f0904;
+      --menu-hover:rgba(216,154,59,.10);
+      --select-bg:rgba(216,154,59,.72);
+      --select-fg:#140d05;
+      --panel-bg:rgba(216,154,59,.025);
+      --chip-bg:rgba(216,154,59,.045);
+      --chip-border:rgba(216,154,59,.18);
+      --modal-bg:rgba(5,4,2,.97);
+      --scan-opacity:.42;
+      --scan-step:4px;
+      --scan-dark:rgba(0,0,0,.18);
+      --shadow-outer:0 0 10px rgba(216,154,59,.07);
+      --shadow-inner:inset 0 1px 0 rgba(255,220,160,.05), inset 0 -1px 0 rgba(0,0,0,.45);
+    }
+
+    *{box-sizing:border-box}
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font-family:"Consolas","Lucida Console","DejaVu Sans Mono","Courier New",monospace;
+      overflow:hidden;
+      text-rendering:geometricPrecision;
+    }
+
+    body{
+      position:relative;
+      background:
+        radial-gradient(circle at center, color-mix(in srgb, var(--fg) 4%, transparent) 0%, transparent 62%),
+        linear-gradient(180deg, color-mix(in srgb, var(--fg) 2%, transparent), rgba(0,0,0,.03));
+    }
+
+    .crt::before,.crt::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:40;
+    }
+
+    .crt::before{
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          color-mix(in srgb, var(--fg) 4%, transparent) 0px,
+          color-mix(in srgb, var(--fg) 4%, transparent) 1px,
+          var(--scan-dark) 2px,
+          var(--scan-dark) var(--scan-step)
+        );
+      opacity:var(--scan-opacity);
+      mix-blend-mode:screen;
+    }
+
+    .crt::after{
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.015), rgba(0,0,0,.12)),
+        radial-gradient(circle at center, transparent 58%, rgba(0,0,0,.34) 100%);
+      opacity:.22;
+      animation:flicker .16s infinite alternate;
+    }
+
+    @keyframes flicker{from{opacity:.18}to{opacity:.24}}
+
+    .shell{
+      height:100vh;
+      padding:12px;
+      display:grid;
+      grid-template-rows:auto auto 1fr auto;
+      gap:8px;
+      border:4px solid rgba(0,0,0,.78);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.03),
+        inset 0 0 0 6px rgba(28,18,8,.55),
+        inset 0 0 0 10px rgba(0,0,0,.35);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.015), rgba(0,0,0,.04));
+    }
+
+    .titlebar,.menubar,.statusbar,.panel,.editor-wrap{
+      border:2px solid var(--border);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--fg) 3%, transparent), color-mix(in srgb, var(--fg) .6%, transparent)),
+        linear-gradient(180deg, rgba(255,255,255,.012), rgba(0,0,0,.10));
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.02),
+        inset 0 0 0 3px rgba(0,0,0,.18),
+        var(--shadow-inner), var(--shadow-outer);
+      position:relative;
+    }
+
+    .titlebar::before,.menubar::before,.statusbar::before,.panel::before,.editor-wrap::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:linear-gradient(180deg, rgba(255,255,255,.02), transparent 20%, transparent 80%, rgba(0,0,0,.12));
+      mix-blend-mode:screen;
+    }
+
+    .titlebar{
+      padding:8px 12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-weight:bold;
+      letter-spacing:.04em;
+      user-select:none;
+      text-shadow:0 0 4px var(--fg-glow);
+    }
+
+    .titlebar-left{
+      font-size:18px;
+      letter-spacing:.06em;
+    }
+
+    .titlebar-right{
+      font-size:14px;
+      color:var(--fg-dim);
+    }
+
+    .menubar{
+      display:flex;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:20;
+      padding:0;
+      user-select:none;
+      text-shadow:0 0 4px var(--fg-glow);
+    }
+
+    .menu{position:relative}
+    .menu-button{
+      appearance:none;
+      border:0;
+      background:transparent;
+      color:var(--fg);
+      padding:8px 14px;
+      font:16px/1.1 inherit;
+      letter-spacing:.05em;
+    }
+    .menu-button:hover,.menu-button:focus,.menu.open>.menu-button{
+      background:var(--menu-hover);
+      outline:none;
+    }
+
+    .dropdown{
+      position:absolute;
+      top:calc(100% + 2px);
+      left:0;
+      min-width:290px;
+      max-height:min(72vh,560px);
+      overflow:auto;
+      border:2px solid var(--border);
+      background:var(--menu-bg);
+      box-shadow:var(--shadow-inner), 0 0 16px color-mix(in srgb, var(--fg) 8%, transparent);
+      padding:4px 0;
+      display:none;
+      z-index:30;
+    }
+    .menu.open .dropdown{display:block}
+
+    .menu-item,.menu-static{
+      width:100%;
+      padding:8px 12px;
+      font:15px/1.2 inherit;
+      letter-spacing:.04em;
+    }
+    .menu-item{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:18px;
+      background:transparent;
+      border:0;
+      color:var(--fg);
+      text-align:left;
+    }
+    .menu-item:hover,.menu-item:focus{
+      background:var(--select-bg);
+      color:var(--select-fg);
+      outline:none;
+      text-shadow:none;
+    }
+    .menu-static{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:18px;
+      opacity:.92;
+      color:var(--fg);
+    }
+    .menu-sep{
+      height:0;
+      border-top:1px solid color-mix(in srgb, var(--fg) 20%, transparent);
+      margin:4px 10px;
+    }
+
+    .workspace{
+      min-height:0;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:8px;
+    }
+    .workspace.calc-mode{
+      grid-template-columns:minmax(0, 1fr) 320px;
+    }
+
+    .editor-wrap{
+      min-height:0;
+      overflow:hidden;
+      position:relative;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--fg) 2%, transparent), rgba(0,0,0,.03));
+    }
+
+    .editor{
+      width:100%;
+      height:100%;
+      border:0;
+      outline:none;
+      resize:none;
+      padding:14px 16px;
+      background:transparent;
+      color:var(--fg);
+      font:21px/1 "Consolas","Lucida Console","DejaVu Sans Mono","Courier New",monospace;
+      text-shadow:0 0 2px var(--fg-soft);
+      white-space:pre-wrap;
+      overflow:auto;
+      overflow-wrap:break-word;
+      word-break:break-word;
+      tab-size:4;
+      font-variant-ligatures:none;
+      caret-color:var(--fg);
+    }
+
+    .editor::selection{
+      background:color-mix(in srgb, var(--fg) 24%, transparent);
+      color:#100a04;
+      text-shadow:none;
+    }
+
+    .calc-sidebar{
+      min-height:0;
+      display:none;
+      grid-template-rows:minmax(0,1fr) 170px;
+      gap:8px;
+    }
+    .workspace.calc-mode .calc-sidebar{display:grid}
+
+    .panel{
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--fg) 3%, transparent), rgba(0,0,0,.04));
+    }
+
+    .panel-header{
+      padding:7px 10px;
+      border-bottom:1px solid color-mix(in srgb, var(--fg) 18%, transparent);
+      font-weight:bold;
+      letter-spacing:.05em;
+      user-select:none;
+    }
+
+    .panel-body{
+      min-height:0;
+      padding:10px;
+      overflow:auto;
+      white-space:pre-wrap;
+      font:15px/1.25 "Consolas","Lucida Console","DejaVu Sans Mono","Courier New",monospace;
+      text-shadow:0 0 2px var(--fg-soft);
+    }
+
+    .statusbar{
+      padding:4px 8px;
+      display:grid;
+      grid-template-columns:auto 1fr auto auto;
+      align-items:center;
+      gap:8px;
+      min-height:30px;
+      font-size:13px;
+      letter-spacing:.03em;
+      user-select:none;
+      text-shadow:0 0 4px var(--fg-glow);
+    }
+
+    .status-left,.status-right{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+    .status-right{justify-content:flex-end}
+
+    .chip{
+      padding:1px 8px;
+      min-height:18px;
+      display:inline-flex;
+      align-items:center;
+      border:1px solid var(--chip-border);
+      background:var(--chip-bg);
+      color:var(--fg);
+      box-shadow:inset 0 0 6px color-mix(in srgb, var(--fg) 5%, transparent);
+      white-space:nowrap;
+    }
+    .chip.active{
+      border-color:color-mix(in srgb, var(--fg) 36%, transparent);
+      box-shadow:inset 0 0 8px color-mix(in srgb, var(--fg) 8%, transparent), 0 0 4px color-mix(in srgb, var(--fg) 6%, transparent);
+    }
+
+    input[type="file"]{display:none}
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.42);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:60;
+      padding:20px;
+    }
+    .modal-backdrop.show{display:flex}
+
+    .modal{
+      width:min(980px,100%);
+      max-height:85vh;
+      overflow:auto;
+      border:2px solid var(--border);
+      background:var(--modal-bg);
+      box-shadow:var(--shadow-inner), 0 0 20px color-mix(in srgb, var(--fg) 10%, transparent);
+      padding:14px;
+      position:relative;
+      text-shadow:0 0 4px var(--fg-glow);
+    }
+
+    .modal-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+      gap:12px;
+      font-weight:bold;
+      letter-spacing:.05em;
+    }
+
+    .modal-close,.action-btn,.char-btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:transparent;
+      color:var(--fg);
+      font:inherit;
+    }
+    .modal-close,.action-btn{padding:6px 10px}
+    .modal-close:hover,.action-btn:hover,.char-btn:hover,
+    .modal-close:focus,.action-btn:focus,.char-btn:focus{
+      background:var(--menu-hover);
+      outline:none;
+    }
+
+    .char-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(54px,1fr));
+      gap:8px;
+      margin-bottom:14px;
+    }
+    .char-btn{
+      min-height:50px;
+      padding:6px;
+      display:grid;
+      place-items:center;
+      font-size:24px;
+      line-height:1;
+      text-shadow:0 0 4px var(--fg-soft);
+    }
+
+    .builder-grid,.replace-grid,.voice-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+      gap:10px;
+      margin:12px 0;
+    }
+    .replace-grid{grid-template-columns:1fr 1fr}
+    .field label{
+      display:block;
+      margin-bottom:4px;
+      font-size:14px;
+    }
+    .field input,.field select,.field textarea{
+      width:100%;
+      padding:8px;
+      border:1px solid var(--border);
+      background:#0a0603;
+      color:var(--fg);
+      font:inherit;
+    }
+    .field textarea{
+      min-height:90px;
+      resize:vertical;
+      white-space:pre-wrap;
+    }
+
+    .preview{
+      border:1px solid color-mix(in srgb, var(--fg) 24%, transparent);
+      padding:10px;
+      min-height:140px;
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+      margin-top:10px;
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .small-note{font-size:13px;opacity:.9;margin:8px 0 0}
+
+    @media (max-width:920px){
+      .workspace.calc-mode{grid-template-columns:1fr}
+      .calc-sidebar{grid-template-rows:minmax(160px,240px) 160px}
+    }
+
+    @media (max-width:720px){
+      .shell{padding:8px;gap:8px}
+      .editor{font-size:18px}
+      .replace-grid{grid-template-columns:1fr}
+      .dropdown{min-width:220px}
+      .titlebar-left{font-size:16px}
+      .statusbar{grid-template-columns:1fr}
+      .status-right{justify-content:flex-start}
+    }
+  </style>
+</head>
+<body class="crt">
+  <div class="shell">
+    <div class="titlebar">
+      <div class="titlebar-left" id="titleLabel">AmberDOS Text Editor v1.9</div>
+      <div class="titlebar-right" id="dateLabel">2026-04-22</div>
+    </div>
+
+    <div class="menubar" id="menubar">
+      <div class="menu">
+        <button class="menu-button" type="button"><u>F</u>ile</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="new"><span>New</span><span>Ctrl+N</span></button>
+          <button class="menu-item" type="button" data-action="open"><span>Open...</span><span>Ctrl+O</span></button>
+          <button class="menu-item" type="button" data-action="save"><span>Save</span><span>Ctrl+S</span></button>
+          <button class="menu-item" type="button" data-action="saveas"><span>Save As...</span><span>Ctrl+Shift+S</span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-action="insertdate"><span>Insert Date</span><span>F5</span></button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>E</u>dit</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="undo"><span>Undo</span><span>Ctrl+Z</span></button>
+          <button class="menu-item" type="button" data-action="redo"><span>Redo</span><span>Ctrl+Y</span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-action="cut"><span>Cut</span><span>Ctrl+X</span></button>
+          <button class="menu-item" type="button" data-action="copy"><span>Copy</span><span>Ctrl+C</span></button>
+          <button class="menu-item" type="button" data-action="paste"><span>Paste</span><span>Ctrl+V</span></button>
+          <button class="menu-item" type="button" data-action="selectall"><span>Select All</span><span>Ctrl+A</span></button>
+          <button class="menu-item" type="button" data-action="clear"><span>Clear</span><span>Del</span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-action="comment-dashes"><span>Comment Selection</span><span>Ctrl+/</span></button>
+          <button class="menu-item" type="button" data-action="uncomment-dashes"><span>Uncomment Selection</span><span>Ctrl+Shift+/</span></button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>S</u>earch</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="find"><span>Find...</span><span>Ctrl+F</span></button>
+          <button class="menu-item" type="button" data-action="findnext"><span>Find Next</span><span>F3</span></button>
+          <button class="menu-item" type="button" data-action="replace"><span>Find / Replace...</span><span>Ctrl+H</span></button>
+          <button class="menu-item" type="button" data-action="goto"><span>Go To Line...</span><span>Ctrl+G</span></button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>T</u>heme</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="theme-amber"><span>Amber Phosphor</span><span></span></button>
+          <button class="menu-item" type="button" data-action="theme-green"><span>Green Phosphor</span><span></span></button>
+          <button class="menu-item" type="button" data-action="theme-white"><span>White Phosphor</span><span></span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-action="toggle-scanlines"><span>Strong Scanlines</span><span id="scanStatus">ON</span></button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>V</u>oice</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="speak-selection"><span>Speak Selection</span><span>Alt+S</span></button>
+          <button class="menu-item" type="button" data-action="speak-document"><span>Speak Document</span><span></span></button>
+          <button class="menu-item" type="button" data-action="stop-speech"><span>Stop Speech</span><span></span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-action="voice-preset-wopr"><span>WOPR-Inspired Preset</span><span></span></button>
+          <button class="menu-item" type="button" data-action="open-voice-settings"><span>Voice Settings...</span><span></span></button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>A</u>SCII</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="charmap"><span>Character Map...</span><span>Alt+A</span></button>
+          <button class="menu-item" type="button" data-action="windowbuilder"><span>Window Builder...</span><span>Alt+W</span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-action="insert-heading-1"><span>Insert Heading 1</span><span></span></button>
+          <button class="menu-item" type="button" data-action="insert-heading-2"><span>Insert Heading 2</span><span></span></button>
+          <button class="menu-item" type="button" data-action="insert-heading-3"><span>Insert Heading 3</span><span></span></button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" type="button" data-action="insert-single-box"><span>Insert Single Box</span><span></span></button>
+          <button class="menu-item" type="button" data-action="insert-double-box"><span>Insert Double Box</span><span></span></button>
+          <button class="menu-item" type="button" data-action="insert-single-rule"><span>Insert Single Rule</span><span></span></button>
+          <button class="menu-item" type="button" data-action="insert-double-rule"><span>Insert Double Rule</span><span></span></button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>C</u>alc</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="toggle-calc"><span>Calculator Mode</span><span id="calcMenuStatus">OFF</span></button>
+          <div class="menu-sep"></div>
+          <div class="menu-static"><span>Syntax</span><span>expr | x=4</span></div>
+          <div class="menu-static"><span>Assignment</span><span>x = 4</span></div>
+          <div class="menu-static"><span>Notes</span><span>-- or #</span></div>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="menu-button" type="button"><u>H</u>elp</button>
+        <div class="dropdown" role="menu">
+          <button class="menu-item" type="button" data-action="about"><span>About Program</span><span></span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="workspace" id="workspace">
+      <div class="editor-wrap">
+        <textarea id="editor" class="editor" spellcheck="false" wrap="soft" aria-label="AmberDOS style text editor"></textarea>
+      </div>
+
+      <div class="calc-sidebar" id="calcSidebar">
+        <div class="panel">
+          <div class="panel-header">CALC OUTPUTS</div>
+          <pre class="panel-body" id="calcOutputs">[no results]</pre>
+        </div>
+        <div class="panel">
+          <div class="panel-header">PERSISTENT VARIABLES</div>
+          <pre class="panel-body" id="calcVars">[none]</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="statusbar">
+      <div class="status-left">
+        <div class="chip active" id="messageChip">READY</div>
+        <div class="chip" id="calcChip">CALC OFF</div>
+      </div>
+      <div></div>
+      <div class="status-right">
+        <div class="chip" id="positionChip">Ln 1, Col 1</div>
+        <div class="chip" id="statsChip">0 chars</div>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept=".txt,.md,.csv,.log,.json,.html,.js,.css" />
+
+  <div class="modal-backdrop" id="asciiModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="asciiModalTitle">
+      <div class="modal-header">
+        <div id="asciiModalTitle">ASCII CHARACTER MAP</div>
+        <button class="modal-close" type="button" id="closeAsciiModal">Close</button>
+      </div>
+      <div class="char-grid" id="charGrid"></div>
+      <div class="small-note">Click repeatedly to keep inserting characters. The map stays open until you close it.</div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="builderModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="builderModalTitle">
+      <div class="modal-header">
+        <div id="builderModalTitle">ASCII WINDOW BUILDER</div>
+        <button class="modal-close" type="button" id="closeBuilderModal">Close</button>
+      </div>
+      <div class="builder-grid">
+        <div class="field">
+          <label for="boxWidth">Width</label>
+          <input id="boxWidth" type="number" min="8" max="120" value="36" />
+        </div>
+        <div class="field">
+          <label for="boxHeight">Height</label>
+          <input id="boxHeight" type="number" min="3" max="40" value="8" />
+        </div>
+        <div class="field">
+          <label for="boxStyle">Border Style</label>
+          <select id="boxStyle">
+            <option value="single">Single Line</option>
+            <option value="double">Double Line</option>
+            <option value="mixed1">Double Outer / Single Vertical</option>
+            <option value="mixed2">Single Outer / Double Vertical</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="boxTitle">Title</label>
+          <input id="boxTitle" type="text" maxlength="60" value="WINDOW" />
+        </div>
+        <div class="field">
+          <label for="headerStyle">Header Style</label>
+          <select id="headerStyle">
+            <option value="none">None</option>
+            <option value="rule">Header Rule</option>
+            <option value="banner">Centered Banner</option>
+            <option value="tab">Left Tab</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="bodyText">Body Text</label>
+          <textarea id="bodyText"></textarea>
+        </div>
+      </div>
+      <div class="preview" id="boxPreview"></div>
+      <div class="actions">
+        <button class="action-btn" type="button" id="insertBoxBtn">Insert Window</button>
+        <button class="action-btn" type="button" id="copyBoxBtn">Copy Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="replaceModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="replaceModalTitle">
+      <div class="modal-header">
+        <div id="replaceModalTitle">FIND AND REPLACE</div>
+        <button class="modal-close" type="button" id="closeReplaceModal">Close</button>
+      </div>
+      <div class="replace-grid">
+        <div class="field">
+          <label for="findText">Find</label>
+          <input id="findText" type="text" />
+        </div>
+        <div class="field">
+          <label for="replaceText">Replace With</label>
+          <input id="replaceText" type="text" />
+        </div>
+      </div>
+      <div class="actions">
+        <button class="action-btn" type="button" id="findFromModalBtn">Find Next</button>
+        <button class="action-btn" type="button" id="replaceOneBtn">Replace</button>
+        <button class="action-btn" type="button" id="replaceAllBtn">Replace All</button>
+      </div>
+      <div class="small-note">Case-sensitive plain text replace.</div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="voiceModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="voiceModalTitle">
+      <div class="modal-header">
+        <div id="voiceModalTitle">VOICE SETTINGS</div>
+        <button class="modal-close" type="button" id="closeVoiceModal">Close</button>
+      </div>
+      <div class="voice-grid">
+        <div class="field">
+          <label for="voiceSelect">Voice</label>
+          <select id="voiceSelect"></select>
+        </div>
+        <div class="field">
+          <label for="voiceRate">Rate</label>
+          <input id="voiceRate" type="number" min="0.4" max="1.5" step="0.05" value="0.78" />
+        </div>
+        <div class="field">
+          <label for="voicePitch">Pitch</label>
+          <input id="voicePitch" type="number" min="0.3" max="1.4" step="0.05" value="0.72" />
+        </div>
+        <div class="field">
+          <label for="voiceVolume">Volume</label>
+          <input id="voiceVolume" type="number" min="0" max="1" step="0.05" value="1" />
+        </div>
+      </div>
+      <div class="actions">
+        <button class="action-btn" type="button" id="testVoiceBtn">Test Voice</button>
+        <button class="action-btn" type="button" id="applyWoprBtn">Apply WOPR-Inspired Preset</button>
+      </div>
+      <div class="small-note">This is a WOPR-inspired browser TTS style, not an exact clone. Quality depends on the voices installed in your browser and OS.</div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="aboutModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="aboutModalTitle">
+      <div class="modal-header">
+        <div id="aboutModalTitle">ABOUT AMBERDOS</div>
+        <button class="modal-close" type="button" id="closeAboutModal">Close</button>
+      </div>
+      <div class="panel-body" style="padding:0; overflow:visible;">
+AmberDOS Text Editor v1.9
+
+A single-file retro CRT-style plain-text editor with DOS-inspired visuals.
+
+Main features:
+- plain ASCII text editing
+- ASCII character map and window builder
+- find, replace, and line navigation
+- Amber Phosphor, Green Phosphor, and White Phosphor themes
+- browser voice output with a WOPR-inspired preset
+- calculator mode with notebook-style outputs and persistent variables
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const editor = document.getElementById('editor');
+    const fileInput = document.getElementById('fileInput');
+    const menubar = document.getElementById('menubar');
+    const menus = Array.from(document.querySelectorAll('.menu'));
+    const workspace = document.getElementById('workspace');
+    const calcOutputs = document.getElementById('calcOutputs');
+    const calcVarsEl = document.getElementById('calcVars');
+
+    const titleLabel = document.getElementById('titleLabel');
+    const dateLabel = document.getElementById('dateLabel');
+    const scanStatus = document.getElementById('scanStatus');
+    const calcMenuStatus = document.getElementById('calcMenuStatus');
+
+    const messageChip = document.getElementById('messageChip');
+    const positionChip = document.getElementById('positionChip');
+    const statsChip = document.getElementById('statsChip');
+    const calcChip = document.getElementById('calcChip');
+
+    const asciiModalBackdrop = document.getElementById('asciiModalBackdrop');
+    const closeAsciiModal = document.getElementById('closeAsciiModal');
+    const charGrid = document.getElementById('charGrid');
+
+    const builderModalBackdrop = document.getElementById('builderModalBackdrop');
+    const closeBuilderModal = document.getElementById('closeBuilderModal');
+    const boxWidth = document.getElementById('boxWidth');
+    const boxHeight = document.getElementById('boxHeight');
+    const boxStyle = document.getElementById('boxStyle');
+    const boxTitle = document.getElementById('boxTitle');
+    const headerStyle = document.getElementById('headerStyle');
+    const bodyText = document.getElementById('bodyText');
+    const boxPreview = document.getElementById('boxPreview');
+    const insertBoxBtn = document.getElementById('insertBoxBtn');
+    const copyBoxBtn = document.getElementById('copyBoxBtn');
+
+    const replaceModalBackdrop = document.getElementById('replaceModalBackdrop');
+    const closeReplaceModal = document.getElementById('closeReplaceModal');
+    const findText = document.getElementById('findText');
+    const replaceText = document.getElementById('replaceText');
+    const findFromModalBtn = document.getElementById('findFromModalBtn');
+    const replaceOneBtn = document.getElementById('replaceOneBtn');
+    const replaceAllBtn = document.getElementById('replaceAllBtn');
+
+    const voiceModalBackdrop = document.getElementById('voiceModalBackdrop');
+    const closeVoiceModal = document.getElementById('closeVoiceModal');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const voiceRate = document.getElementById('voiceRate');
+    const voicePitch = document.getElementById('voicePitch');
+    const voiceVolume = document.getElementById('voiceVolume');
+    const testVoiceBtn = document.getElementById('testVoiceBtn');
+    const applyWoprBtn = document.getElementById('applyWoprBtn');
+
+    const aboutModalBackdrop = document.getElementById('aboutModalBackdrop');
+    const closeAboutModal = document.getElementById('closeAboutModal');
+
+    let currentFileName = 'untitled.txt';
+    let dirty = false;
+    let lastSearch = '';
+    let savedSelectionStart = 0;
+    let savedSelectionEnd = 0;
+    let calcMode = false;
+    let availableVoices = [];
+    const persistentVars = Object.create(null);
+
+    const THEMES = {
+      amber: {
+        title: 'AmberDOS Text Editor v1.9',
+        vars: {
+          '--bg':'#050402','--fg':'#d89a3b','--fg-dim':'#8f6321','--fg-soft':'rgba(216,154,59,.12)',
+          '--fg-glow':'rgba(216,154,59,.24)','--border':'#6f4512','--menu-bg':'#0f0904','--menu-hover':'rgba(216,154,59,.10)',
+          '--select-bg':'rgba(216,154,59,.72)','--select-fg':'#140d05','--panel-bg':'rgba(216,154,59,.025)',
+          '--chip-bg':'rgba(216,154,59,.045)','--chip-border':'rgba(216,154,59,.18)','--modal-bg':'rgba(5,4,2,.97)'
+        }
+      },
+      green: {
+        title: 'AmberDOS Text Editor v1.9',
+        vars: {
+          '--bg':'#010401','--fg':'#4fa34c','--fg-dim':'#2e622d','--fg-soft':'rgba(79,163,76,.08)',
+          '--fg-glow':'rgba(79,163,76,.16)','--border':'#2a5128','--menu-bg':'#050d05','--menu-hover':'rgba(79,163,76,.07)',
+          '--select-bg':'rgba(79,163,76,.66)','--select-fg':'#081008','--panel-bg':'rgba(79,163,76,.018)',
+          '--chip-bg':'rgba(79,163,76,.035)','--chip-border':'rgba(79,163,76,.15)','--modal-bg':'rgba(1,4,1,.97)'
+        }
+      },
+      white: {
+        title: 'AmberDOS Text Editor v1.9',
+        vars: {
+          '--bg':'#040404','--fg':'#dcdcdc','--fg-dim':'#8d8d8d','--fg-soft':'rgba(220,220,220,.08)',
+          '--fg-glow':'rgba(220,220,220,.18)','--border':'#6c6c6c','--menu-bg':'#111111','--menu-hover':'rgba(220,220,220,.08)',
+          '--select-bg':'rgba(220,220,220,.70)','--select-fg':'#101010','--panel-bg':'rgba(220,220,220,.02)',
+          '--chip-bg':'rgba(220,220,220,.04)','--chip-border':'rgba(220,220,220,.16)','--modal-bg':'rgba(6,6,6,.97)'
+        }
+      }
+    };
+
+    const BOX_SETS = {
+      single: { tl:'┌', tr:'┐', bl:'└', br:'┘', h:'─', v:'│' },
+      double: { tl:'╔', tr:'╗', bl:'╚', br:'╝', h:'═', v:'║' },
+      mixed1: { tl:'╒', tr:'╕', bl:'╘', br:'╛', h:'═', v:'│' },
+      mixed2: { tl:'┌', tr:'┐', bl:'└', br:'┘', h:'─', v:'║' }
+    };
+
+    const CHAR_MAP = [
+      '─','│','┌','┐','└','┘','├','┤','┬','┴','┼',
+      '═','║','╔','╗','╚','╝','╠','╣','╦','╩','╬',
+      '╒','╕','╘','╛','╓','╖','╙','╜','╞','╡','╟','╢','╤','╧','╥','╨','╪','╫',
+      '█','▓','▒','░','■','·'
+    ];
+
+    function rememberSelection() {
+      savedSelectionStart = editor.selectionStart;
+      savedSelectionEnd = editor.selectionEnd;
+    }
+
+    function restoreSelection() {
+      editor.focus();
+      editor.setSelectionRange(savedSelectionStart, savedSelectionEnd);
+    }
+
+    function setMessage(text) {
+      messageChip.textContent = text;
+    }
+
+    function setDateLabel() {
+      dateLabel.textContent = '2026-04-22';
+    }
+
+    function updateStatus() {
+      const value = editor.value;
+      const caretPos = editor.selectionStart;
+      const before = value.slice(0, caretPos);
+      const lines = before.split('\n');
+      const line = lines.length;
+      const col = lines[lines.length - 1].length + 1;
+
+      positionChip.textContent = `Ln ${line}, Col ${col}`;
+      statsChip.textContent = `${value.length} chars`;
+      calcChip.textContent = calcMode ? 'CALC ON' : 'CALC OFF';
+      calcMenuStatus.textContent = calcMode ? 'ON' : 'OFF';
+      rememberSelection();
+      document.title = `${dirty ? '*' : ''}AmberDOS Text Editor v1.9`;
+    }
+
+    function applyTheme(name) {
+      const theme = THEMES[name];
+      if (!theme) return;
+      for (const [k,v] of Object.entries(theme.vars)) {
+        document.documentElement.style.setProperty(k, v);
+      }
+      titleLabel.textContent = theme.title;
+      setMessage(name === 'amber' ? 'AMBER PHOSPHOR' : name === 'green' ? 'GREEN PHOSPHOR' : 'WHITE PHOSPHOR');
+    }
+
+    function toggleScanlines() {
+      const current = getComputedStyle(document.documentElement).getPropertyValue('--scan-opacity').trim();
+      const on = current !== '.28';
+      document.documentElement.style.setProperty('--scan-opacity', on ? '.28' : '.48');
+      scanStatus.textContent = on ? 'OFF' : 'ON';
+      setMessage(on ? 'SCANLINES OFF' : 'SCANLINES ON');
+    }
+
+    function insertAtSelection(text, selectMode='end') {
+      restoreSelection();
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      editor.setRangeText(text, start, end, selectMode);
+      dirty = true;
+      updateStatus();
+      if (calcMode) recomputeNotebook();
+      editor.focus();
+    }
+
+    function handlePlainEnter() {
+      restoreSelection();
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      editor.setRangeText('\n', start, end, 'end');
+      dirty = true;
+      updateStatus();
+      if (calcMode) recomputeNotebook();
+      editor.focus();
+    }
+
+    function downloadFile(forcePrompt=false) {
+      let fileName = currentFileName;
+      if (forcePrompt || currentFileName === 'untitled.txt') {
+        const proposed = prompt('Save file as:', currentFileName);
+        if (!proposed) { setMessage('SAVE CANCELLED'); return; }
+        fileName = proposed.trim() || 'untitled.txt';
+        currentFileName = fileName;
+      }
+      const blob = new Blob([editor.value], { type:'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      dirty = false;
+      updateStatus();
+      setMessage(`SAVED ${currentFileName.toUpperCase()}`);
+    }
+
+    function newDocument() {
+      if (dirty && !confirm('Discard current unsaved changes?')) return;
+      editor.value = '';
+      currentFileName = 'untitled.txt';
+      dirty = false;
+      savedSelectionStart = 0;
+      savedSelectionEnd = 0;
+      for (const k of Object.keys(persistentVars)) delete persistentVars[k];
+      editor.focus();
+      recomputeNotebook();
+      updateStatus();
+      setMessage('NEW DOCUMENT');
+    }
+
+    function openDocument() {
+      fileInput.value = '';
+      fileInput.click();
+    }
+
+    function insertDateValue() {
+      insertAtSelection('2026-04-22');
+      setMessage('DATE INSERTED');
+    }
+
+    function clearSelectionOrAll() {
+      restoreSelection();
+      if (editor.selectionStart !== editor.selectionEnd) {
+        editor.setRangeText('', editor.selectionStart, editor.selectionEnd, 'start');
+      } else {
+        editor.value = '';
+      }
+      dirty = true;
+      updateStatus();
+      if (calcMode) recomputeNotebook();
+      setMessage('CLEARED');
+      editor.focus();
+    }
+
+    function getSelectedLineRange() {
+      restoreSelection();
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+      const value = editor.value;
+      const lineStart = value.lastIndexOf('\n', Math.max(0, start - 1)) + 1;
+      let lineEnd = value.indexOf('\n', end);
+      if (lineEnd === -1) lineEnd = value.length;
+      return { lineStart, lineEnd };
+    }
+
+    function commentSelectionWithDashes() {
+      const { lineStart, lineEnd } = getSelectedLineRange();
+      const block = editor.value.slice(lineStart, lineEnd);
+      const commented = block.split('\n').map(line => `--${line}`).join('\n');
+      editor.setRangeText(commented, lineStart, lineEnd, 'select');
+      dirty = true;
+      updateStatus();
+      if (calcMode) recomputeNotebook();
+      setMessage('COMMENTED');
+      editor.focus();
+    }
+
+    function uncommentSelectionWithDashes() {
+      const { lineStart, lineEnd } = getSelectedLineRange();
+      const block = editor.value.slice(lineStart, lineEnd);
+      const uncommented = block.split('\n').map(line => line.replace(/^--/, '')).join('\n');
+      editor.setRangeText(uncommented, lineStart, lineEnd, 'select');
+      dirty = true;
+      updateStatus();
+      if (calcMode) recomputeNotebook();
+      setMessage('UNCOMMENTED');
+      editor.focus();
+    }
+
+    function doFind(next=false) {
+      let term = lastSearch;
+      if (!next || !term) {
+        const input = prompt('Find:', lastSearch || '');
+        if (input === null) { setMessage('FIND CANCELLED'); return; }
+        term = input;
+        lastSearch = term;
+      }
+      if (!term) { setMessage('NO SEARCH TEXT'); return; }
+      const haystack = editor.value;
+      const startFrom = next ? editor.selectionEnd : editor.selectionStart;
+      let idx = haystack.indexOf(term, startFrom);
+      if (idx === -1 && startFrom > 0) idx = haystack.indexOf(term, 0);
+      if (idx === -1) { setMessage('TEXT NOT FOUND'); return; }
+      editor.focus();
+      editor.setSelectionRange(idx, idx + term.length);
+      updateStatus();
+      setMessage(`FOUND "${term.toUpperCase()}"`);
+    }
+
+    function gotoLine() {
+      const input = prompt('Go to line:');
+      if (input === null) { setMessage('GO TO CANCELLED'); return; }
+      const target = Math.max(1, parseInt(input, 10) || 1);
+      const lines = editor.value.split('\n');
+      let pos = 0;
+      for (let i = 0; i < Math.min(target - 1, lines.length - 1); i++) pos += lines[i].length + 1;
+      editor.focus();
+      editor.setSelectionRange(pos, pos);
+      updateStatus();
+      setMessage(`LINE ${target}`);
+    }
+
+    function openReplaceModal() {
+      rememberSelection();
+      findText.value = lastSearch;
+      replaceModalBackdrop.classList.add('show');
+      closeMenus();
+      findText.focus();
+      setMessage('FIND / REPLACE');
+    }
+
+    function closeReplaceDialog() {
+      replaceModalBackdrop.classList.remove('show');
+      restoreSelection();
+    }
+
+    function replaceCurrent() {
+      restoreSelection();
+      const findVal = findText.value;
+      const replaceVal = replaceText.value;
+      if (!findVal) { setMessage('NO FIND TEXT'); return; }
+      const selected = editor.value.slice(editor.selectionStart, editor.selectionEnd);
+      if (selected === findVal) {
+        editor.setRangeText(replaceVal, editor.selectionStart, editor.selectionEnd, 'select');
+        dirty = true;
+        updateStatus();
+        if (calcMode) recomputeNotebook();
+        setMessage('REPLACED');
+        return;
+      }
+      lastSearch = findVal;
+      doFind(false);
+    }
+
+    function replaceAll() {
+      const findVal = findText.value;
+      const replaceVal = replaceText.value;
+      if (!findVal) { setMessage('NO FIND TEXT'); return; }
+      const count = editor.value.split(findVal).length - 1;
+      if (count === 0) { setMessage('TEXT NOT FOUND'); return; }
+      editor.value = editor.value.split(findVal).join(replaceVal);
+      dirty = true;
+      lastSearch = findVal;
+      updateStatus();
+      if (calcMode) recomputeNotebook();
+      setMessage(`REPLACED ${count}`);
+      editor.focus();
+    }
+
+    function openAsciiModal() {
+      rememberSelection();
+      asciiModalBackdrop.classList.add('show');
+      closeMenus();
+      setMessage('CHARACTER MAP');
+    }
+
+    function closeAsciiDialog() {
+      asciiModalBackdrop.classList.remove('show');
+      restoreSelection();
+    }
+
+    function openBuilderModal() {
+      rememberSelection();
+      builderModalBackdrop.classList.add('show');
+      renderBoxPreview();
+      closeMenus();
+      setMessage('WINDOW BUILDER');
+    }
+
+    function closeBuilderDialog() {
+      builderModalBackdrop.classList.remove('show');
+      restoreSelection();
+    }
+
+    function openAboutModal() {
+      aboutModalBackdrop.classList.add('show');
+      closeMenus();
+      setMessage('ABOUT');
+    }
+
+    function closeAboutDialog() {
+      aboutModalBackdrop.classList.remove('show');
+      editor.focus();
+    }
+
+    function populateVoiceList() {
+      if (!('speechSynthesis' in window)) return;
+      availableVoices = window.speechSynthesis.getVoices().filter(v => /en/i.test(v.lang || '') || !v.lang);
+      const previous = voiceSelect.value;
+      voiceSelect.innerHTML = '';
+      availableVoices.forEach((v, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = `${v.name} (${v.lang || 'unknown'})`;
+        voiceSelect.appendChild(opt);
+      });
+      let bestIndex = availableVoices.findIndex(v => /(david|mark|daniel|alex|microsoft|google us english|fred|male)/i.test(v.name));
+      if (bestIndex < 0) bestIndex = 0;
+      voiceSelect.value = previous && availableVoices[Number(previous)] ? previous : String(Math.max(0, bestIndex));
+    }
+
+    function applyWoprPreset() {
+      voiceRate.value = '0.78';
+      voicePitch.value = '0.72';
+      voiceVolume.value = '1';
+      if (availableVoices.length) {
+        let bestIndex = availableVoices.findIndex(v => /(david|mark|daniel|alex|microsoft|google us english|fred|male)/i.test(v.name));
+        if (bestIndex < 0) bestIndex = 0;
+        voiceSelect.value = String(bestIndex);
+      }
+      setMessage('WOPR-INSPIRED PRESET');
+    }
+
+    function buildUtterance(text) {
+      const cleaned = String(text || '').trim();
+      if (!cleaned) return null;
+      const utter = new SpeechSynthesisUtterance(cleaned);
+      const idx = Number(voiceSelect.value || 0);
+      if (availableVoices[idx]) utter.voice = availableVoices[idx];
+      utter.rate = Math.max(0.4, Math.min(1.5, Number(voiceRate.value) || 0.78));
+      utter.pitch = Math.max(0.3, Math.min(1.4, Number(voicePitch.value) || 0.72));
+      utter.volume = Math.max(0, Math.min(1, Number(voiceVolume.value) || 1));
+      return utter;
+    }
+
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) { setMessage('TTS NOT AVAILABLE'); return; }
+      const utter = buildUtterance(text);
+      if (!utter) { setMessage('NO TEXT TO SPEAK'); return; }
+      window.speechSynthesis.cancel();
+      utter.onstart = () => setMessage('SPEAKING');
+      utter.onend = () => setMessage('SPEECH COMPLETE');
+      utter.onerror = () => setMessage('SPEECH ERROR');
+      window.speechSynthesis.speak(utter);
+    }
+
+    function speakSelection() {
+      restoreSelection();
+      const txt = editor.value.slice(editor.selectionStart, editor.selectionEnd);
+      if (!txt.trim()) { setMessage('NO SELECTION'); return; }
+      speakText(txt);
+    }
+
+    function speakDocument() {
+      speakText(editor.value);
+    }
+
+    function stopSpeech() {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      setMessage('SPEECH STOPPED');
+    }
+
+    function openVoiceSettings() {
+      rememberSelection();
+      voiceModalBackdrop.classList.add('show');
+      closeMenus();
+      populateVoiceList();
+      setMessage('VOICE SETTINGS');
+    }
+
+    function closeVoiceDialog() {
+      voiceModalBackdrop.classList.remove('show');
+      restoreSelection();
+    }
+
+    function clipText(text, max) {
+      return String(text || '').replace(/[\r]/g, '').slice(0, max);
+    }
+
+    function wrapTextToWidth(text, width) {
+      const rawLines = String(text || '').split('\n');
+      const out = [];
+      for (const raw of rawLines) {
+        if (raw === '') { out.push(''); continue; }
+        let line = raw;
+        while (line.length > width) {
+          out.push(line.slice(0, width));
+          line = line.slice(width);
+        }
+        out.push(line);
+      }
+      return out;
+    }
+
+    function buildAsciiWindow(width, height, style, title='', header='none', body='') {
+      const w = Math.max(8, Math.min(120, Number(width) || 8));
+      const h = Math.max(3, Math.min(40, Number(height) || 3));
+      const box = BOX_SETS[style] || BOX_SETS.single;
+      const innerW = w - 2;
+      const titleText = clipText(title.trim(), Math.max(0, innerW - 2));
+
+      let top;
+      if (titleText) {
+        const decorated = ` ${titleText} `;
+        const remaining = Math.max(0, innerW - decorated.length);
+        const leftFill = Math.floor(remaining / 2);
+        const rightFill = remaining - leftFill;
+        top = box.tl + box.h.repeat(leftFill) + decorated + box.h.repeat(rightFill) + box.tr;
+      } else {
+        top = box.tl + box.h.repeat(innerW) + box.tr;
+      }
+
+      const contentLines = [];
+      const bodyLines = wrapTextToWidth(body, innerW).map(line => line.padEnd(innerW, ' '));
+
+      if (header === 'rule' && titleText) {
+        contentLines.push(titleText.padEnd(innerW, ' '));
+        contentLines.push(box.h.repeat(innerW));
+      } else if (header === 'banner' && titleText) {
+        const banner = `[ ${clipText(titleText, Math.max(0, innerW - 4))} ]`;
+        const padLeft = Math.max(0, Math.floor((innerW - banner.length) / 2));
+        contentLines.push(((' '.repeat(padLeft) + banner).slice(0, innerW)).padEnd(innerW, ' '));
+      } else if (header === 'tab' && titleText) {
+        const tab = `${box.v} ${clipText(titleText, Math.max(0, innerW - 2))}`;
+        contentLines.push(tab.slice(0, innerW).padEnd(innerW, ' '));
+      }
+
+      contentLines.push(...bodyLines);
+      const usableRows = h - 2;
+      const shown = contentLines.slice(0, usableRows);
+      while (shown.length < usableRows) shown.push(' '.repeat(innerW));
+
+      const middle = shown.map(line => box.v + line.slice(0, innerW).padEnd(innerW, ' ') + box.v);
+      const bottom = box.bl + box.h.repeat(innerW) + box.br;
+      return [top, ...middle, bottom].join('\n');
+    }
+
+    function renderBoxPreview() {
+      boxPreview.textContent = buildAsciiWindow(
+        boxWidth.value, boxHeight.value, boxStyle.value,
+        boxTitle.value, headerStyle.value, bodyText.value
+      );
+    }
+
+    function makeHeading1(text='SECTION TITLE') {
+      const title = clipText(text.trim() || 'SECTION TITLE', 60);
+      return [
+        '╔' + '═'.repeat(title.length + 2) + '╗',
+        '║ ' + title + ' ║',
+        '╚' + '═'.repeat(title.length + 2) + '╝'
+      ].join('\n');
+    }
+
+    function makeHeading2(text='SUBSECTION') {
+      const title = clipText(text.trim() || 'SUBSECTION', 60);
+      return [title, '─'.repeat(title.length)].join('\n');
+    }
+
+    function makeHeading3(text='DETAIL') {
+      const title = clipText(text.trim() || 'DETAIL', 60);
+      return `[ ${title} ]`;
+    }
+
+    function populateCharMap() {
+      charGrid.innerHTML = '';
+      CHAR_MAP.forEach(ch => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'char-btn';
+        btn.textContent = ch;
+        btn.title = `Insert ${ch}`;
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          insertAtSelection(ch);
+          setMessage(`INSERTED ${ch}`);
+        });
+        charGrid.appendChild(btn);
+      });
+    }
+
+    function splitCalcLine(line) {
+      const idx = line.indexOf('|');
+      if (idx === -1) return { expr: line.trim(), cond: '' };
+      return { expr: line.slice(0, idx).trim(), cond: line.slice(idx + 1).trim() };
+    }
+
+    function parseAssignments(text) {
+      const out = Object.create(null);
+      if (!text) return out;
+      const pieces = text.split(/[;,]/).map(s => s.trim()).filter(Boolean);
+      for (const piece of pieces) {
+        const m = piece.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+        if (m) out[m[1]] = m[2].trim();
+      }
+      return out;
+    }
+
+    function sanitizeExpr(rawExpr) {
+      let expr = String(rawExpr || '').trim();
+      expr = expr.replace(/[–—]/g, '-').replace(/\^/g, '**');
+      expr = expr.replace(/√\s*\(/g, 'sqrt(');
+
+      expr = expr.replace(/(\d)([A-Za-z_(])/g, '$1*$2');
+      expr = expr.replace(/([A-Za-z_)])(\d)/g, '$1*$2');
+      expr = expr.replace(/([A-Za-z_)])([A-Za-z_(])/g, (m, a, b) => {
+        const funcs = ['sin','cos','tan','asin','acos','atan','sqrt','log','ln','abs','floor','ceil','round','min','max','pow'];
+        if (/[A-Za-z_]/.test(a) && funcs.includes(a)) return a + b;
+        return a + '*' + b;
+      });
+
+      expr = expr.replace(/\bln\(/g, 'Math.log(');
+      expr = expr.replace(/\blog\(/g, 'Math.log10(');
+      expr = expr.replace(/\bsqrt\(/g, 'Math.sqrt(');
+      expr = expr.replace(/\bsin\(/g, 'Math.sin(');
+      expr = expr.replace(/\bcos\(/g, 'Math.cos(');
+      expr = expr.replace(/\btan\(/g, 'Math.tan(');
+      expr = expr.replace(/\basin\(/g, 'Math.asin(');
+      expr = expr.replace(/\bacos\(/g, 'Math.acos(');
+      expr = expr.replace(/\batan\(/g, 'Math.atan(');
+      expr = expr.replace(/\babs\(/g, 'Math.abs(');
+      expr = expr.replace(/\bfloor\(/g, 'Math.floor(');
+      expr = expr.replace(/\bceil\(/g, 'Math.ceil(');
+      expr = expr.replace(/\bround\(/g, 'Math.round(');
+      expr = expr.replace(/\bmin\(/g, 'Math.min(');
+      expr = expr.replace(/\bmax\(/g, 'Math.max(');
+      expr = expr.replace(/\bpow\(/g, 'Math.pow(');
+      expr = expr.replace(/\bpi\b/gi, 'Math.PI');
+      expr = expr.replace(/\be\b/g, 'Math.E');
+
+      if (/[^0-9A-Za-z_+\-*/%().,=<>!&| \t:*]/.test(expr)) throw new Error('Unsupported characters');
+      return expr;
+    }
+
+    function evalCalcExpression(exprText, localVars={}) {
+      const scope = { ...persistentVars, ...localVars };
+      const keys = Object.keys(scope);
+      const sanitized = sanitizeExpr(exprText);
+      const values = keys.map(k => scope[k]);
+      const fn = Function(...keys, `"use strict"; return (${sanitized});`);
+      const result = fn(...values);
+      if (typeof result !== 'number' || Number.isNaN(result)) throw new Error('Invalid result');
+      return result;
+    }
+
+    function formatCalcNumber(value) {
+      if (!Number.isFinite(value)) return String(value);
+      if (Math.abs(value) < 1e-12) value = 0;
+      const rounded = Math.round(value * 1e12) / 1e12;
+      return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+    }
+
+    function lineLooksLikeMath(line) {
+      return /[=+\-*/^()0-9]/.test(line) || /\|\s*[A-Za-z_]/.test(line);
+    }
+
+    function recomputeNotebook() {
+      if (!calcMode) {
+        calcOutputs.textContent = '[calculator mode off]';
+        calcVarsEl.textContent = '[none]';
+        return;
+      }
+
+      for (const k of Object.keys(persistentVars)) delete persistentVars[k];
+
+      const lines = editor.value.split('\n');
+      const outputs = [];
+
+      lines.forEach((rawLine, i) => {
+        const lineNo = i + 1;
+        const line = rawLine.trim();
+        if (!line) return;
+        if (/^(--|#)/.test(line)) return;
+        if (!lineLooksLikeMath(line)) return;
+
+        try {
+          const { expr, cond } = splitCalcLine(line);
+          const localAssignments = parseAssignments(cond);
+          const resolvedLocal = Object.create(null);
+
+          for (const [name, rhs] of Object.entries(localAssignments)) {
+            resolvedLocal[name] = evalCalcExpression(rhs, resolvedLocal);
+          }
+
+          const assignOnly = expr.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+          let result;
+          if (assignOnly) {
+            result = evalCalcExpression(assignOnly[2], resolvedLocal);
+            persistentVars[assignOnly[1]] = result;
+            outputs.push(`[${lineNo}] ${assignOnly[1]} = ${formatCalcNumber(result)}`);
+          } else {
+            result = evalCalcExpression(expr, resolvedLocal);
+            outputs.push(`[${lineNo}] ${formatCalcNumber(result)}`);
+          }
+        } catch {
+          outputs.push(`[${lineNo}] ERROR`);
+        }
+      });
+
+      calcOutputs.textContent = outputs.length ? outputs.join('\n') : '[no results]';
+      const vars = Object.entries(persistentVars).map(([k,v]) => `${k} = ${formatCalcNumber(v)}`);
+      calcVarsEl.textContent = vars.length ? vars.join('\n') : '[none]';
+    }
+
+    function toggleCalcMode() {
+      calcMode = !calcMode;
+      workspace.classList.toggle('calc-mode', calcMode);
+      if (calcMode) recomputeNotebook();
+      updateStatus();
+      setMessage(calcMode ? 'CALCULATOR MODE ON' : 'CALCULATOR MODE OFF');
+    }
+
+    function handleAction(action) {
+      closeMenus();
+      switch (action) {
+        case 'new': return newDocument();
+        case 'open': return openDocument();
+        case 'save': return downloadFile(false);
+        case 'saveas': return downloadFile(true);
+        case 'insertdate': return insertDateValue();
+        case 'undo': editor.focus(); document.execCommand('undo'); updateStatus(); if (calcMode) recomputeNotebook(); setMessage('UNDO'); return;
+        case 'redo': editor.focus(); document.execCommand('redo'); updateStatus(); if (calcMode) recomputeNotebook(); setMessage('REDO'); return;
+        case 'cut': return doClipboard('cut');
+        case 'copy': return doClipboard('copy');
+        case 'paste': return doClipboard('paste');
+        case 'selectall': editor.focus(); editor.select(); updateStatus(); setMessage('SELECT ALL'); return;
+        case 'clear': return clearSelectionOrAll();
+        case 'comment-dashes': return commentSelectionWithDashes();
+        case 'uncomment-dashes': return uncommentSelectionWithDashes();
+        case 'find': return doFind(false);
+        case 'findnext': return doFind(true);
+        case 'replace': return openReplaceModal();
+        case 'goto': return gotoLine();
+        case 'theme-amber': return applyTheme('amber');
+        case 'theme-green': return applyTheme('green');
+        case 'theme-white': return applyTheme('white');
+        case 'toggle-scanlines': return toggleScanlines();
+        case 'charmap': return openAsciiModal();
+        case 'windowbuilder': return openBuilderModal();
+        case 'insert-heading-1': return insertAtSelection(makeHeading1(prompt('Heading 1 text:', 'SECTION TITLE') || 'SECTION TITLE'));
+        case 'insert-heading-2': return insertAtSelection(makeHeading2(prompt('Heading 2 text:', 'SUBSECTION') || 'SUBSECTION'));
+        case 'insert-heading-3': return insertAtSelection(makeHeading3(prompt('Heading 3 text:', 'DETAIL') || 'DETAIL'));
+        case 'insert-single-box': return insertAtSelection(buildAsciiWindow(36, 8, 'single', 'WINDOW', 'none', ''));
+        case 'insert-double-box': return insertAtSelection(buildAsciiWindow(36, 8, 'double', 'WINDOW', 'none', ''));
+        case 'insert-single-rule': return insertAtSelection('─'.repeat(40));
+        case 'insert-double-rule': return insertAtSelection('═'.repeat(40));
+        case 'toggle-calc': return toggleCalcMode();
+        case 'about': return openAboutModal();
+        case 'speak-selection': return speakSelection();
+        case 'speak-document': return speakDocument();
+        case 'stop-speech': return stopSpeech();
+        case 'voice-preset-wopr': return applyWoprPreset();
+        case 'open-voice-settings': return openVoiceSettings();
+      }
+    }
+
+    function doClipboard(action) {
+      restoreSelection();
+      try {
+        if (action === 'cut') document.execCommand('cut');
+        if (action === 'copy') document.execCommand('copy');
+        if (action === 'paste') document.execCommand('paste');
+        updateStatus();
+        if (calcMode) recomputeNotebook();
+        setMessage(action.toUpperCase());
+      } catch {
+        setMessage(`${action.toUpperCase()} NOT AVAILABLE`);
+      }
+    }
+
+    function closeMenus() {
+      menus.forEach(m => m.classList.remove('open'));
+    }
+
+    function toggleMenu(menu) {
+      const open = menu.classList.contains('open');
+      closeMenus();
+      if (!open) menu.classList.add('open');
+    }
+
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        editor.value = String(reader.result || '');
+        currentFileName = file.name || 'untitled.txt';
+        dirty = false;
+        savedSelectionStart = 0;
+        savedSelectionEnd = 0;
+        updateStatus();
+        if (calcMode) recomputeNotebook();
+        setMessage(`OPENED ${currentFileName.toUpperCase()}`);
+        editor.focus();
+      };
+      reader.onerror = () => setMessage('READ ERROR');
+      reader.readAsText(file);
+    });
+
+    menus.forEach(menu => {
+      const btn = menu.querySelector('.menu-button');
+      btn.addEventListener('mousedown', () => rememberSelection());
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMenu(menu);
+      });
+    });
+
+    menubar.addEventListener('click', (e) => {
+      const item = e.target.closest('[data-action]');
+      if (!item) return;
+      handleAction(item.dataset.action);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.menu') && !e.target.closest('.modal')) closeMenus();
+    });
+
+    editor.addEventListener('input', () => {
+      dirty = true;
+      updateStatus();
+      if (calcMode) recomputeNotebook();
+      setMessage('EDITING');
+    });
+
+    ['click','keyup','select','mouseup','scroll'].forEach(evt => editor.addEventListener(evt, updateStatus));
+
+    editor.addEventListener('keydown', (event) => {
+      rememberSelection();
+      if (event.key === 'Tab') { event.preventDefault(); insertAtSelection('    '); return; }
+      if (event.key === 'Enter') { event.preventDefault(); handlePlainEnter(); return; }
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 's') { event.preventDefault(); downloadFile(false); return; }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 's') { event.preventDefault(); downloadFile(true); return; }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'o') { event.preventDefault(); openDocument(); return; }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'n') { event.preventDefault(); newDocument(); return; }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') { event.preventDefault(); doFind(false); return; }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'h') { event.preventDefault(); openReplaceModal(); return; }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'g') { event.preventDefault(); gotoLine(); return; }
+      if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key === '/') { event.preventDefault(); commentSelectionWithDashes(); return; }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === '?') { event.preventDefault(); uncommentSelectionWithDashes(); return; }
+      if (event.altKey && event.key.toLowerCase() === 'a') { event.preventDefault(); openAsciiModal(); return; }
+      if (event.altKey && event.key.toLowerCase() === 'w') { event.preventDefault(); openBuilderModal(); return; }
+      if (event.altKey && event.key.toLowerCase() === 's') { event.preventDefault(); speakSelection(); return; }
+      if (event.key === 'F3') { event.preventDefault(); doFind(true); return; }
+      if (event.key === 'F5') { event.preventDefault(); insertDateValue(); return; }
+    });
+
+    closeAsciiModal.addEventListener('click', closeAsciiDialog);
+    closeBuilderModal.addEventListener('click', closeBuilderDialog);
+    closeReplaceModal.addEventListener('click', closeReplaceDialog);
+    closeVoiceModal.addEventListener('click', closeVoiceDialog);
+    closeAboutModal.addEventListener('click', closeAboutDialog);
+
+    asciiModalBackdrop.addEventListener('click', (e) => { if (e.target === asciiModalBackdrop) closeAsciiDialog(); });
+    builderModalBackdrop.addEventListener('click', (e) => { if (e.target === builderModalBackdrop) closeBuilderDialog(); });
+    replaceModalBackdrop.addEventListener('click', (e) => { if (e.target === replaceModalBackdrop) closeReplaceDialog(); });
+    voiceModalBackdrop.addEventListener('click', (e) => { if (e.target === voiceModalBackdrop) closeVoiceDialog(); });
+    aboutModalBackdrop.addEventListener('click', (e) => { if (e.target === aboutModalBackdrop) closeAboutDialog(); });
+
+    [boxWidth, boxHeight, boxStyle, boxTitle, headerStyle, bodyText].forEach(el => el.addEventListener('input', renderBoxPreview));
+
+    insertBoxBtn.addEventListener('click', () => {
+      insertAtSelection(boxPreview.textContent);
+      setMessage('WINDOW INSERTED');
+      closeBuilderDialog();
+    });
+
+    copyBoxBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(boxPreview.textContent);
+        setMessage('PREVIEW COPIED');
+      } catch {
+        setMessage('COPY FAILED');
+      }
+    });
+
+    findFromModalBtn.addEventListener('click', () => {
+      lastSearch = findText.value;
+      doFind(false);
+    });
+    replaceOneBtn.addEventListener('click', () => {
+      lastSearch = findText.value;
+      replaceCurrent();
+    });
+    replaceAllBtn.addEventListener('click', () => {
+      lastSearch = findText.value;
+      replaceAll();
+    });
+
+    testVoiceBtn.addEventListener('click', () => speakText('Greetings, Professor. Shall we play a game?'));
+    applyWoprBtn.addEventListener('click', applyWoprPreset);
+
+    if ('speechSynthesis' in window) {
+      populateVoiceList();
+      window.speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
+
+    window.addEventListener('beforeunload', (event) => {
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    });
+
+    applyTheme('amber');
+    setDateLabel();
+    populateCharMap();
+    renderBoxPreview();
+    updateStatus();
+    recomputeNotebook();
+    editor.focus();
+  </script>
+</body>
+</html>

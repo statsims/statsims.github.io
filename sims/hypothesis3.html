@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statistics Lab — Hypothesis Testing</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg:#f6f7f9; --card:#ffffff; --border:#d9dde3;
+      --text:#1f2937; --muted:#6b7280; --soft:#f3f4f6;
+      --blue:#2563eb; --red:#dc2626; --green:#16a34a;
+      --amber:#d97706; --gray:#9ca3af; --purple:#7c3aed;
+      --teal:#0891b2;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px}
+    .container{max-width:1380px;margin:auto}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+    .small{font-size:.87rem;color:var(--muted);line-height:1.6}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+    /* ── Header ── */
+    .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+    .app-header h1{font-size:1.45rem;font-weight:700;margin-bottom:4px}
+    .app-header p{font-size:.93rem;color:var(--muted)}
+    .header-btns{display:flex;gap:8px;flex-shrink:0;align-self:flex-start;flex-wrap:wrap}
+
+    /* ── Concept strip ── */
+    .concept-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+    .concept-card{border:1px solid var(--border);border-radius:10px;padding:11px 13px;background:var(--card)}
+    .concept-label{font-weight:700;font-size:.84rem;color:var(--text)}
+    .concept-desc{font-size:.76rem;color:var(--muted);margin-top:4px;line-height:1.4}
+
+    /* ── Guide ── */
+    .guide-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px;display:none}
+    .guide-section.open{display:block}
+    .guide-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .guide-col h4{margin:0 0 8px;font-size:.9rem;color:var(--text)}
+    .guide-col ol,.guide-col ul{margin:0;padding-left:18px}
+    .guide-col li{font-size:.83rem;color:var(--muted);line-height:1.55;margin-bottom:5px}
+    .guide-col li strong{color:var(--text)}
+
+    /* ── Reference card ── */
+    .ref-card{display:none;margin-bottom:16px}
+    .ref-card.open{display:block}
+    .ref-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .ref-sec{margin-bottom:16px}
+    .ref-sec h4{margin:0 0 6px;font-size:.9rem;font-weight:700;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px}
+    .ref-sec p{font-size:.83rem;color:var(--muted);line-height:1.6;margin-bottom:5px}
+    .ref-sec p strong{color:var(--text)}
+    .ref-sec ul{padding-left:18px;margin:4px 0}
+    .ref-sec li{font-size:.83rem;color:var(--muted);line-height:1.55;margin-bottom:4px}
+    .ref-sec li strong{color:var(--text)}
+    .formula-box{background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:ui-monospace,monospace;font-size:.83rem;color:var(--text);margin:8px 0;line-height:1.7}
+    .case-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .case-box{border:1px solid var(--border);border-radius:8px;padding:9px 11px;background:var(--soft)}
+    .case-box .cl{font-weight:700;font-size:.82rem;margin-bottom:3px}
+    .case-box .cd{font-size:.76rem;color:var(--muted);line-height:1.4}
+
+    /* ── Lesson rail ── */
+    .lesson-rail{display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+    .lesson-btn{flex:1;padding:11px 6px;background:var(--card);border:none;border-right:1px solid var(--border);cursor:pointer;font-size:.75rem;font-weight:600;color:var(--muted);line-height:1.35;text-align:center;transition:background .15s,color .15s}
+    .lesson-btn:last-child{border-right:none}
+    .lesson-btn:hover{background:var(--soft)}
+    .lesson-btn.active{background:var(--blue);color:#fff}
+    .lesson-num{display:block;font-size:.64rem;font-weight:400;opacity:.75;margin-bottom:2px}
+
+    /* ── Main grid ── */
+    .main-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+
+    /* ── Lesson card ── */
+    .lesson-card{border:1px solid #bfdbfe;border-left:5px solid var(--blue);background:#eff6ff;border-radius:10px;padding:14px 16px;margin-bottom:14px}
+    .lesson-card h3{font-size:.95rem;color:#1e40af;margin:0 0 6px}
+    .lesson-card p{font-size:.83rem;color:#1d4ed8;line-height:1.65;margin:0}
+    .lesson-card strong{color:#1e3a8a}
+
+    /* ── Plot card ── */
+    .plot-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    #plot{width:100%;height:400px}
+
+    /* ── Stat bar ── */
+    .stat-bar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border)}
+    .stat-cell{padding:12px 14px;border-right:1px solid var(--border)}
+    .stat-cell:last-child{border-right:none}
+    .stat-name{font-size:.71rem;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+    .stat-val{font-family:ui-monospace,monospace;font-size:1.35rem;font-weight:700;line-height:1;transition:color .35s}
+    .stat-sub{font-size:.71rem;color:var(--muted);margin-top:4px;line-height:1.35}
+    .decision-badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700;margin-top:5px;border:1px solid}
+    .decision-reject{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
+    .decision-ftr{background:#f1f5f9;color:#475569;border-color:var(--border)}
+    .info-tip{display:inline-block;width:14px;height:14px;background:#e0e7ff;color:#3730a3;border-radius:50%;font-size:.64rem;font-weight:700;text-align:center;line-height:14px;cursor:default;position:relative;flex-shrink:0}
+    .info-tip:hover .tip-text{display:block}
+    .tip-text{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 6px);background:#1f2937;color:#fff;font-size:.72rem;padding:8px 10px;border-radius:7px;width:230px;line-height:1.5;font-family:Arial,sans-serif;font-weight:400;z-index:20;white-space:normal;pointer-events:none}
+
+    /* ── Equivalence banner ── */
+    .equiv-banner{margin-top:10px;padding:9px 14px;border:1px solid #a7f3d0;background:#ecfdf5;border-radius:8px;font-size:.81rem;color:#065f46;line-height:1.5;display:none}
+    .equiv-banner.show{display:block}
+
+    /* ── Observation panel ── */
+    .obs-card{border-radius:10px;padding:13px 15px;margin-top:12px;border:1px solid var(--border);background:var(--soft);font-size:.83rem;line-height:1.7;color:var(--text)}
+    .obs-card.blue{border-color:#bfdbfe;background:#eff6ff;color:#1e3a8a}
+    .obs-card.amber{border-color:#fde68a;background:#fffbeb;color:#78350f}
+    .obs-card.green{border-color:#86efac;background:#f0fdf4;color:#14532d}
+    .obs-card.red{border-color:#fca5a5;background:#fef2f2;color:#7f1d1d}
+    .obs-card.purple{border-color:#ddd6fe;background:#f5f3ff;color:#4c1d95}
+    .obs-card.teal{border-color:#a5f3fc;background:#ecfeff;color:#164e63}
+
+    /* ── Two-method comparison (L2 & L3) ── */
+    .method-compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .method-box{border-radius:10px;padding:12px 14px;border:1px solid var(--border);background:var(--soft);font-size:.81rem;line-height:1.6}
+    .method-box h4{font-size:.84rem;font-weight:700;margin:0 0 6px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+    .method-box.reject{border-color:#fca5a5;background:#fef2f2}
+    .method-box.reject h4{color:#991b1b}
+    .method-box.ftr{border-color:#d1d5db;background:#f9fafb}
+    .method-box.ftr h4{color:#374151}
+
+    /* ── Power grid ── */
+    .power-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+    .power-cell{border:1px solid var(--border);border-radius:9px;padding:11px 13px;background:var(--card);text-align:center}
+    .power-cell .pc-label{font-size:.72rem;color:var(--muted);margin-bottom:4px}
+    .power-cell .pc-val{font-family:ui-monospace,monospace;font-size:1.6rem;font-weight:700;line-height:1.1}
+    .power-cell .pc-desc{font-size:.71rem;color:var(--muted);margin-top:4px;line-height:1.35}
+    .power-bar-outer{height:8px;background:var(--soft);border-radius:4px;margin-top:6px;border:1px solid var(--border);overflow:hidden}
+    .power-bar-inner{height:100%;border-radius:4px;transition:width .4s}
+
+    /* ── Sidebar ── */
+    .sidebar{display:flex;flex-direction:column;gap:12px}
+    .ctrl-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+    .ctrl-card h3{font-size:.9rem;font-weight:700;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    .ctrl-sec{margin-bottom:12px}
+    .ctrl-sec:last-child{margin-bottom:0}
+    .ctrl-label{font-size:.78rem;font-weight:600;color:var(--text);display:block;margin-bottom:5px}
+    .ctrl-note{font-size:.73rem;color:var(--muted);margin-bottom:6px;line-height:1.5}
+    .slider-row{display:flex;align-items:center;gap:8px}
+    .slider-row input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--border);border-radius:2px;cursor:pointer;outline:none}
+    .slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue);border:2px solid #fff;box-shadow:0 0 0 1px var(--blue);cursor:pointer}
+    .slider-row input[type=range].red-thumb::-webkit-slider-thumb{background:var(--red);box-shadow:0 0 0 1px var(--red)}
+    .slider-row input[type=range].green-thumb::-webkit-slider-thumb{background:var(--green);box-shadow:0 0 0 1px var(--green)}
+    .slider-val{font-family:ui-monospace,monospace;font-size:.8rem;font-weight:600;color:var(--blue);min-width:42px;text-align:right}
+    .slider-val.red{color:var(--red)}
+    .slider-val.green{color:var(--green)}
+    .radio-row{display:flex;gap:6px;flex-wrap:wrap}
+    .radio-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border:1px solid var(--border);border-radius:999px;cursor:pointer;font-size:.79rem;color:var(--muted);transition:all .15s;user-select:none}
+    .radio-chip input{display:none}
+    .radio-chip.checked{background:#eff6ff;border-color:#93c5fd;color:var(--blue);font-weight:600}
+    .radio-chip.red-chip.checked{background:#fef2f2;border-color:#fca5a5;color:var(--red)}
+    .radio-chip.green-chip.checked{background:#f0fdf4;border-color:#86efac;color:var(--green)}
+    .btn{padding:8px 14px;border:1px solid var(--border);border-radius:9px;background:var(--card);cursor:pointer;font-size:.82rem;font-weight:600;color:var(--text);transition:background .15s;display:inline-flex;align-items:center;gap:5px}
+    .btn:hover{background:var(--soft)}
+    .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .btn.primary:hover{background:#1d4ed8}
+    .btn-row{display:flex;gap:8px;flex-wrap:wrap}
+    .computed-stat{background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-top:8px;font-family:ui-monospace,monospace;font-size:.84rem;color:var(--text);line-height:1.7}
+    .computed-stat .cs-result{font-size:1.1rem;font-weight:700;color:var(--purple)}
+
+    /* ── Mode toggle ── */
+    .mode-toggle{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:10px}
+    .mode-btn{flex:1;padding:6px 10px;font-size:.78rem;font-weight:600;border:none;cursor:pointer;background:var(--card);color:var(--muted);transition:all .15s}
+    .mode-btn.active{background:var(--blue);color:#fff}
+
+    /* ── Parable scenes ── */
+    .scene-stage{position:relative;width:100%;height:300px;border-radius:10px;overflow:hidden;margin-bottom:10px}
+    .scene-sky{position:absolute;top:0;left:0;right:0;height:55%;background:linear-gradient(180deg,#dbeafe 0%,#bfdbfe 100%)}
+    .scene-hill{position:absolute;bottom:0;left:0;right:0;height:52%;background:linear-gradient(180deg,#4ade80 0%,#22c55e 100%);border-radius:50% 50% 0 0/18% 18% 0 0}
+    .scene-village{position:absolute;bottom:10%;left:3%;font-size:2.2rem;line-height:1}
+    .scene-hill-top{position:absolute;right:11%;bottom:44%;font-size:1.3rem;line-height:1.3;text-align:center}
+    .scene-sheep{position:absolute;bottom:22%;left:33%;font-size:1.7rem;letter-spacing:3px}
+    .scene-alarm{position:absolute;top:9%;right:16%;font-size:.82rem;font-weight:700;background:white;border:2px solid var(--red);border-radius:10px;padding:4px 10px;color:var(--red);box-shadow:0 2px 8px rgba(0,0,0,.18)}
+    .scene-runners{position:absolute;bottom:12%;left:15%;font-size:1.5rem;letter-spacing:3px}
+    .scene-caption{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.48);color:#fff;font-size:.78rem;padding:6px 12px;font-weight:600}
+    .scene-error-badge{position:absolute;top:8px;left:8px;padding:3px 10px;border-radius:999px;font-size:.73rem;font-weight:700;border:2px solid}
+    .badge-t1{background:#fef2f2;color:#991b1b;border-color:#dc2626}
+    .badge-t2{background:#fffbeb;color:#92400e;border-color:#d97706}
+    .badge-setup{background:#eff6ff;color:#1e40af;border-color:#2563eb}
+    .scene-nav{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:0 2px}
+    .scene-dots{display:flex;gap:6px;align-items:center}
+    .scene-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .2s;cursor:pointer}
+    .scene-dot.active{background:var(--blue)}
+    .metric-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .m-item{border:1px solid var(--border);background:var(--soft);border-radius:9px;padding:10px 12px}
+    .m-item .mi-label{font-size:.71rem;color:var(--muted);margin-bottom:3px;line-height:1.3}
+    .m-item .mi-val{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.2rem;font-weight:700;line-height:1.15;transition:color .3s}
+    .m-item .mi-sub{font-size:.69rem;color:var(--muted);margin-top:4px;line-height:1.4}
+    .scene-stat-frame{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+    .ssf-cell{border:1px solid var(--border);border-radius:8px;padding:9px 11px;background:var(--soft);text-align:center}
+    .ssf-label{font-size:.68rem;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+    .ssf-val{font-size:.88rem;font-weight:700;line-height:1.2}
+    .ssf-sub{font-size:.68rem;color:var(--muted);margin-top:2px}
+    .ssf-cell.hl-red{border-color:#fca5a5;background:#fef2f2}
+    .ssf-cell.hl-amber{border-color:#fde68a;background:#fffbeb}
+    .ssf-cell.hl-green{border-color:#86efac;background:#f0fdf4}
+    .error-table{display:grid;grid-template-columns:auto 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:9px;overflow:hidden;font-size:.79rem}
+    .et-cell{background:var(--card);padding:9px 10px;text-align:center;line-height:1.35}
+    .et-hdr{background:var(--soft);font-weight:700;font-size:.74rem;color:var(--muted)}
+    .et-row-hdr{background:var(--soft);font-weight:700;font-size:.74rem;color:var(--text);text-align:left;padding:8px 10px}
+    .et-cell.hl-red{background:#fef2f2;color:#991b1b;font-weight:700}
+    .et-cell.hl-amber{background:#fffbeb;color:#92400e;font-weight:700}
+    .et-cell.hl-green{background:#f0fdf4;color:#14532d;font-weight:700}
+
+    @media(max-width:1100px){.concept-row{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:980px){
+      .main-grid{grid-template-columns:1fr}
+      .stat-bar{grid-template-columns:1fr 1fr}
+      .stat-cell:nth-child(2){border-right:none}
+      .stat-cell:nth-child(3){border-top:1px solid var(--border)}
+      .ref-2col{grid-template-columns:1fr}
+      .guide-cols{grid-template-columns:1fr}
+      .method-compare{grid-template-columns:1fr}
+      .power-grid{grid-template-columns:1fr}
+    }
+    @media(max-width:640px){
+      .stat-bar{grid-template-columns:1fr}
+      .stat-cell{border-right:none;border-top:1px solid var(--border)}
+      .stat-cell:first-child{border-top:none}
+      .concept-row{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ── Header ── -->
+  <div class="app-header">
+    <div>
+      <h1>Hypothesis Testing Explorer</h1>
+      <p>Five guided lessons on the logic, methods, and limits of statistical hypothesis testing.</p>
+    </div>
+    <div class="header-btns">
+      <button class="btn" id="btnGuide">▼ Quick-Start Guide</button>
+      <button class="btn" id="btnRef">📖 Full Reference</button>
+    </div>
+  </div>
+
+  <!-- ── Concept strip + collapsible guide ── -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="concept-row">
+      <div class="concept-card">
+        <div class="concept-label">Null &amp; Alternative</div>
+        <div class="concept-desc">H₀ is the "no effect" claim. H₁ is what you're trying to demonstrate. You never prove H₁ — you only decide whether the data are inconsistent with H₀.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">Test Statistic</div>
+        <div class="concept-desc">A single number summarizing how far the sample is from what H₀ predicts, measured in standard errors. z = (x̄ − μ₀)/(σ/√n), or t with estimated σ.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">Critical Value Method</div>
+        <div class="concept-desc">Look up the cutoff in a table. If the test statistic exceeds it, reject H₀. The cutoff is set so that only α% of results cross it when H₀ is true.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">p-value Method</div>
+        <div class="concept-desc">Compute the probability of a result this extreme or more extreme, assuming H₀. If p &lt; α, reject. Both methods always give the same decision — they are equivalent.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">Power &amp; Errors</div>
+        <div class="concept-desc">α = P(reject H₀ | H₀ true) — Type I error. β = P(fail to reject | H₀ false) — Type II error. Power = 1 − β = probability of detecting a true effect.</div>
+      </div>
+    </div>
+
+    <div class="guide-section" id="guideSection">
+      <div class="guide-cols">
+        <div class="guide-col">
+          <h4>What This Lab Teaches</h4>
+          <ul>
+            <li>The <strong>logic</strong> of hypothesis testing: what the sampling distribution represents and why it's the foundation of every test.</li>
+            <li>Why the <strong>critical value method</strong> and the <strong>p-value method</strong> are two framings of the same question — and always agree.</li>
+            <li>How the <strong>direction of H₁</strong> (left, right, two-tailed) changes the critical value, the p-value, and possibly the decision.</li>
+            <li>The <strong>Type I / Type II trade-off</strong> and why increasing sample size improves power without inflating α.</li>
+          </ul>
+        </div>
+        <div class="guide-col">
+          <h4>How to Use</h4>
+          <ol>
+            <li>Click a <strong>lesson tab</strong> — it loads a preset and a plain-language explanation.</li>
+            <li>Read the <strong>blue lesson card</strong> and follow its instructions exactly once before touching anything.</li>
+            <li>Watch the <strong>four stat cells</strong> below the plot and read the <strong>observation panel</strong> for an interpretation of what you're seeing.</li>
+            <li>In <strong>Compute mode</strong>, adjust μ₀, x̄, σ, and n to see how the test statistic is built from raw data inputs.</li>
+            <li>In <strong>Direct mode</strong>, drag the test statistic directly to explore what happens at different values.</li>
+            <li>In <strong>Lesson 5</strong>, slide the true mean μ₁ and sample size n to see power, α, and β update together.</li>
+          </ol>
+        </div>
+        <div class="guide-col">
+          <h4>What You Gain</h4>
+          <ul>
+            <li>An intuition for the <strong>sampling distribution under H₀</strong> — not just a formula, but a picture of what "random chance" looks like.</li>
+            <li>The insight that <strong>significance ≠ importance</strong>: the same small effect can be p&lt;.001 at n=1000 and p&gt;.10 at n=20.</li>
+            <li>A visual understanding of why <strong>one-tailed tests have more power</strong> but require a directional hypothesis stated in advance.</li>
+            <li>Confidence using both <strong>tables and p-values</strong>, and why both exist historically and practically.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Full Reference (collapsible) ── -->
+  <div class="card ref-card" id="refCard">
+    <h3 style="margin-bottom:14px">Full Reference — Hypothesis Testing</h3>
+    <div class="ref-2col">
+      <div>
+        <div class="ref-sec">
+          <h4>The Sampling Distribution</h4>
+          <p>The entire framework of hypothesis testing rests on one idea: <strong>if H₀ were true, what distribution would our test statistic follow?</strong> For a one-sample z-test, the answer is the standard normal N(0,1). For a t-test, it's Student's t with df = n−1. The test statistic measures how many standard errors the sample is from H₀'s prediction.</p>
+          <div class="formula-box">z = (x̄ − μ₀) / (σ / √n)&nbsp;&nbsp;&nbsp;[known σ]<br>t = (x̄ − μ₀) / (s / √n)&nbsp;&nbsp;&nbsp;[estimated σ, df = n−1]</div>
+        </div>
+        <div class="ref-sec">
+          <h4>Critical Value Method — "The Table Method"</h4>
+          <p>Before computing anything, look up the <strong>critical value</strong> for your α level, test type, and direction. This is the value that the test statistic must exceed to reject H₀.</p>
+          <ul>
+            <li><strong>Two-tailed, α=.05:</strong> z* = ±1.960 (z); varies with df (t)</li>
+            <li><strong>Right-tailed, α=.05:</strong> z* = 1.645 (z)</li>
+            <li><strong>Left-tailed, α=.05:</strong> z* = −1.645 (z)</li>
+          </ul>
+          <p>Decision rule: <strong>Reject H₀</strong> if the test statistic is in the rejection region (past the critical value). The rejection region is the α% most extreme area of the null distribution.</p>
+        </div>
+        <div class="ref-sec">
+          <h4>p-value Method</h4>
+          <p>The p-value is the probability of observing a test statistic <em>at least as extreme</em> as the one obtained, assuming H₀ is true. It is the area under the null distribution in the tail(s) defined by the observed test statistic.</p>
+          <p><strong>Decision rule:</strong> Reject H₀ if p &lt; α. The two methods always agree because they answer the same question with different units: "did we cross the threshold?"</p>
+          <div class="formula-box">Right-tailed:&nbsp; p = P(Z ≥ z_obs)<br>Left-tailed:&nbsp;&nbsp; p = P(Z ≤ z_obs)<br>Two-tailed:&nbsp;&nbsp; p = 2 · P(Z ≥ |z_obs|)</div>
+        </div>
+        <div class="ref-sec">
+          <h4>z-test vs t-test</h4>
+          <p>Use a <strong>z-test</strong> when the population standard deviation σ is known (rare in practice). Use a <strong>t-test</strong> when you estimate σ from the sample using s. The t-distribution has heavier tails than the normal — it accounts for the additional uncertainty in estimating σ. As df → ∞, t → z.</p>
+          <p>The t-distribution's shape depends on <strong>degrees of freedom (df = n−1)</strong>. At df=5 the tails are visibly heavier; at df=30+ it is nearly indistinguishable from the standard normal.</p>
+        </div>
+      </div>
+      <div>
+        <div class="ref-sec">
+          <h4>One-tailed vs Two-tailed Tests</h4>
+          <p>The direction of H₁ must be specified <em>before seeing the data</em>. A two-tailed test asks "is the true mean different from μ₀ in either direction?" and spreads α across both tails. A one-tailed test concentrates all of α in one tail, giving more power in that direction.</p>
+          <div class="case-grid">
+            <div class="case-box">
+              <div class="cl">Two-tailed</div>
+              <div class="cd">H₁: μ ≠ μ₀. Use when you have no prior directional hypothesis. More conservative — harder to reject H₀.</div>
+            </div>
+            <div class="case-box">
+              <div class="cl">One-tailed</div>
+              <div class="cd">H₁: μ &gt; μ₀ or μ &lt; μ₀. Use only when direction is theoretically motivated before data collection.</div>
+            </div>
+          </div>
+          <p style="margin-top:8px"><strong>Important:</strong> Switching from two-tailed to one-tailed after seeing the data to achieve significance is p-hacking — a serious methodological error.</p>
+        </div>
+        <div class="ref-sec">
+          <h4>Type I and Type II Errors</h4>
+          <div class="case-grid">
+            <div class="case-box">
+              <div class="cl" style="color:var(--red)">Type I Error (α)</div>
+              <div class="cd">Reject H₀ when H₀ is actually true. A "false positive." Rate is exactly α when all assumptions hold.</div>
+            </div>
+            <div class="case-box">
+              <div class="cl" style="color:var(--amber)">Type II Error (β)</div>
+              <div class="cd">Fail to reject H₀ when H₁ is true. A "false negative." Rate depends on effect size, n, and α.</div>
+            </div>
+          </div>
+          <p style="margin-top:8px"><strong>Power = 1 − β.</strong> Increasing n is the most reliable way to increase power without increasing α. Increasing α also increases power but at the cost of more false positives.</p>
+        </div>
+        <div class="ref-sec">
+          <h4>Common Misconceptions</h4>
+          <ul>
+            <li><strong>"p &lt; .05 means the result is important."</strong> No — significance depends on n. A trivial effect becomes significant with enough data.</li>
+            <li><strong>"p = .06 means the result is false."</strong> No — p-values are continuous. p = .06 and p = .04 are barely distinguishable.</li>
+            <li><strong>"Fail to reject means H₀ is true."</strong> No — it means the data are insufficient to reject it. Absence of evidence ≠ evidence of absence.</li>
+            <li><strong>"The p-value is the probability H₀ is true."</strong> No — it is P(data this extreme | H₀ is true), not P(H₀ true | data).</li>
+          </ul>
+        </div>
+        <div class="ref-sec">
+          <h4>The Four Decision Outcomes</h4>
+          <div class="case-grid">
+            <div class="case-box">
+              <div class="cl" style="color:var(--green)">✓ Correct Rejection</div>
+              <div class="cd">Reject H₀ when H₁ is truly correct. Probability = Power = 1 − β.</div>
+            </div>
+            <div class="case-box">
+              <div class="cl" style="color:var(--green)">✓ Correct Retention</div>
+              <div class="cd">Fail to reject H₀ when H₀ is truly correct. Probability = 1 − α.</div>
+            </div>
+            <div class="case-box">
+              <div class="cl" style="color:var(--red)">✗ Type I Error</div>
+              <div class="cd">Reject H₀ when H₀ is truly correct. Probability = α.</div>
+            </div>
+            <div class="case-box">
+              <div class="cl" style="color:var(--amber)">✗ Type II Error</div>
+              <div class="cd">Fail to reject H₀ when H₁ is truly correct. Probability = β.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Lesson rail ── -->
+  <div class="lesson-rail">
+    <button class="lesson-btn active" data-lesson="logic" onclick="setLesson('logic')">
+      <span class="lesson-num">Lesson 1</span>The Logic
+    </button>
+    <button class="lesson-btn" data-lesson="critical" onclick="setLesson('critical')">
+      <span class="lesson-num">Lesson 2</span>Critical Values
+    </button>
+    <button class="lesson-btn" data-lesson="pvalue" onclick="setLesson('pvalue')">
+      <span class="lesson-num">Lesson 3</span>p-values
+    </button>
+    <button class="lesson-btn" data-lesson="tails" onclick="setLesson('tails')">
+      <span class="lesson-num">Lesson 4</span>One vs Two-Tailed
+    </button>
+    <button class="lesson-btn" data-lesson="power" onclick="setLesson('power')">
+      <span class="lesson-num">Lesson 5</span>Power &amp; Errors
+    </button>
+    <button class="lesson-btn" data-lesson="parable" onclick="setLesson('parable')">
+      <span class="lesson-num">Lesson 6</span>Boy Who Cried Wolf
+    </button>
+  </div>
+
+  <!-- ── Main grid ── -->
+  <div class="main-grid">
+    <div>
+      <div class="lesson-card">
+        <h3 id="lessonTitle">—</h3>
+        <p id="lessonBody">—</p>
+      </div>
+
+      <div class="plot-card">
+        <div id="plot"></div>
+
+        <!-- Parable stage (Lesson 6 — replaces plot) -->
+        <div id="parableStage" style="display:none;padding:14px 14px 10px">
+          <div class="scene-stage" id="sceneStage"></div>
+          <div class="scene-nav" style="margin-top:10px">
+            <button class="btn" id="btnPrev" onclick="prevScene()" style="min-width:110px">← Previous</button>
+            <div class="scene-dots" id="sceneDots"></div>
+            <button class="btn primary" id="btnNext" onclick="nextScene()" style="min-width:110px">Next →</button>
+          </div>
+        </div>
+        <div class="stat-bar" id="statBar">
+          <div class="stat-cell">
+            <div class="stat-name" id="cell1name">
+              Test statistic
+              <span class="info-tip">i<span class="tip-text">Measures how many standard errors the sample is from what H₀ predicts. Larger absolute value = more evidence against H₀.</span></span>
+            </div>
+            <div class="stat-val" id="cell1val" style="color:var(--purple)">—</div>
+            <div class="stat-sub" id="cell1sub">—</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-name" id="cell2name">
+              Critical value
+              <span class="info-tip">i<span class="tip-text">The threshold from the table. Reject H₀ if |test stat| exceeds |critical value|. Set by α, direction, and test type.</span></span>
+            </div>
+            <div class="stat-val" id="cell2val" style="color:var(--red)">—</div>
+            <div class="stat-sub" id="cell2sub">—</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-name" id="cell3name">
+              p-value
+              <span class="info-tip">i<span class="tip-text">P(result this extreme or more extreme | H₀ true). Not the probability H₀ is true. Reject H₀ if p &lt; α.</span></span>
+            </div>
+            <div class="stat-val" id="cell3val">—</div>
+            <div class="stat-sub" id="cell3sub">—</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-name" id="cell4name">Decision</div>
+            <div id="cell4val">—</div>
+            <div class="stat-sub" id="cell4sub">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Observation panel -->
+      <div class="obs-card blue" id="obsPanel">Select a lesson to begin.</div>
+
+      <!-- Two-method comparison (lessons 2 & 3) -->
+      <div class="method-compare" id="methodCompare" style="display:none">
+        <div class="method-box" id="methodBox1">
+          <h4>Critical Value Method</h4>
+          <div id="methodText1"></div>
+        </div>
+        <div class="method-box" id="methodBox2">
+          <h4>p-value Method</h4>
+          <div id="methodText2"></div>
+        </div>
+      </div>
+
+      <!-- Equivalence banner -->
+      <div class="equiv-banner" id="equivBanner">
+        ✓ Both methods reach the same decision — they are mathematically equivalent framings of the same question.
+      </div>
+
+      <!-- Power summary (lesson 5) -->
+      <div id="powerSummary" style="display:none">
+        <div class="power-grid">
+          <div class="power-cell">
+            <div class="pc-label">α — Type I Error Rate</div>
+            <div class="pc-val" id="pAlpha" style="color:var(--red)">—</div>
+            <div class="pc-desc">Probability of rejecting H₀ when H₀ is true. Set by the researcher.</div>
+            <div class="power-bar-outer"><div class="power-bar-inner" id="barAlpha" style="background:#fca5a5"></div></div>
+          </div>
+          <div class="power-cell">
+            <div class="pc-label">β — Type II Error Rate</div>
+            <div class="pc-val" id="pBeta" style="color:var(--amber)">—</div>
+            <div class="pc-desc">Probability of failing to detect a true effect. Decreases as n or effect size grows.</div>
+            <div class="power-bar-outer"><div class="power-bar-inner" id="barBeta" style="background:#fde68a"></div></div>
+          </div>
+          <div class="power-cell">
+            <div class="pc-label">Power = 1 − β</div>
+            <div class="pc-val" id="pPower" style="color:var(--green)">—</div>
+            <div class="pc-desc">Probability of correctly detecting the true effect. Aim for ≥ 0.80 in study design.</div>
+            <div class="power-bar-outer"><div class="power-bar-inner" id="barPower" style="background:#86efac"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SIDEBAR ── -->
+    <div class="sidebar">
+
+      <!-- Hypothesis Setup -->
+      <div class="ctrl-card" id="hypothesisCard">
+        <h3>Hypothesis Setup</h3>
+        <div class="ctrl-sec">
+          <span class="ctrl-label">Test type</span>
+          <div class="radio-row" id="testTypeRow">
+            <label class="radio-chip checked" id="chipZ"><input type="radio" name="testType" value="z" checked onchange="onTestTypeChange()" />z-test (σ known)</label>
+            <label class="radio-chip" id="chipT"><input type="radio" name="testType" value="t" onchange="onTestTypeChange()" />t-test (s estimated)</label>
+          </div>
+        </div>
+        <div class="ctrl-sec" id="directionSection">
+          <span class="ctrl-label">Alternative hypothesis H₁</span>
+          <div class="radio-row" id="dirRow">
+            <label class="radio-chip" id="chipLeft"><input type="radio" name="dir" value="left" onchange="onDirChange()" />← Left</label>
+            <label class="radio-chip checked" id="chipTwo"><input type="radio" name="dir" value="two" checked onchange="onDirChange()" />↔ Two-tailed</label>
+            <label class="radio-chip" id="chipRight"><input type="radio" name="dir" value="right" onchange="onDirChange()" />Right →</label>
+          </div>
+        </div>
+        <div class="ctrl-sec">
+          <span class="ctrl-label">Significance level α</span>
+          <div class="radio-row" id="alphaRow">
+            <label class="radio-chip" id="chipA01"><input type="radio" name="alpha" value="0.01" onchange="onAlphaChange()" />0.01</label>
+            <label class="radio-chip checked" id="chipA05"><input type="radio" name="alpha" value="0.05" checked onchange="onAlphaChange()" />0.05</label>
+            <label class="radio-chip" id="chipA10"><input type="radio" name="alpha" value="0.10" onchange="onAlphaChange()" />0.10</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data / Parameters -->
+      <div class="ctrl-card" id="dataCard">
+        <h3>Parameters</h3>
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="modeBtnCompute" onclick="setMode('compute')">Compute from data</button>
+          <button class="mode-btn" id="modeBtnDirect" onclick="setMode('direct')">Direct test stat</button>
+        </div>
+
+        <!-- Compute mode -->
+        <div id="computeMode">
+          <div class="ctrl-sec">
+            <span class="ctrl-label">Null mean μ₀ &nbsp;<span class="mono" style="color:var(--blue)" id="mu0Disp">50.0</span></span>
+            <span class="ctrl-note">The value H₀ claims is the true population mean.</span>
+            <div class="slider-row">
+              <input type="range" id="mu0Slider" min="40" max="60" step="0.5" value="50" oninput="onComputeChange()" />
+              <span class="slider-val" id="mu0Val">50.0</span>
+            </div>
+          </div>
+          <div class="ctrl-sec">
+            <span class="ctrl-label">Observed mean x̄ &nbsp;<span class="mono" style="color:var(--blue)" id="xbarDisp">52.0</span></span>
+            <span class="ctrl-note">The sample mean from your data.</span>
+            <div class="slider-row">
+              <input type="range" id="xbarSlider" min="40" max="60" step="0.1" value="52" oninput="onComputeChange()" />
+              <span class="slider-val" id="xbarVal">52.0</span>
+            </div>
+          </div>
+          <div class="ctrl-sec">
+            <span class="ctrl-label" id="sdLabel">Population SD σ &nbsp;<span class="mono" style="color:var(--blue)" id="sdDisp">10.0</span></span>
+            <span class="ctrl-note" id="sdNote">Known σ for z-test; replace with sample s for t-test.</span>
+            <div class="slider-row">
+              <input type="range" id="sdSlider" min="2" max="25" step="0.5" value="10" oninput="onComputeChange()" />
+              <span class="slider-val" id="sdVal">10.0</span>
+            </div>
+          </div>
+          <div class="ctrl-sec">
+            <span class="ctrl-label">Sample size n &nbsp;<span class="mono" style="color:var(--blue)" id="nDisp">25</span></span>
+            <div class="slider-row">
+              <input type="range" id="nSlider" min="5" max="100" step="1" value="25" oninput="onComputeChange()" />
+              <span class="slider-val" id="nVal">25</span>
+            </div>
+          </div>
+          <div class="computed-stat" id="computedStatBox">
+            <div>SE = σ/√n = <span id="csSE">—</span></div>
+            <div>z = (x̄ − μ₀) / SE = <span id="csNum">—</span></div>
+            <div class="cs-result" id="csResult">z = —</div>
+          </div>
+        </div>
+
+        <!-- Direct mode -->
+        <div id="directMode" style="display:none">
+          <div class="ctrl-sec">
+            <span class="ctrl-label">Test statistic &nbsp;<span class="mono" style="color:var(--purple)" id="tsDisp">2.00</span></span>
+            <span class="ctrl-note">Drag to explore what happens at different values of z (or t).</span>
+            <div class="slider-row">
+              <input type="range" id="tsSlider" min="-4" max="4" step="0.05" value="2.0" oninput="onDirectChange()" />
+              <span class="slider-val" style="color:var(--purple)" id="tsVal">2.00</span>
+            </div>
+          </div>
+          <div class="ctrl-sec" id="dfSection" style="display:none">
+            <span class="ctrl-label">Degrees of freedom &nbsp;<span class="mono" style="color:var(--blue)" id="dfDisp">24</span></span>
+            <div class="slider-row">
+              <input type="range" id="dfSlider" min="2" max="100" step="1" value="24" oninput="onDirectChange()" />
+              <span class="slider-val" id="dfVal">24</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Power controls (lesson 5 only) -->
+      <div class="ctrl-card" id="powerCard" style="display:none">
+        <h3>Power Analysis</h3>
+        <div class="ctrl-sec">
+          <span class="ctrl-label">True mean μ₁ &nbsp;<span class="mono green" id="mu1Disp">53.0</span></span>
+          <span class="ctrl-note">The actual population mean if H₁ is true. Distance from μ₀ = effect size.</span>
+          <div class="slider-row">
+            <input type="range" class="green-thumb" id="mu1Slider" min="50" max="60" step="0.5" value="53" oninput="onPowerChange()" />
+            <span class="slider-val green" id="mu1Val">53.0</span>
+          </div>
+        </div>
+        <div class="ctrl-sec">
+          <span class="ctrl-label">Population SD σ &nbsp;<span class="mono" style="color:var(--blue)" id="pwSdDisp">10.0</span></span>
+          <div class="slider-row">
+            <input type="range" id="pwSdSlider" min="2" max="20" step="0.5" value="10" oninput="onPowerChange()" />
+            <span class="slider-val" id="pwSdVal">10.0</span>
+          </div>
+        </div>
+        <div class="ctrl-sec">
+          <span class="ctrl-label">Sample size n &nbsp;<span class="mono" style="color:var(--blue)" id="pwNDisp">25</span></span>
+          <span class="ctrl-note">The fastest way to increase power is to increase n.</span>
+          <div class="slider-row">
+            <input type="range" id="pwNSlider" min="5" max="150" step="1" value="25" oninput="onPowerChange()" />
+            <span class="slider-val" id="pwNVal">25</span>
+          </div>
+        </div>
+        <div class="ctrl-sec">
+          <span class="ctrl-label">Significance level α</span>
+          <div class="radio-row">
+            <label class="radio-chip" id="pwA01"><input type="radio" name="pwAlpha" value="0.01" onchange="onPowerChange()" />0.01</label>
+            <label class="radio-chip checked" id="pwA05"><input type="radio" name="pwAlpha" value="0.05" checked onchange="onPowerChange()" />0.05</label>
+            <label class="radio-chip" id="pwA10"><input type="radio" name="pwAlpha" value="0.10" onchange="onPowerChange()" />0.10</label>
+          </div>
+        </div>
+        <div class="ctrl-sec">
+          <span class="ctrl-label">Effect size = <span class="mono green" id="effectSizeDisp">—</span> standard errors</span>
+          <div class="computed-stat" style="margin-top:4px;font-size:.78rem">
+            δ = (μ₁ − μ₀) / (σ/√n) = <span class="cs-result" id="deltaDisp">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parable sidebar (Lesson 6) -->
+      <div class="ctrl-card" id="parableCard" style="display:none">
+        <h3>The Decision Table</h3>
+        <p class="small" style="margin-bottom:10px">Every hypothesis test produces one of four outcomes. The highlighted cell shows where the current scene falls in that table.</p>
+        <div class="error-table">
+          <div class="et-cell et-hdr"></div>
+          <div class="et-cell et-hdr">H₀ true<br>(no wolf)</div>
+          <div class="et-cell et-hdr">H₁ true<br>(wolf!)</div>
+          <div class="et-row-hdr">Reject H₀<br><span style="font-weight:400;color:var(--muted)">(believe alarm)</span></div>
+          <div class="et-cell" id="etT1">✗ Type I<br>Error (α)</div>
+          <div class="et-cell" id="etCR">✓ Correct<br>Detection</div>
+          <div class="et-row-hdr">Fail to Reject<br><span style="font-weight:400;color:var(--muted)">(ignore alarm)</span></div>
+          <div class="et-cell" id="etCRet">✓ Correct<br>Retention</div>
+          <div class="et-cell" id="etT2">✗ Type II<br>Error (β)</div>
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
+          <span class="ctrl-label" style="margin-bottom:6px">The core constraint</span>
+          <p class="small">You cannot independently minimize both α and β at a fixed n. The parable shows what happens when repeated Type I errors informally raise the villagers' threshold — driving β toward 1. The only true fixes are <strong>larger samples</strong>, <strong>pre-registration</strong>, and <strong>replication</strong>.</p>
+        </div>
+      </div>
+
+      <!-- Parable scene stats (Lesson 6) -->
+      <div class="ctrl-card" id="parableStatsCard" style="display:none">
+        <h3>Current Scene — State</h3>
+        <div class="metric-grid-2" id="parableMetrics">
+          <!-- populated by renderScene() -->
+        </div>
+      </div>
+
+    </div><!-- /sidebar -->
+  </div><!-- /main-grid -->
+</div><!-- /container -->
+
+<script>
+/* ═══════════════════════════════════════════
+   STATISTICAL FUNCTIONS
+═══════════════════════════════════════════ */
+
+// Lanczos approximation for log-gamma
+function logGamma(z) {
+  const g = 7;
+  const c = [0.99999999999980993,676.5203681218851,-1259.1392167224028,
+             771.32342877765313,-176.61502916214059,12.507343278686905,
+             -0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if (z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * z)) - logGamma(1 - z);
+  z -= 1;
+  let x = c[0];
+  for (let i = 1; i < g + 2; i++) x += c[i] / (z + i);
+  const t = z + g + 0.5;
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
+}
+
+// Regularized incomplete beta using Lentz continued fraction
+function betaInc(x, a, b) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  let swapped = false, aa = a, bb = b, xx = x;
+  if (xx > (aa + 1) / (aa + bb + 2)) { swapped = true; [aa, bb] = [bb, aa]; xx = 1 - xx; }
+  const lnB = logGamma(aa) + logGamma(bb) - logGamma(aa + bb);
+  const front = Math.exp(aa * Math.log(xx) + bb * Math.log(1 - xx) - lnB) / aa;
+  const MAXIT = 200, EPS = 3e-7, FPMIN = 1e-30;
+  let c = 1, d = 1 - (aa + bb) * xx / (aa + 1);
+  if (Math.abs(d) < FPMIN) d = FPMIN;
+  d = 1 / d; let h = d;
+  for (let m = 1; m <= MAXIT; m++) {
+    let num = m * (bb - m) * xx / ((aa + 2*m - 1) * (aa + 2*m));
+    d = 1 + num * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1 + num / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1 / d; h *= d * c;
+    num = -(aa + m) * (aa + bb + m) * xx / ((aa + 2*m) * (aa + 2*m + 1));
+    d = 1 + num * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+    c = 1 + num / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+    d = 1 / d; const delta = d * c; h *= delta;
+    if (Math.abs(delta - 1) < EPS) break;
+  }
+  const r = front * h;
+  return swapped ? 1 - r : r;
+}
+
+// Distributions
+function normalPDF(x)     { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+function normalCDF(z)     {
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign = z < 0 ? -1 : 1; const az = Math.abs(z);
+  const t = 1/(1+p*az);
+  const y = 1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-az*az);
+  return 0.5*(1+sign*y);
+}
+function normalInvCDF(p)  {
+  if (p <= 0) return -Infinity; if (p >= 1) return Infinity;
+  const a = [-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,
+              1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  const b = [-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,
+              6.680131188771972e+01,-1.328068155288572e+01];
+  const c = [-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,
+             -2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  const d = [7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const pLow=0.02425, pHigh=1-pLow;
+  if (p < pLow) {
+    const q = Math.sqrt(-2*Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else if (p <= pHigh) {
+    const q=p-0.5, r=q*q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  } else {
+    const q = Math.sqrt(-2*Math.log(1-p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+}
+
+function tPDF(x, df) {
+  const lnC = logGamma((df+1)/2) - 0.5*Math.log(df*Math.PI) - logGamma(df/2);
+  return Math.exp(lnC) * Math.pow(1 + x*x/df, -(df+1)/2);
+}
+function tCDF(t, df) {
+  if (df <= 0) return NaN;
+  const x = df/(df + t*t);
+  const ib = betaInc(x, df/2, 0.5);
+  return t < 0 ? 0.5*ib : 1 - 0.5*ib;
+}
+function tInvCDF(p, df) {
+  if (p <= 0) return -Infinity; if (p >= 1) return Infinity;
+  let lo = -100, hi = 100;
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo+hi)/2;
+    if (tCDF(mid, df) < p) lo = mid; else hi = mid;
+  }
+  return (lo+hi)/2;
+}
+
+// Helpers
+function linspace(a, b, n) {
+  const arr = []; const step = (b-a)/(n-1);
+  for (let i=0;i<n;i++) arr.push(a+i*step);
+  return arr;
+}
+function getPDF()    { return isT() ? x => tPDF(x, getDF()) : normalPDF; }
+function getCDF()    { return isT() ? x => tCDF(x, getDF()) : normalCDF; }
+function isT()       { return document.querySelector('input[name="testType"]:checked').value === 't'; }
+function getDF()     {
+  if (currentLesson==='power') return 1000;
+  if (inputMode==='direct') return +document.getElementById('dfSlider').value;
+  return +document.getElementById('nSlider').value - 1;
+}
+function getDir()    { return document.querySelector('input[name="dir"]:checked').value; }
+function getAlpha()  { return +document.querySelector('input[name="alpha"]:checked').value; }
+
+function getTestStat() {
+  if (currentLesson==='power') return 0;
+  if (inputMode==='direct') return +document.getElementById('tsSlider').value;
+  const mu0 = +document.getElementById('mu0Slider').value;
+  const xbar = +document.getElementById('xbarSlider').value;
+  const sd   = +document.getElementById('sdSlider').value;
+  const n    = +document.getElementById('nSlider').value;
+  const se   = sd / Math.sqrt(n);
+  return (xbar - mu0) / se;
+}
+
+function getCriticalValues(alpha, dir, df) {
+  const inv = isT() && df < 1000 ? p => tInvCDF(p, df) : normalInvCDF;
+  if (dir === 'two') {
+    const cv = inv(1 - alpha/2);
+    return [-cv, cv];
+  } else if (dir === 'right') {
+    return [inv(1 - alpha)];
+  } else {
+    return [inv(alpha)];
+  }
+}
+
+function getPValue(ts, dir, df) {
+  const cdf = isT() && df < 1000 ? x => tCDF(x, df) : normalCDF;
+  if (dir === 'two')   return 2*(1 - cdf(Math.abs(ts)));
+  if (dir === 'right') return 1 - cdf(ts);
+  return cdf(ts);
+}
+
+function inRejectionRegion(ts, cvs, dir) {
+  if (dir === 'right') return ts > cvs[0];
+  if (dir === 'left')  return ts < cvs[0];
+  return Math.abs(ts) > Math.abs(cvs[1]);
+}
+
+/* ═══════════════════════════════════════════
+   LESSON CONTENT
+═══════════════════════════════════════════ */
+const LESSONS = {
+  logic: {
+    title: 'Lesson 1 — The Logic of Hypothesis Testing',
+    body: `<strong>Core idea:</strong> Every hypothesis test rests on one question: <em>"If H₀ were true, how often would chance alone produce a result at least this extreme?"</em> The sampling distribution (the curve) answers this. It shows all possible values of the test statistic when H₀ is correct. The test statistic marks where your actual sample landed.<br><br>
+<strong>Try this:</strong> Use <em>Compute mode</em> to adjust x̄ (the observed mean). As you move it away from μ₀ = 50, the test statistic moves farther into the tail. The shaded area (p-value) shrinks. This is the core mechanic: more unusual results under H₀ produce smaller p-values. Notice how n and σ both affect how extreme a given x̄ appears.`,
+    preset: { dir:'two', alpha:0.05, mode:'compute', mu0:50, xbar:52, sd:10, n:25, ts:1.0, df:24, testType:'z' },
+    showPower: false
+  },
+  critical: {
+    title: 'Lesson 2 — The Critical Value Method (Table Method)',
+    body: `<strong>Core idea:</strong> Before computing anything, you look up a critical value from a table — the test statistic threshold that separates "reject" from "fail to reject." If your test statistic crosses that line, you reject H₀. The critical value is chosen so that only α% of results cross it by chance when H₀ is true.<br><br>
+<strong>Try this:</strong> The red dashed lines mark the critical values (±1.96 for α=.05, two-tailed). Drag x̄ and watch the purple line approach, cross, and retreat from the critical value. Change α to 0.01 and see the critical values move outward — it becomes harder to reject. The comparison below shows both methods reaching the same verdict.`,
+    preset: { dir:'two', alpha:0.05, mode:'compute', mu0:50, xbar:54, sd:10, n:25, ts:2.0, df:24, testType:'z' },
+    showPower: false
+  },
+  pvalue: {
+    title: 'Lesson 3 — The p-value Method',
+    body: `<strong>Core idea:</strong> Instead of comparing the test statistic to a fixed cutoff, the p-value method computes the area under the curve in the tail(s) beyond the test statistic. That area is the probability of getting a result this extreme or more extreme, assuming H₀. If that probability is less than α, you reject.<br><br>
+<strong>Try this:</strong> The orange shading is the p-value area. As x̄ moves farther from μ₀, the orange area shrinks. When the orange area shrinks below the red critical value lines, p &lt; α — and the decision flips. The comparison below confirms that both methods always agree. Change α and watch both methods update simultaneously.`,
+    preset: { dir:'two', alpha:0.05, mode:'compute', mu0:50, xbar:53.5, sd:10, n:25, ts:1.75, df:24, testType:'z' },
+    showPower: false
+  },
+  tails: {
+    title: 'Lesson 4 — One-tailed vs Two-tailed Tests',
+    body: `<strong>Core idea:</strong> A two-tailed test spreads α across both tails — it can detect effects in either direction but is harder to reject for any given effect. A one-tailed test concentrates all of α in one tail — more powerful if you have a theoretically justified directional hypothesis, but it can only detect an effect in that direction. The tail choice must be made <em>before</em> seeing the data.<br><br>
+<strong>Try this:</strong> With the test statistic at ~1.75 and α=.05: switch H₁ between Left, Two-tailed, and Right. Watch the p-value and decision change. Right-tailed rejects; two-tailed does not. This is the same data, same α, different conclusions — solely due to the hypothesis stated in advance.`,
+    preset: { dir:'right', alpha:0.05, mode:'direct', mu0:50, xbar:53.5, sd:10, n:25, ts:1.75, df:24, testType:'z' },
+    showPower: false
+  },
+  power: {
+    title: 'Lesson 5 — Power, Type I &amp; Type II Errors',
+    body: `<strong>Core idea:</strong> The plot shows <em>two</em> distributions simultaneously: H₀ (blue, centered at 0) and H₁ (green, centered at the true effect size). The red region is where we reject H₀ — its area is α. The orange region is where H₁ falls but we fail to reject — its area is β. The green region is where we correctly reject — its area is Power = 1 − β.<br><br>
+<strong>Try this:</strong> Slide <em>True mean μ₁</em> away from 50 (increasing the effect) and watch power rise. Then slide <em>n</em> upward — power rises again with no change to α. Notice you cannot increase power without either increasing n, increasing the true effect, or increasing α. These are the only three levers.`,
+    preset: { dir:'right', alpha:0.05, mode:'compute', mu0:50, xbar:52, sd:10, n:25, ts:1.0, df:24, testType:'z',
+              mu1:53, pwSd:10, pwN:25, pwAlpha:0.05 },
+    showPower: true
+  },
+  parable: {
+    title: 'Lesson 6 — The Boy Who Cried Wolf',
+    body: `The parable maps perfectly onto the four outcomes of hypothesis testing. Each time the boy cries wolf without one, the villagers <strong>reject H₀</strong> ("no wolf") when H₀ is actually true — a <strong>Type I Error</strong>. When the real wolf finally arrives, the villagers <strong>fail to reject H₀</strong> when H₁ is true — a <strong>Type II Error</strong>.<br><br>
+But there is a deeper lesson: the repeated Type I errors did not just waste effort — they <em>caused</em> the Type II error. By eroding trust, they raised the villagers' effective threshold so high that a genuine signal could no longer pass it. Step through the scenes and watch the error table highlight each outcome.`,
+    preset: { dir:'right', alpha:0.05, mode:'compute', mu0:50, xbar:52, sd:10, n:25, ts:1.0, df:24, testType:'z' },
+    showPower: false
+  }
+};
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let currentLesson = 'logic';
+let inputMode     = 'compute';
+
+/* ═══════════════════════════════════════════
+   PLOT — LESSONS 1–4
+═══════════════════════════════════════════ */
+function drawMainPlot() {
+  const ts    = getTestStat();
+  const df    = getDF();
+  const dir   = getDir();
+  const alpha = getAlpha();
+  const cvs   = getCriticalValues(alpha, dir, df);
+  const pval  = getPValue(ts, dir, df);
+  const reject= inRejectionRegion(ts, cvs, dir);
+  const pdf   = getPDF();
+
+  const XMAX = Math.max(4.2, Math.abs(ts) + 0.8, Math.abs(cvs[cvs.length-1]) + 0.6);
+  const xs    = linspace(-XMAX, XMAX, 500);
+  const ys    = xs.map(pdf);
+  const yMax  = pdf(0) * 1.18;
+  const traces= [];
+
+  // ── Rejection region(s) — red ──
+  function fillRegion(xFrom, xTo, name, showLegend) {
+    const xf = xs.filter(x => x >= xFrom && x <= xTo);
+    if (!xf.length) return;
+    traces.push({
+      x: xf, y: xf.map(pdf),
+      fill:'tozeroy', fillcolor:'rgba(220,38,38,0.18)',
+      line:{color:'rgba(220,38,38,0.6)',width:1},
+      mode:'lines', type:'scatter', name, showlegend:showLegend,
+      hoverinfo:'skip'
+    });
+  }
+  if (dir==='right'||dir==='two') fillRegion(cvs[cvs.length-1], XMAX, 'Rejection region', true);
+  if (dir==='left' ||dir==='two') fillRegion(-XMAX, cvs[0], dir==='two'?null:'Rejection region', dir!=='two');
+
+  // ── p-value area — orange ──
+  function fillPVal(xFrom, xTo, showLegend) {
+    const xf = xs.filter(x => x >= xFrom && x <= xTo);
+    if (!xf.length) return;
+    traces.push({
+      x: xf, y: xf.map(pdf),
+      fill:'tozeroy', fillcolor:'rgba(217,119,6,0.22)',
+      line:{color:'rgba(217,119,6,0.7)',width:1},
+      mode:'lines', type:'scatter', name:'p-value area', showlegend:showLegend,
+      hoverinfo:'skip'
+    });
+  }
+  if (dir==='right') fillPVal(ts, XMAX, true);
+  else if (dir==='left') fillPVal(-XMAX, ts, true);
+  else {
+    const absTs = Math.abs(ts);
+    fillPVal(absTs, XMAX, true);
+    fillPVal(-XMAX, -absTs, false);
+  }
+
+  // ── Main curve ──
+  const label = isT() && df < 1000 ? `t-distribution (df = ${df})` : 'Standard normal — N(0,1)';
+  traces.push({
+    x: xs, y: ys,
+    mode:'lines', type:'scatter',
+    line:{color:'#2563eb',width:2.5},
+    name: label, showlegend:true, hoverinfo:'skip'
+  });
+
+  // ── Critical value lines ──
+  for (const cv of cvs) {
+    traces.push({
+      x:[cv, cv], y:[0, Math.min(yMax, pdf(cv)+0.02)],
+      mode:'lines', type:'scatter',
+      line:{color:'#dc2626',width:2,dash:'dash'},
+      name:`Critical value (${cv.toFixed(3)})`, showlegend:true, hoverinfo:'skip'
+    });
+  }
+
+  // ── Test statistic line ──
+  traces.push({
+    x:[ts, ts], y:[0, Math.min(yMax, pdf(ts) + 0.04)],
+    mode:'lines', type:'scatter',
+    line:{color:'#7c3aed',width:2.5},
+    name:`Test statistic (${ts.toFixed(3)})`, showlegend:true, hoverinfo:'skip'
+  });
+
+  // ── Text labels via scatter with text mode ──
+  traces.push({
+    x:[ts], y:[Math.min(yMax*0.95, pdf(ts)+0.06)],
+    mode:'text', type:'scatter',
+    text:[ts.toFixed(2)],
+    textfont:{size:11,color:'#7c3aed',family:'ui-monospace,monospace'},
+    showlegend:false, hoverinfo:'skip'
+  });
+
+  Plotly.react('plot', traces, {
+    margin:{t:16,r:16,b:48,l:52},
+    xaxis:{title: isT()&&df<1000?`t (df=${df})`:'z', zeroline:true, zerolinecolor:'#d1d5db', range:[-XMAX,XMAX]},
+    yaxis:{title:'Probability density', range:[0, yMax]},
+    showlegend:true,
+    legend:{orientation:'h',x:0,y:1.08,xanchor:'left',yanchor:'bottom',font:{size:11}},
+    uirevision:'keep'
+  },{responsive:true});
+
+  updateStatBar(ts, cvs, pval, reject, df, dir, alpha);
+  updateObsPanel(ts, cvs, pval, reject, dir, alpha);
+  updateComputedBox();
+}
+
+/* ═══════════════════════════════════════════
+   PLOT — LESSON 5 (POWER)
+═══════════════════════════════════════════ */
+function drawPowerPlot() {
+  const mu1   = +document.getElementById('mu1Slider').value;
+  const mu0   = 50;
+  const sd    = +document.getElementById('pwSdSlider').value;
+  const n     = +document.getElementById('pwNSlider').value;
+  const alpha = +document.querySelector('input[name="pwAlpha"]:checked').value;
+  const se    = sd / Math.sqrt(n);
+  const delta = (mu1 - mu0) / se;            // effect in SE units, always right-tailed
+  const cv    = normalInvCDF(1 - alpha);     // right-tailed critical value in SEs
+  const power = 1 - normalCDF(cv - delta);
+  const beta  = 1 - power;
+
+  const XMAX = Math.max(4.2, delta + 3.5);
+  const xs   = linspace(-XMAX, XMAX + delta, 600);
+  const traces = [];
+
+  // H₀ distribution (centered at 0)
+  const h0PDF = x => normalPDF(x);
+  // H₁ distribution (centered at delta)
+  const h1PDF = x => normalPDF(x - delta);
+
+  // β region (H₁ curve, left of cv — missed detections)
+  const xBeta = xs.filter(x => x >= -XMAX && x <= cv);
+  if (xBeta.length) traces.push({
+    x:xBeta, y:xBeta.map(h1PDF),
+    fill:'tozeroy', fillcolor:'rgba(217,119,6,0.22)',
+    line:{color:'rgba(217,119,6,0.5)',width:1},
+    mode:'lines', type:'scatter', name:'β — Type II error', showlegend:true, hoverinfo:'skip'
+  });
+
+  // Power region (H₁ curve, right of cv — correct detections)
+  const xPow = xs.filter(x => x >= cv && x <= XMAX + delta);
+  if (xPow.length) traces.push({
+    x:xPow, y:xPow.map(h1PDF),
+    fill:'tozeroy', fillcolor:'rgba(22,163,74,0.22)',
+    line:{color:'rgba(22,163,74,0.5)',width:1},
+    mode:'lines', type:'scatter', name:'Power — correct detection', showlegend:true, hoverinfo:'skip'
+  });
+
+  // α region (H₀ curve, right of cv — false positives)
+  const xAlpha = xs.filter(x => x >= cv && x <= XMAX);
+  if (xAlpha.length) traces.push({
+    x:xAlpha, y:xAlpha.map(h0PDF),
+    fill:'tozeroy', fillcolor:'rgba(220,38,38,0.22)',
+    line:{color:'rgba(220,38,38,0.5)',width:1},
+    mode:'lines', type:'scatter', name:'α — Type I error', showlegend:true, hoverinfo:'skip'
+  });
+
+  // H₀ curve
+  const xs0 = linspace(-XMAX, XMAX, 500);
+  traces.push({
+    x:xs0, y:xs0.map(h0PDF),
+    mode:'lines', type:'scatter',
+    line:{color:'#2563eb',width:2.5},
+    name:'H₀ distribution (μ = μ₀)', showlegend:true, hoverinfo:'skip'
+  });
+
+  // H₁ curve
+  const xs1 = linspace(-XMAX, XMAX + delta, 500);
+  traces.push({
+    x:xs1, y:xs1.map(h1PDF),
+    mode:'lines', type:'scatter',
+    line:{color:'#16a34a',width:2.5},
+    name:`H₁ distribution (δ = ${delta.toFixed(2)} SE)`, showlegend:true, hoverinfo:'skip'
+  });
+
+  // Critical value line
+  const yMax = normalPDF(0) * 1.18;
+  traces.push({
+    x:[cv,cv], y:[0,yMax],
+    mode:'lines', type:'scatter',
+    line:{color:'#dc2626',width:2,dash:'dash'},
+    name:`Critical value (z* = ${cv.toFixed(3)})`, showlegend:true, hoverinfo:'skip'
+  });
+
+  Plotly.react('plot', traces, {
+    margin:{t:16,r:16,b:48,l:52},
+    xaxis:{title:'Test statistic (standard errors)', zeroline:true, zerolinecolor:'#d1d5db'},
+    yaxis:{title:'Probability density', range:[0, yMax]},
+    showlegend:true,
+    legend:{orientation:'h',x:0,y:1.08,xanchor:'left',yanchor:'bottom',font:{size:11}},
+    uirevision:'keep'
+  },{responsive:true});
+
+  // Update power summary
+  updatePowerSummary(alpha, beta, power, delta, n, mu1, mu0, sd);
+  updatePowerStatBar(alpha, beta, power, delta);
+  updatePowerObsPanel(alpha, beta, power, delta, n, mu1, mu0, sd);
+  updatePowerLabels(mu1, sd, n, delta);
+}
+
+/* ═══════════════════════════════════════════
+   STAT BAR UPDATES
+═══════════════════════════════════════════ */
+function updateStatBar(ts, cvs, pval, reject, df, dir, alpha) {
+  // Cell 1 — test statistic
+  const testLabel = isT() && df < 1000 ? 't' : 'z';
+  document.getElementById('cell1name').childNodes[0].nodeValue = `${testLabel}-statistic `;
+  const c1v = document.getElementById('cell1val');
+  c1v.textContent = ts.toFixed(3);
+  c1v.style.color = Math.abs(ts) < 1 ? 'var(--gray)' : Math.abs(ts) < 1.96 ? 'var(--amber)' : 'var(--purple)';
+  document.getElementById('cell1sub').textContent = Math.abs(ts).toFixed(2)+' standard errors from μ₀';
+
+  // Cell 2 — critical value
+  document.getElementById('cell2name').childNodes[0].nodeValue = 'Critical value ';
+  document.getElementById('cell2val').textContent = dir==='two' ? `±${Math.abs(cvs[0]).toFixed(3)}` : cvs[0].toFixed(3);
+  document.getElementById('cell2sub').textContent = `α = ${alpha}, ${dir==='two'?'two':dir}-tailed`;
+
+  // Cell 3 — p-value
+  const c3v = document.getElementById('cell3val');
+  c3v.textContent = pval < 0.001 ? '< .001' : pval.toFixed(3);
+  c3v.style.color  = pval < alpha ? 'var(--green)' : pval < 0.10 ? 'var(--amber)' : 'var(--red)';
+  document.getElementById('cell3name').childNodes[0].nodeValue = 'p-value ';
+  document.getElementById('cell3sub').textContent = pval < alpha ? `p < α (${alpha})` : `p ≥ α (${alpha})`;
+
+  // Cell 4 — decision
+  const c4 = document.getElementById('cell4val');
+  const badge = reject
+    ? '<span class="decision-badge decision-reject">Reject H₀</span>'
+    : '<span class="decision-badge decision-ftr">Fail to Reject H₀</span>';
+  c4.innerHTML = badge;
+  document.getElementById('cell4sub').textContent = reject ? 'Result is statistically significant' : 'Insufficient evidence to reject H₀';
+}
+
+function updatePowerStatBar(alpha, beta, power, delta) {
+  document.getElementById('cell1name').childNodes[0].nodeValue = 'Effect size (δ) ';
+  const c1v = document.getElementById('cell1val');
+  c1v.textContent = delta.toFixed(3); c1v.style.color = 'var(--green)';
+  document.getElementById('cell1sub').textContent = 'in standard error units';
+
+  document.getElementById('cell2name').childNodes[0].nodeValue = 'α (Type I Error) ';
+  document.getElementById('cell2val').textContent = (alpha*100).toFixed(0)+'%';
+  document.getElementById('cell2val').style.color = 'var(--red)';
+  document.getElementById('cell2sub').textContent = 'Reject H₀ when H₀ is true';
+
+  document.getElementById('cell3name').childNodes[0].nodeValue = 'β (Type II Error) ';
+  const c3v = document.getElementById('cell3val');
+  c3v.textContent = (beta*100).toFixed(1)+'%'; c3v.style.color = 'var(--amber)';
+  document.getElementById('cell3sub').textContent = 'Miss a true effect';
+
+  document.getElementById('cell4name').textContent = 'Power = 1 − β';
+  const c4 = document.getElementById('cell4val');
+  const pc = (power*100).toFixed(1)+'%';
+  const col = power >= 0.8 ? 'var(--green)' : power >= 0.5 ? 'var(--amber)' : 'var(--red)';
+  c4.innerHTML = `<span class="stat-val" style="color:${col}">${pc}</span>`;
+  document.getElementById('cell4sub').textContent = power >= 0.8 ? 'Adequate power (≥ 80%)' : 'Underpowered — increase n';
+}
+
+/* ═══════════════════════════════════════════
+   POWER SUMMARY PANEL
+═══════════════════════════════════════════ */
+function updatePowerSummary(alpha, beta, power, delta, n, mu1, mu0, sd) {
+  document.getElementById('pAlpha').textContent = (alpha*100).toFixed(0)+'%';
+  document.getElementById('pBeta').textContent  = (beta*100).toFixed(1)+'%';
+  document.getElementById('pPower').textContent = (power*100).toFixed(1)+'%';
+
+  document.getElementById('barAlpha').style.width = (alpha*100)+'%';
+  document.getElementById('barBeta').style.width  = (beta*100)+'%';
+  document.getElementById('barPower').style.width = (power*100)+'%';
+}
+
+/* ═══════════════════════════════════════════
+   OBSERVATION PANEL
+═══════════════════════════════════════════ */
+function pLabel(p) {
+  if (p < 0.001) return '< .001';
+  return p.toFixed(3);
+}
+function strengthLabel(ts) {
+  const a = Math.abs(ts);
+  if (a < 1)    return 'less than 1 standard error — very weak evidence';
+  if (a < 1.65) return 'between 1 and 1.65 SEs — mild evidence';
+  if (a < 1.96) return 'between 1.65 and 1.96 SEs — moderate evidence';
+  if (a < 2.58) return 'between 1.96 and 2.58 SEs — strong evidence';
+  return 'more than 2.58 SEs — very strong evidence';
+}
+
+function updateObsPanel(ts, cvs, pval, reject, dir, alpha) {
+  const panel = document.getElementById('obsPanel');
+  const cvAbs = Math.abs(cvs[cvs.length-1]).toFixed(3);
+  const mc    = document.getElementById('methodCompare');
+  const eb    = document.getElementById('equivBanner');
+
+  let cls, text, showCompare = false;
+
+  if (currentLesson === 'logic') {
+    const pct = (pval * 100).toFixed(1);
+    cls = reject ? 'obs-card green' : Math.abs(ts) > 1.5 ? 'obs-card amber' : 'obs-card blue';
+    text = `The test statistic is <strong>${ts.toFixed(3)}</strong> — the sample mean is ${strengthLabel(ts)} from μ₀.
+      If H₀ were truly correct, a result this extreme or more extreme would occur <strong>${pct}%</strong> of the time by chance alone.
+      That probability — ${pLabel(pval)} — is the p-value. The sampling distribution (the bell curve) is the model of what chance produces when H₀ is true.
+      Adjust x̄ toward or away from μ₀ to see how the test statistic and p-value move together.`;
+  } else if (currentLesson === 'critical') {
+    showCompare = true;
+    cls = reject ? 'obs-card green' : 'obs-card amber';
+    text = reject
+      ? `Your test statistic (${ts.toFixed(3)}) <strong>crosses the critical value</strong> of ±${cvAbs}. It falls inside the red rejection region.
+         Both methods agree: <strong>Reject H₀</strong>. The result is statistically significant at α = ${alpha}.`
+      : `Your test statistic (${ts.toFixed(3)}) <strong>does not reach the critical value</strong> of ±${cvAbs}. It remains inside the "fail to reject" zone.
+         Both methods agree: <strong>Fail to Reject H₀</strong>. Try moving x̄ farther from μ₀, or increase n or α.`;
+  } else if (currentLesson === 'pvalue') {
+    showCompare = true;
+    cls = reject ? 'obs-card green' : 'obs-card amber';
+    text = reject
+      ? `The p-value is <strong>${pLabel(pval)}</strong>, which is less than α = ${alpha}. The orange shaded area is smaller than the red threshold region.
+         In words: if H₀ were true, a result this extreme would occur only ${(pval*100).toFixed(1)}% of the time — rare enough to reject H₀.
+         Both methods agree: <strong>Reject H₀</strong>.`
+      : `The p-value is <strong>${pLabel(pval)}</strong>, which exceeds α = ${alpha}. The orange area still sits outside (or barely into) the rejection region.
+         In words: a result this extreme occurs ${(pval*100).toFixed(1)}% of the time by chance — not rare enough to confidently reject H₀.
+         Both methods agree: <strong>Fail to Reject H₀</strong>.`;
+  } else if (currentLesson === 'tails') {
+    const pR = getPValue(ts, 'right', getDF());
+    const pL = getPValue(ts, 'left',  getDF());
+    const p2 = getPValue(ts, 'two',   getDF());
+    const sig = p => p < alpha ? '✓ Reject' : '✗ FTR';
+    cls = 'obs-card purple';
+    text = `With test statistic = <strong>${ts.toFixed(3)}</strong> and α = ${alpha}:<br>
+      • <strong>Right-tailed</strong> (H₁: μ &gt; μ₀): p = ${pLabel(pR)} → <strong>${sig(pR)} H₀</strong><br>
+      • <strong>Two-tailed</strong> &nbsp;(H₁: μ ≠ μ₀): p = ${pLabel(p2)} → <strong>${sig(p2)} H₀</strong><br>
+      • <strong>Left-tailed</strong> &nbsp;(H₁: μ &lt; μ₀): p = ${pLabel(pL)} → <strong>${sig(pL)} H₀</strong><br><br>
+      The current selection is <em>${dir}-tailed</em>. The direction of H₁ must be stated <em>before</em> seeing the data — switching after the fact to get significance is p-hacking.`;
+  }
+
+  panel.className = cls;
+  panel.innerHTML = text;
+
+  // Two-method comparison
+  mc.style.display = showCompare ? 'grid' : 'none';
+  eb.classList.toggle('show', showCompare);
+  if (showCompare) {
+    const cvMethod = reject ? 'reject' : 'ftr';
+    const box1 = document.getElementById('methodBox1');
+    const box2 = document.getElementById('methodBox2');
+    box1.className = `method-box ${cvMethod}`;
+    box2.className = `method-box ${cvMethod}`;
+    document.getElementById('methodText1').innerHTML =
+      `Test statistic: <strong>${ts.toFixed(3)}</strong><br>
+       Critical value: ±<strong>${cvAbs}</strong><br>
+       |${ts.toFixed(3)}| ${reject ? '>' : '<'} ${cvAbs}<br>
+       <strong>${reject ? '→ Reject H₀' : '→ Fail to Reject H₀'}</strong>`;
+    document.getElementById('methodText2').innerHTML =
+      `p-value: <strong>${pLabel(pval)}</strong><br>
+       α: <strong>${alpha}</strong><br>
+       p ${reject ? '<' : '≥'} α<br>
+       <strong>${reject ? '→ Reject H₀' : '→ Fail to Reject H₀'}</strong>`;
+  }
+}
+
+function updatePowerObsPanel(alpha, beta, power, delta, n, mu1, mu0, sd) {
+  const panel = document.getElementById('obsPanel');
+  const se    = sd / Math.sqrt(n);
+  const cls   = power >= 0.8 ? 'obs-card green' : power >= 0.5 ? 'obs-card amber' : 'obs-card red';
+  panel.className = cls;
+
+  const nFor80 = Math.ceil(Math.pow((normalInvCDF(1-alpha) + normalInvCDF(0.8)) * sd / (mu1 - mu0), 2));
+
+  panel.innerHTML = `Effect size: the true mean μ₁ = ${mu1} is <strong>${((mu1-mu0)/se).toFixed(2)} standard errors</strong> from μ₀ = ${mu0} (SE = ${se.toFixed(2)}).
+    At n = ${n} with α = ${alpha} (right-tailed):
+    <strong>Power = ${(power*100).toFixed(1)}%</strong> — the probability of correctly detecting this effect.
+    <strong>β = ${(beta*100).toFixed(1)}%</strong> — the probability of missing it (Type II error).
+    ${power < 0.8
+      ? `⚠ Power is below the conventional 80% target. To achieve 80% power for this effect size, you would need approximately <strong>n ≈ ${nFor80}</strong>.`
+      : `✓ Power exceeds 80% — this design is adequately powered to detect an effect of this magnitude.`}
+    Increasing n, increasing (μ₁ − μ₀), or raising α are the only ways to increase power.`;
+  document.getElementById('methodCompare').style.display = 'none';
+  document.getElementById('equivBanner').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════
+   COMPUTED STAT BOX
+═══════════════════════════════════════════ */
+function updateComputedBox() {
+  if (inputMode !== 'compute') return;
+  const mu0  = +document.getElementById('mu0Slider').value;
+  const xbar = +document.getElementById('xbarSlider').value;
+  const sd   = +document.getElementById('sdSlider').value;
+  const n    = +document.getElementById('nSlider').value;
+  const se   = sd / Math.sqrt(n);
+  const ts   = (xbar - mu0) / se;
+  const lbl  = isT() ? 't' : 'z';
+  document.getElementById('csSE').textContent = `${sd.toFixed(1)} / √${n} = ${se.toFixed(3)}`;
+  document.getElementById('csNum').textContent = `(${xbar.toFixed(1)} − ${mu0.toFixed(1)}) / ${se.toFixed(3)} = ${ts.toFixed(3)}`;
+  document.getElementById('csResult').textContent = `${lbl} = ${ts.toFixed(3)}`;
+}
+
+function updatePowerLabels(mu1, sd, n, delta) {
+  document.getElementById('mu1Disp').textContent = mu1.toFixed(1);
+  document.getElementById('mu1Val').textContent  = mu1.toFixed(1);
+  document.getElementById('pwSdDisp').textContent = sd.toFixed(1);
+  document.getElementById('pwSdVal').textContent  = sd.toFixed(1);
+  document.getElementById('pwNDisp').textContent  = n;
+  document.getElementById('pwNVal').textContent   = n;
+  document.getElementById('effectSizeDisp').textContent = delta.toFixed(2);
+  document.getElementById('deltaDisp').textContent = delta.toFixed(2);
+  // Alpha chips
+  const pa = +document.querySelector('input[name="pwAlpha"]:checked').value;
+  ['pwA01','pwA05','pwA10'].forEach(id => {
+    const el=document.getElementById(id);
+    el.classList.toggle('checked', el.querySelector('input').checked);
+  });
+}
+
+/* ═══════════════════════════════════════════
+   SLIDER LABEL SYNC
+═══════════════════════════════════════════ */
+function syncComputeLabels() {
+  const mu0  = document.getElementById('mu0Slider').value;
+  const xbar = document.getElementById('xbarSlider').value;
+  const sd   = document.getElementById('sdSlider').value;
+  const n    = document.getElementById('nSlider').value;
+  document.getElementById('mu0Disp').textContent = (+mu0).toFixed(1);
+  document.getElementById('mu0Val').textContent  = (+mu0).toFixed(1);
+  document.getElementById('xbarDisp').textContent= (+xbar).toFixed(1);
+  document.getElementById('xbarVal').textContent = (+xbar).toFixed(1);
+  document.getElementById('sdDisp').textContent  = (+sd).toFixed(1);
+  document.getElementById('sdVal').textContent   = (+sd).toFixed(1);
+  document.getElementById('nDisp').textContent   = n;
+  document.getElementById('nVal').textContent    = n;
+}
+
+function syncDirectLabels() {
+  const ts = document.getElementById('tsSlider').value;
+  const df = document.getElementById('dfSlider').value;
+  document.getElementById('tsDisp').textContent = (+ts).toFixed(2);
+  document.getElementById('tsVal').textContent  = (+ts).toFixed(2);
+  document.getElementById('dfDisp').textContent = df;
+  document.getElementById('dfVal').textContent  = df;
+}
+
+function syncRadioChips(groupName, chips) {
+  const val = document.querySelector(`input[name="${groupName}"]:checked`).value;
+  chips.forEach(([id, v]) => document.getElementById(id).classList.toggle('checked', v === val));
+}
+function syncAllChips() {
+  syncRadioChips('testType', [['chipZ','z'],['chipT','t']]);
+  syncRadioChips('dir', [['chipLeft','left'],['chipTwo','two'],['chipRight','right']]);
+  syncRadioChips('alpha', [['chipA01','0.01'],['chipA05','0.05'],['chipA10','0.10']]);
+}
+
+/* ═══════════════════════════════════════════
+   LESSON SWITCHING
+═══════════════════════════════════════════ */
+function setLesson(key) {
+  currentLesson = key;
+  const L = LESSONS[key];
+
+  // Rail
+  document.querySelectorAll('.lesson-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lesson-btn[data-lesson="${key}"]`).classList.add('active');
+
+  // Narrative
+  document.getElementById('lessonTitle').innerHTML = L.title;
+  document.getElementById('lessonBody').innerHTML  = L.body;
+
+  // Parable / normal toggle
+  const isParable = key === 'parable';
+  const isPower   = key === 'power';
+
+  document.getElementById('plot').style.display          = isParable ? 'none'  : 'block';
+  document.getElementById('parableStage').style.display  = isParable ? 'block' : 'none';
+  document.getElementById('parableCard').style.display   = isParable ? 'block' : 'none';
+  document.getElementById('parableStatsCard').style.display = isParable ? 'block' : 'none';
+  document.getElementById('statBar').style.display       = isParable ? 'none'  : 'grid';
+  document.getElementById('hypothesisCard').style.display= (isPower||isParable) ? 'none' : 'block';
+  document.getElementById('dataCard').style.display      = (isPower||isParable) ? 'none' : 'block';
+  document.getElementById('powerCard').style.display     = isPower  ? 'block' : 'none';
+  document.getElementById('powerSummary').style.display  = isPower  ? 'block' : 'none';
+  document.getElementById('methodCompare').style.display = 'none';
+  document.getElementById('equivBanner').classList.remove('show');
+
+  if (isParable) {
+    currentScene = 0;
+    renderScene();
+    return;
+  }
+
+  // Apply preset
+  const pr = L.preset;
+  document.querySelector(`input[name="dir"][value="${pr.dir}"]`).checked      = true;
+  document.querySelector(`input[name="alpha"][value="${pr.alpha}"]`).checked  = true;
+  document.querySelector(`input[name="testType"][value="${pr.testType}"]`).checked = true;
+  syncAllChips();
+
+  setMode(pr.mode);
+
+  document.getElementById('mu0Slider').value  = pr.mu0;
+  document.getElementById('xbarSlider').value = pr.xbar;
+  document.getElementById('sdSlider').value   = pr.sd;
+  document.getElementById('nSlider').value    = pr.n;
+  document.getElementById('tsSlider').value   = pr.ts;
+  document.getElementById('dfSlider').value   = pr.df;
+  syncComputeLabels();
+  syncDirectLabels();
+
+  updateSDLabel();
+
+  if (isPower) {
+    document.getElementById('mu1Slider').value   = pr.mu1;
+    document.getElementById('pwSdSlider').value  = pr.pwSd;
+    document.getElementById('pwNSlider').value   = pr.pwN;
+    document.querySelector(`input[name="pwAlpha"][value="${pr.pwAlpha}"]`).checked = true;
+    ['pwA01','pwA05','pwA10'].forEach(id => {
+      const el=document.getElementById(id);
+      el.classList.toggle('checked',el.querySelector('input').checked);
+    });
+    drawPowerPlot();
+  } else {
+    drawMainPlot();
+  }
+
+  document.getElementById('directionSection').style.display = 'block';
+}
+
+/* ═══════════════════════════════════════════
+   PARABLE — SCENES & RENDERING
+═══════════════════════════════════════════ */
+let currentScene = 0;
+
+const SCENES = [
+  /* ── Scene 0: Setup ──────────────────── */
+  {
+    title: 'The Setup — Stating the Hypotheses',
+    highlight: null,
+    illustration: `
+      <div class="scene-sky"></div>
+      <div class="scene-hill"></div>
+      <div class="scene-village">🏘️</div>
+      <div style="position:absolute;bottom:10%;left:19%;font-size:1.2rem">👨‍🌾 👩‍🌾 🧑‍🌾</div>
+      <div class="scene-sheep">🐑 🐑 🐑</div>
+      <div class="scene-hill-top">🧒<br><span style="font-size:.68rem;background:white;padding:1px 5px;border-radius:4px;color:#374151">watching...</span></div>
+      <div class="scene-error-badge badge-setup">📋 Setup</div>
+      <div class="scene-caption">A peaceful day. The boy watches the sheep. The villagers trust that if he sounds the alarm, danger is real.</div>`,
+    statFrame: [
+      { label: 'Ground Truth', val: 'H₀ is TRUE', sub: 'No wolf is present', cls: 'hl-green' },
+      { label: 'Alarm sent?', val: 'No alarm yet', sub: 'Boy is quiet', cls: '' },
+      { label: 'Status', val: 'Waiting...', sub: 'No decision has been made', cls: '' }
+    ],
+    cells: [
+      { name:'Ground truth', val:'H₀ true',   sub:'No wolf is here',                          col:'var(--green)' },
+      { name:'Villagers\' threshold', val:'Normal α', sub:'Trust intact — will respond to a credible alarm', col:'var(--blue)' },
+      { name:'β risk',       val:'Low',        sub:'Low chance of missing a real signal',       col:'var(--green)' },
+      { name:'Decision',     val:'—',          sub:'No alarm yet — no decision to make',        col:'var(--gray)' }
+    ],
+    obs: { cls:'obs-card blue', text:`<strong>H₀: "No wolf is approaching."</strong> This is the null hypothesis — the default belief the villagers hold until evidence forces a change.<br><br>
+<strong>H₁: "A wolf is approaching."</strong> This is what the boy's alarm would claim. The villagers will reject H₀ if the signal is convincing enough.<br><br>
+They have an implicit <strong>significance level α</strong> — a threshold above which they'll respond. Right now, trust is intact. Both error rates are at their designed levels: α is controlled, and β (the chance of missing a real wolf) is acceptably low.` }
+  },
+
+  /* ── Scene 1: First cry — Type I error ── */
+  {
+    title: 'First Alarm — A Type I Error (False Positive)',
+    highlight: 'T1',
+    illustration: `
+      <div class="scene-sky"></div>
+      <div class="scene-hill"></div>
+      <div class="scene-village" style="opacity:.5">🏘️</div>
+      <div class="scene-sheep">🐑 🐑 🐑</div>
+      <div class="scene-hill-top">🧒</div>
+      <div class="scene-alarm">🐺 WOLF!</div>
+      <div class="scene-runners">🏃‍♂️ 🏃‍♀️ 🏃‍♂️</div>
+      <div class="scene-error-badge badge-t1">✗ Type I Error</div>
+      <div class="scene-caption">The boy cries wolf — but there is no wolf. The alarm passes the threshold. The villagers all run up the hill.</div>`,
+    statFrame: [
+      { label: 'Ground Truth', val: 'H₀ is TRUE', sub: 'No wolf present', cls: 'hl-green' },
+      { label: 'Decision',     val: 'Reject H₀',  sub: 'Villagers believe the alarm', cls: 'hl-red' },
+      { label: 'Error Type',   val: 'Type I (α)', sub: 'False positive', cls: 'hl-red' }
+    ],
+    cells: [
+      { name:'Ground truth', val:'H₀ true',    sub:'No wolf — alarm was false',                      col:'var(--green)' },
+      { name:'Decision',     val:'Reject H₀',  sub:'Villagers respond — ran up the hill',            col:'var(--red)' },
+      { name:'Error type',   val:'Type I',      sub:'Probability = α — the designed false-alarm rate', col:'var(--red)' },
+      { name:'Trust level',  val:'Reduced',     sub:'Villagers are now mildly skeptical',             col:'var(--amber)' }
+    ],
+    obs: { cls:'obs-card red', text:`The boy's alarm was convincing. The villagers <strong>rejected H₀</strong> and ran up the hill — but H₀ was true. There was no wolf.<br><br>
+This is a <strong>Type I Error</strong> — a false positive. It happens with probability α whenever H₀ is true and a test is run. The direct cost is wasted effort and mild embarrassment.<br><br>
+But there is a <strong>hidden cost</strong>: trust has eroded. The villagers' effective threshold — the signal strength they'll now require before responding — has shifted informally upward. Their de facto α has decreased. This means their <strong>β has increased</strong>: the probability of missing a real wolf is now higher than it was before.` }
+  },
+
+  /* ── Scene 2: Second cry — Type I again ── */
+  {
+    title: 'Second Alarm — Trust Is Eroding',
+    highlight: 'T1',
+    illustration: `
+      <div class="scene-sky"></div>
+      <div class="scene-hill"></div>
+      <div class="scene-village" style="opacity:.55">🏘️</div>
+      <div class="scene-sheep">🐑 🐑 🐑</div>
+      <div class="scene-hill-top">🧒</div>
+      <div class="scene-alarm" style="border-color:#f97316;color:#f97316">🐺 WOLF!</div>
+      <div class="scene-runners" style="font-size:1.3rem;left:17%">🏃‍♂️</div>
+      <div style="position:absolute;bottom:11%;left:11%;font-size:1.4rem">🤷‍♂️ 🙄</div>
+      <div class="scene-error-badge badge-t1">✗ Type I Error (again)</div>
+      <div class="scene-caption">The boy cries wolf again. Still no wolf. Only one villager responds now. Others have stopped trusting the alarm.</div>`,
+    statFrame: [
+      { label: 'Ground Truth', val: 'H₀ is TRUE',   sub: 'Still no wolf', cls: 'hl-green' },
+      { label: 'Effective α',  val: '↑ Rising fast', sub: 'Required signal strength is much higher', cls: 'hl-amber' },
+      { label: 'β is rising',  val: '↑ β risk',      sub: 'Chance of missing a real wolf grows', cls: 'hl-amber' }
+    ],
+    cells: [
+      { name:'Ground truth', val:'H₀ true',      sub:'Second false alarm in a row',                       col:'var(--green)' },
+      { name:'Decision',     val:'Mixed',         sub:'Some respond; others ignore — thresholds diverge',  col:'var(--amber)' },
+      { name:'Error type',   val:'Type I again',  sub:'Procedure accumulating false positives',            col:'var(--red)' },
+      { name:'Trust level',  val:'Critical ↓',   sub:'Effective threshold has shifted sharply upward',    col:'var(--red)' }
+    ],
+    obs: { cls:'obs-card amber', text:`Another false alarm. Another <strong>Type I Error</strong>. The hidden cost is now visible: only one villager responds. Others shrug. The procedure is breaking down.<br><br>
+In statistical terms, the villagers have <strong>informally raised their threshold</strong> — their effective α is now much lower than the designed level. But this is not free. Because α and β are linked at any fixed n, <strong>β has risen sharply</strong>. They are now far more likely to miss a real threat than they were at the start.<br><br>
+This is the fundamental trade-off: you cannot independently minimize both errors. With no way to increase n (no more observations), the only options are to accept higher β or to restore the credibility of the testing procedure through structural reform.` }
+  },
+
+  /* ── Scene 3: Real wolf — Type II error ── */
+  {
+    title: 'The Wolf Arrives — A Type II Error (False Negative)',
+    highlight: 'T2',
+    illustration: `
+      <div class="scene-sky" style="background:linear-gradient(180deg,#fee2e2 0%,#fecaca 100%)"></div>
+      <div class="scene-hill"></div>
+      <div class="scene-village">🏘️</div>
+      <div style="position:absolute;bottom:11%;left:13%;font-size:1.4rem">🙅‍♂️ 🙅‍♀️</div>
+      <div style="position:absolute;bottom:22%;left:35%;font-size:1.7rem">😱🐑 🐑</div>
+      <div style="position:absolute;right:4%;bottom:28%;font-size:2rem">🐺</div>
+      <div class="scene-hill-top">🧒😰</div>
+      <div class="scene-alarm" style="border-color:#dc2626;color:#dc2626;font-size:.9rem;padding:5px 12px">🐺 WOLF!! 🐺</div>
+      <div class="scene-error-badge badge-t2">✗ Type II Error</div>
+      <div class="scene-caption">A real wolf! The boy cries wolf desperately. The villagers don't come. The wolf reaches the sheep.</div>`,
+    statFrame: [
+      { label: 'Ground Truth', val: 'H₁ is TRUE',      sub: 'A real wolf is here', cls: 'hl-red' },
+      { label: 'Decision',     val: 'Fail to Reject H₀', sub: 'Villagers do not respond', cls: 'hl-amber' },
+      { label: 'Error Type',   val: 'Type II (β)',      sub: 'False negative — catastrophic miss', cls: 'hl-amber' }
+    ],
+    cells: [
+      { name:'Ground truth', val:'H₁ TRUE',    sub:'Wolf is actually present — real signal',            col:'var(--red)' },
+      { name:'Decision',     val:'FTR H₀',     sub:'Villagers stay home — do not respond',              col:'var(--red)' },
+      { name:'Error type',   val:'Type II',    sub:'False negative — probability = β',                  col:'var(--amber)' },
+      { name:'Power = 1−β',  val:'≈ 0%',      sub:'Procedure has lost nearly all power to detect',     col:'var(--red)' }
+    ],
+    obs: { cls:'obs-card red', text:`The wolf is real. The boy cries wolf. H₁ is true — but the villagers <strong>fail to reject H₀</strong>. They stay home. This is a <strong>Type II Error</strong>.<br><br>
+The signal may have been strong enough to exceed the <em>original</em> threshold — but the villagers' effective threshold, eroded by repeated false positives, is now so high that the alarm cannot pass it. The procedure's <strong>power has collapsed to near zero</strong>.<br><br>
+<strong>The repeated Type I errors directly caused this Type II error</strong> — not by changing reality, but by changing the decision threshold. A genuine signal was present; the damaged testing framework could not detect it. This is exactly why multiple testing corrections, pre-registration, and replication matter in science.` }
+  },
+
+  /* ── Scene 4: The moral ── */
+  {
+    title: 'The Moral — What Statistics Teaches',
+    highlight: null,
+    illustration: `
+      <div class="scene-sky" style="background:linear-gradient(180deg,#e0e7ff 0%,#c7d2fe 100%)"></div>
+      <div class="scene-hill" style="background:linear-gradient(180deg,#6ee7b7 0%,#34d399 100%)"></div>
+      <div class="scene-village">🏘️</div>
+      <div style="position:absolute;bottom:12%;left:18%;font-size:1.3rem">😔 👨‍🌾 👩‍🌾</div>
+      <div style="position:absolute;bottom:22%;left:40%;font-size:1.5rem">🐑 🐑</div>
+      <div style="position:absolute;bottom:38%;left:30%;right:30%;text-align:center;font-size:.8rem;font-weight:700;color:#1e3a8a;background:rgba(255,255,255,.92);padding:6px 10px;border-radius:8px;border:1.5px solid #93c5fd;line-height:1.6">
+        α ↔ β<br>Linked at fixed n<br>Fix: ↑ n, pre-register, replicate
+      </div>
+      <div class="scene-hill-top">🧒😢</div>
+      <div class="scene-error-badge badge-setup">📖 The Lesson</div>
+      <div class="scene-caption">The village counts the cost. α and β are not independent. The only structural fixes: increase n, pre-register, and replicate.</div>`,
+    statFrame: [
+      { label: 'Type I (α)',     val: 'False Alarm',      sub: 'Crying wolf when safe', cls: 'hl-red' },
+      { label: 'Type II (β)',    val: 'Missed Wolf',       sub: 'Staying home when real', cls: 'hl-amber' },
+      { label: 'Power = 1 − β', val: 'Correct Detection', sub: 'Responding when real', cls: 'hl-green' }
+    ],
+    cells: [
+      { name:'Core trade-off', val:'α ↔ β',       sub:'Lowering one raises the other at fixed n',      col:'var(--purple)' },
+      { name:'Fix 1',          val:'↑ n',          sub:'Larger samples lower β without raising α',      col:'var(--green)' },
+      { name:'Fix 2',          val:'Pre-register', sub:'Specify H₁ and α before collecting data',       col:'var(--blue)' },
+      { name:'Fix 3',          val:'Replicate',    sub:'Independent tests restore and sustain trust',   col:'var(--green)' }
+    ],
+    obs: { cls:'obs-card purple', text:`<strong>Three lessons from the parable:</strong><br><br>
+<strong>1. α and β are linked.</strong> The villagers could not independently set their false-positive rate and their false-negative rate. Reducing one (requiring stronger evidence to respond) increased the other (becoming more likely to miss a real threat). The only escape is more observations — a larger n.<br><br>
+<strong>2. Repeated false positives erode a testing procedure's power.</strong> This mirrors the replication crisis in science: when studies routinely report false positives without replication, researchers and readers lose trust in findings — including genuine ones. The effective threshold shifts upward across the field.<br><br>
+<strong>3. The fix is structural, not reactive.</strong> Pre-registration (committing to H₁ and α before collecting data), adequate sample sizes planned for target power (typically 80%), and independent replication are the equivalents of the village establishing a formal protocol — not just hoping the boy changes his behavior.` }
+  }
+];
+
+function renderScene() {
+  const s = SCENES[currentScene];
+
+  // Stage
+  document.getElementById('sceneStage').innerHTML = s.illustration;
+
+  // Progress dots
+  document.getElementById('sceneDots').innerHTML = SCENES.map((_, i) =>
+    `<div class="scene-dot ${i===currentScene?'active':''}" onclick="goScene(${i})"></div>`
+  ).join('');
+
+  // Buttons
+  document.getElementById('btnPrev').disabled = currentScene === 0;
+  document.getElementById('btnNext').textContent = currentScene === SCENES.length-1 ? '↺ Restart' : 'Next →';
+
+  // Sidebar metric card (replaces stat bar for parable)
+  document.getElementById('parableMetrics').innerHTML = s.cells.map(c =>
+    `<div class="m-item">
+       <div class="mi-label">${c.name}</div>
+       <div class="mi-val" style="color:${c.col}">${c.val}</div>
+       <div class="mi-sub">${c.sub}</div>
+     </div>`
+  ).join('');
+
+  // Obs panel
+  document.getElementById('obsPanel').className = s.obs.cls;
+  document.getElementById('obsPanel').innerHTML  = s.obs.text;
+
+  // Error table highlighting
+  ['etT1','etT2','etCR','etCRet'].forEach(id =>
+    document.getElementById(id).className = 'et-cell'
+  );
+  if (s.highlight === 'T1')   document.getElementById('etT1').className  = 'et-cell hl-red';
+  if (s.highlight === 'T2')   document.getElementById('etT2').className  = 'et-cell hl-amber';
+  if (s.highlight === 'CR')   document.getElementById('etCR').className  = 'et-cell hl-green';
+  if (s.highlight === 'CRet') document.getElementById('etCRet').className = 'et-cell hl-green';
+}
+
+function nextScene() {
+  currentScene = currentScene < SCENES.length-1 ? currentScene+1 : 0;
+  renderScene();
+}
+function prevScene() {
+  if (currentScene > 0) { currentScene--; renderScene(); }
+}
+function goScene(i) { currentScene = i; renderScene(); }
+
+/* ═══════════════════════════════════════════
+   INPUT MODE
+═══════════════════════════════════════════ */
+function setMode(mode) {
+  inputMode = mode;
+  document.getElementById('computeMode').style.display = mode==='compute' ? 'block' : 'none';
+  document.getElementById('directMode').style.display  = mode==='direct'  ? 'block' : 'none';
+  document.getElementById('modeBtnCompute').classList.toggle('active', mode==='compute');
+  document.getElementById('modeBtnDirect').classList.toggle('active', mode==='direct');
+  // Show df slider in direct+t mode
+  const showDF = mode==='direct' && isT();
+  document.getElementById('dfSection').style.display = showDF ? 'block' : 'none';
+}
+
+function updateSDLabel() {
+  const useT = isT();
+  document.getElementById('sdLabel').innerHTML = `${useT?'Sample SD s':'Population SD σ'} &nbsp;<span class="mono" style="color:var(--blue)" id="sdDisp">${document.getElementById('sdSlider').value}</span>`;
+  document.getElementById('sdNote').textContent = useT
+    ? 'Estimated from the sample. df = n − 1 will be used.'
+    : 'Known σ used for z-test.';
+}
+
+/* ═══════════════════════════════════════════
+   EVENT HANDLERS
+═══════════════════════════════════════════ */
+function onComputeChange() { syncComputeLabels(); if (currentLesson!=='power'&&currentLesson!=='parable') drawMainPlot(); }
+function onDirectChange()  { syncDirectLabels();  if (currentLesson!=='power'&&currentLesson!=='parable') drawMainPlot(); }
+function onDirChange()     { syncAllChips(); if (currentLesson!=='power'&&currentLesson!=='parable') drawMainPlot(); }
+function onAlphaChange()   { syncAllChips(); if (currentLesson!=='power'&&currentLesson!=='parable') drawMainPlot(); }
+function onPowerChange()   { if (currentLesson==='power') drawPowerPlot(); }
+function onTestTypeChange() {
+  syncAllChips(); updateSDLabel();
+  const showDF = inputMode==='direct' && isT();
+  document.getElementById('dfSection').style.display = showDF ? 'block' : 'none';
+  if (currentLesson!=='power'&&currentLesson!=='parable') drawMainPlot();
+}
+
+document.getElementById('btnGuide').addEventListener('click', () => {
+  const g = document.getElementById('guideSection');
+  const btn = document.getElementById('btnGuide');
+  const open = g.classList.toggle('open');
+  btn.textContent = open ? '▲ Hide Guide' : '▼ Quick-Start Guide';
+});
+
+document.getElementById('btnRef').addEventListener('click', () => {
+  const rc  = document.getElementById('refCard');
+  const btn = document.getElementById('btnRef');
+  const open = rc.classList.toggle('open');
+  btn.textContent = open ? '▲ Hide Reference' : '📖 Full Reference';
+});
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+setLesson('logic');
+</script>
+</body>
+</html>

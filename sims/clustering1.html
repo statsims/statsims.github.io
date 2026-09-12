@@ -1,0 +1,2509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clustering &amp; Pattern Discovery Lab</title>
+<style>
+:root {
+  --bg:#f6f7f9; --card:#ffffff; --border:#d9dde3;
+  --text:#1f2937; --muted:#6b7280; --soft:#f3f4f6;
+  --blue:#2563eb; --red:#dc2626; --green:#16a34a;
+  --amber:#d97706; --gray:#9ca3af;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px;font-size:14px;line-height:1.5}
+.container{max-width:1420px;margin:auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+
+/* Top-level tab bar (technique picker) */
+.tab-bar{display:flex;align-items:center;border-bottom:2px solid var(--border);margin-bottom:16px;gap:0;flex-wrap:wrap}
+.tab-btn{padding:10px 16px;border:none;border-bottom:2px solid transparent;background:none;font-family:Arial,sans-serif;font-size:.85rem;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:-2px;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-hint{font-size:.76rem;color:var(--gray);font-style:italic;margin-left:auto;padding-right:6px;white-space:nowrap}
+
+/* Sub-tab pill toggle (step-by-step vs full run, within a technique) */
+.subtab-bar{display:flex;gap:8px;margin-bottom:14px}
+.subtab-btn{padding:7px 15px;border:1px solid var(--border);border-radius:20px;background:var(--soft);font-family:Arial,sans-serif;font-size:.8rem;font-weight:700;color:var(--muted);cursor:pointer;transition:background .15s}
+.subtab-btn:hover{background:#e5e7eb}
+.subtab-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* Step track */
+.step-track{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--border);margin-bottom:14px}
+.step-btn{flex:1;padding:9px 4px;border:none;background:var(--soft);color:var(--muted);cursor:pointer;font-size:.76rem;font-weight:700;border-right:1px solid var(--border);transition:background .15s}
+.step-btn:last-child{border-right:none}
+.step-btn:hover{background:#e5e7eb}
+.step-btn.active{background:var(--blue);color:white}
+
+/* Layouts */
+.two-panel{display:grid;grid-template-columns:3fr 2fr;gap:16px}
+.full-sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.controls-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+
+/* Intro */
+.intro-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.intro-title{flex:1 1 400px}
+.intro-title h2{margin:0 0 5px;font-size:1.2rem}
+.intro-subtitle{font-size:.9rem;color:var(--muted);margin:0;line-height:1.5}
+.header-btns{display:flex;flex-direction:column;gap:8px;flex-shrink:0;margin-top:2px}
+
+/* Guide */
+.guide-section{display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.guide-section.open{display:block}
+.guide-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.guide-col h4{margin:0 0 7px;font-size:.9rem;color:var(--text)}
+.guide-col ul,.guide-col ol{padding-left:18px;margin:0}
+.guide-col li{font-size:.83rem;color:var(--muted);line-height:1.5;margin-bottom:3px}
+.guide-col li strong{color:var(--text)}
+
+/* Buttons */
+button{padding:8px 13px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;font-family:Arial,sans-serif;font-size:.84rem;color:var(--text);transition:background .15s}
+button:hover{background:#f8fafc}
+button:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--blue);border-color:var(--blue);color:white}
+.btn-primary:hover{background:#1d4ed8}
+
+/* Step description */
+.step-desc{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px;font-size:.84rem;color:#075985;line-height:1.5;margin-top:12px}
+.step-desc strong{color:#0c4a6e}
+
+/* Action row */
+.action-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+
+/* Metrics */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{border:1px solid var(--border);background:var(--soft);border-radius:8px;padding:8px 10px}
+.metric-label{font-size:.72rem;color:var(--muted)}
+.metric-value{font-weight:700;font-size:.95rem;font-family:ui-monospace,monospace;margin-top:1px}
+
+/* Interpretation */
+.interp-box{padding:12px 14px;border:1px solid;border-left:5px solid;border-radius:10px;transition:all .35s}
+.interp-box.pending{background:#eff6ff;border-color:#c7d2fe;border-left-color:var(--blue)}
+.interp-box.poor{background:var(--soft);border-color:var(--border);border-left-color:var(--gray)}
+.interp-box.fair{background:#fff7ed;border-color:#fdba74;border-left-color:var(--amber)}
+.interp-box.good{background:#ecfdf5;border-color:#86efac;border-left-color:var(--green)}
+.interp-box.great{background:#f0fdf4;border-color:#4ade80;border-left-color:#15803d}
+.interp-verdict{font-weight:700;margin-bottom:5px}
+.interp-ctx{font-size:.84rem;color:var(--muted)}
+
+/* Scenario cards */
+.sc-card{border:1px solid var(--border);border-radius:10px;padding:11px 13px;background:var(--soft);cursor:pointer;transition:all .15s}
+.sc-card:hover{border-color:var(--blue);background:#eff6ff}
+.sc-card.active{border-color:var(--blue);background:#eff6ff}
+.sc-name{font-weight:700;font-size:.88rem;margin-bottom:4px}
+.sc-desc{font-size:.78rem;color:var(--muted);line-height:1.4}
+
+/* Controls */
+.control-box{background:var(--soft);padding:10px;border-radius:10px;border:1px solid var(--border);margin-bottom:10px}
+.control-title{font-size:.82rem;font-weight:700;display:block;margin-bottom:6px}
+input[type=range]{width:100%;accent-color:var(--blue)}
+select{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:Arial,sans-serif;font-size:.84rem;background:white}
+.val-display{font-size:.8rem;color:var(--muted);margin-top:3px}
+
+/* Panel header */
+.panel-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.panel-header h3{margin:0;font-size:1rem}
+.panel-badge{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:var(--soft);color:var(--muted)}
+.wtw{margin:0 0 10px;padding:9px 11px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:.82rem;color:#075985;line-height:1.45}
+.wtw strong{color:#0c4a6e}
+
+/* Legend */
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--muted)}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:1px solid rgba(0,0,0,0.15)}
+.legend-ring{width:10px;height:10px;border-radius:50%;flex-shrink:0;border:1.6px solid var(--gray);background:none}
+
+/* SVG wrap */
+.svg-wrap svg{width:100%;display:block}
+
+/* Help card */
+.help-card{display:none}
+.help-card.open{display:block}
+.help-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.help-section{margin-bottom:18px}
+.help-section h4{margin:0 0 6px;font-size:.93rem;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px}
+.help-section p,.help-section li{font-size:.86rem;color:var(--muted);line-height:1.5;margin:4px 0}
+.help-section ul{padding-left:18px;margin:6px 0}
+.help-section li strong{color:var(--text)}
+.case-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.case-box{border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--soft)}
+.case-box .case-label{font-weight:700;font-size:.82rem;color:var(--text)}
+.case-box .case-desc{font-size:.76rem;color:var(--muted);margin-top:2px;line-height:1.35}
+
+/* Animation overlay */
+#animOverlay{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999}
+
+@media(max-width:900px){
+  .two-panel,.full-sim-grid,.guide-cols,.scenario-grid,.help-2col,.case-grid{grid-template-columns:1fr}
+  .metric-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div id="animOverlay"></div>
+<div class="container">
+
+<!-- HEADER -->
+<div class="card">
+  <div class="intro-header">
+    <div class="intro-title">
+      <h2>Clustering &amp; Pattern Discovery Lab</h2>
+      <p class="intro-subtitle">One shared dataset, six ways of looking at it. Generate a scenario once in the Overview tab, then switch between k-Means, Hierarchical, DBSCAN, and GMM to see how differently each algorithm carves up the exact same points &mdash; plus the distance metric and validation tools that sit underneath all of them.</p>
+    </div>
+    <div class="header-btns">
+      <button id="toggleGuide">&#9660; Quick-Start Guide</button>
+      <button id="toggleHelp">&#128218; Full Reference</button>
+    </div>
+  </div>
+  <div class="guide-section" id="guideSection">
+    <div class="guide-cols">
+      <div class="guide-col">
+        <h4>Start Here</h4>
+        <ul>
+          <li>Go to <strong>Overview &amp; Scenarios</strong> and pick a preset. This generates one shared point set used by every tab.</li>
+          <li>Open <strong>k-Means</strong> first &mdash; step through one iteration, then run it to convergence.</li>
+          <li>Switch to <strong>Hierarchical</strong>, <strong>DBSCAN</strong>, or <strong>GMM</strong> without changing the scenario, and compare how each one partitions the same points.</li>
+          <li>Use <strong>Distance Metrics</strong> and <strong>Cluster Validation</strong> to understand the assumptions all four algorithms rest on.</li>
+        </ul>
+      </div>
+      <div class="guide-col">
+        <h4>Why Compare on the Same Data</h4>
+        <ul>
+          <li>k-Means assumes round, similarly-sized clusters &mdash; try the <strong>elongated</strong> or <strong>two moons</strong> scenario to watch it fail.</li>
+          <li>DBSCAN handles odd shapes and noise but struggles when clusters have <strong>different densities</strong>.</li>
+          <li>GMM generalizes k-Means with elliptical, soft-membership clusters.</li>
+          <li>Hierarchical needs no upfront k &mdash; you choose the cut afterward.</li>
+        </ul>
+      </div>
+      <div class="guide-col">
+        <h4>The Core Idea</h4>
+        <ul>
+          <li><strong>Clustering finds structure with no labels.</strong> Every method here groups points using only their coordinates.</li>
+          <li>Every algorithm encodes an assumption about what a "cluster" looks like &mdash; round, dense, elliptical, or hierarchical.</li>
+          <li>There is rarely one true k. <strong>Cluster Validation</strong> gives you evidence, not certainty.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOP TAB BAR -->
+<div class="tab-bar" id="topTabBar">
+  <button class="tab-btn active" data-tab="0">Overview &amp; Scenarios</button>
+  <button class="tab-btn" data-tab="1">k-Means</button>
+  <button class="tab-btn" data-tab="2">Hierarchical</button>
+  <button class="tab-btn" data-tab="3">DBSCAN</button>
+  <button class="tab-btn" data-tab="4">GMM</button>
+  <button class="tab-btn" data-tab="5">Distance Metrics</button>
+  <button class="tab-btn" data-tab="6">Cluster Validation</button>
+  <span class="tab-hint">Pick a scenario, then explore any technique tab.</span>
+</div>
+
+<!-- ══ TAB 0: OVERVIEW & SCENARIOS ══ -->
+<div id="tab0" class="tab-content">
+  <div class="full-sim-grid">
+    <div class="card">
+      <h3 style="margin-bottom:6px">Scenarios</h3>
+      <p style="font-size:.84rem;color:var(--muted);margin-bottom:0">Each scenario generates one shared point set used by every technique tab. Loading a scenario resets all technique tabs so you compare fairly. Use <strong>Reshuffle Noise</strong> to redraw the same scenario with a new random seed without changing its structure.</p>
+      <div class="scenario-grid" id="scenarioGrid"></div>
+      <div class="action-row">
+        <button class="btn-primary" onclick="reshuffleNoise()">Reshuffle Noise</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="panel-header">
+        <h3>Shared Dataset</h3>
+        <span class="panel-badge" id="ovBadge">-- points</span>
+      </div>
+      <p class="wtw"><strong>What to look for:</strong> this is the raw, unlabeled point set. No colors mean no assumptions yet &mdash; every technique tab will color these same points differently based on what it thinks a cluster is.</p>
+      <div class="svg-wrap"><svg id="ovSvg" viewBox="0 0 460 380"></svg></div>
+      <div class="control-box" style="margin-top:10px">
+        <span class="control-title">Point count</span>
+        <input type="range" id="nPoints" min="40" max="220" step="10" value="140">
+        <div class="val-display" id="nPointsVal">140 points</div>
+      </div>
+      <div class="control-box" style="margin-bottom:0">
+        <span class="control-title">Noise level</span>
+        <input type="range" id="noiseLevel" min="0" max="10" step="0.5" value="3">
+        <div class="val-display" id="noiseLevelVal">3.0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 1: K-MEANS (placeholder, filled next) ══ -->
+<div id="tab1" class="tab-content" style="display:none">
+  <div class="card">
+    <div class="panel-header">
+      <h3>k-Means Clustering</h3>
+      <span class="panel-badge">Hard assignment &middot; assumes round clusters</span>
+    </div>
+    <p class="wtw"><strong>What to look for:</strong> k-Means alternates between two steps &mdash; assign each point to its nearest centroid, then move each centroid to the mean of the points assigned to it. It always converges, but only to a local optimum, and it implicitly assumes clusters are round and similarly sized.</p>
+    <div class="subtab-bar">
+      <button class="subtab-btn active" id="kmSubBtn0" onclick="kmShowSub(0)">Step-by-Step</button>
+      <button class="subtab-btn" id="kmSubBtn1" onclick="kmShowSub(1)">Run to Convergence</button>
+    </div>
+    <div class="control-box" style="max-width:360px">
+      <span class="control-title">Number of clusters (k)</span>
+      <input type="range" id="kmK" min="2" max="6" step="1" value="4">
+      <div class="val-display" id="kmKVal">k = 4</div>
+    </div>
+
+    <div id="kmSub0">
+      <div class="two-panel">
+        <div>
+          <div class="panel-header">
+            <h4 style="margin:0;font-size:.95rem">One Iteration</h4>
+            <span class="panel-badge" id="kmStepBadge">Step 1 of 4</span>
+          </div>
+          <div class="step-track">
+            <button class="step-btn active" id="km_sb0" onclick="kmGoToStep(0)">1 &middot; Init</button>
+            <button class="step-btn" id="km_sb1" onclick="kmGoToStep(1)">2 &middot; Assign</button>
+            <button class="step-btn" id="km_sb2" onclick="kmGoToStep(2)">3 &middot; Update</button>
+            <button class="step-btn" id="km_sb3" onclick="kmGoToStep(3)">4 &middot; Check</button>
+          </div>
+          <div class="svg-wrap"><svg id="kmStepSvg" viewBox="0 0 460 380"></svg></div>
+          <div class="legend" id="kmStepLegend"></div>
+          <div class="step-desc" id="kmStepDesc">Loading...</div>
+          <div class="action-row">
+            <button class="btn-primary" id="kmBtnNext" onclick="kmNextStep()">Next Step</button>
+            <button id="kmBtnRun10" onclick="kmRun10More()">Run 10 More Iterations</button>
+            <div style="flex:1"></div>
+            <button onclick="kmGoToStep(0)">Reset Steps</button>
+          </div>
+        </div>
+        <div>
+          <div class="metric-grid">
+            <div class="metric"><div class="metric-label">Iteration</div><div class="metric-value" id="kmIterVal">0</div></div>
+            <div class="metric"><div class="metric-label">Inertia (within-cluster SS)</div><div class="metric-value" id="kmInertiaVal">--</div></div>
+            <div class="metric"><div class="metric-label">Centroid shift</div><div class="metric-value" id="kmShiftVal">--</div></div>
+            <div class="metric"><div class="metric-label">Converged?</div><div class="metric-value" id="kmConvVal">--</div></div>
+          </div>
+          <div class="panel-header" style="margin-top:12px"><h4 style="margin:0;font-size:.9rem">Inertia so far</h4></div>
+          <div class="svg-wrap"><svg id="kmStepInertiaSvg" viewBox="0 0 460 200"></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="kmSub1" style="display:none">
+      <div class="full-sim-grid">
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Final Clustering</h4><span class="panel-badge" id="kmFullBadge">not run</span></div>
+          <div class="svg-wrap"><svg id="kmFullSvg" viewBox="0 0 460 380"></svg></div>
+          <div class="legend" id="kmFullLegend"></div>
+          <div class="action-row">
+            <button class="btn-primary" onclick="kmRunToConvergence()">Run to Convergence</button>
+            <button onclick="kmReset()">Reset</button>
+          </div>
+        </div>
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Inertia by Iteration</h4></div>
+          <p class="wtw" style="font-size:.78rem"><strong>What to look for:</strong> inertia (total within-cluster squared distance) never increases &mdash; k-Means always converges, but possibly to a local optimum that depends on the random initialization. Try running again on the same data.</p>
+          <div class="svg-wrap"><svg id="kmFullInertiaSvg" viewBox="0 0 460 240"></svg></div>
+          <div id="kmInterpBox" class="interp-box pending" style="margin-top:10px">
+            <div class="interp-verdict" id="kmInterpVerdict">Run the algorithm to see an interpretation.</div>
+            <div class="interp-ctx" id="kmInterpCtx">Inertia measures how tightly points cluster around their assigned centroid.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 2: HIERARCHICAL (placeholder) ══ -->
+<div id="tab2" class="tab-content" style="display:none">
+  <div class="card">
+    <div class="panel-header">
+      <h3>Hierarchical (Agglomerative) Clustering</h3>
+      <span class="panel-badge">No k required upfront</span>
+    </div>
+    <p class="wtw"><strong>What to look for:</strong> every point starts as its own cluster. At each step the two <em>closest</em> clusters merge, building a tree (dendrogram) bottom-up. You choose k afterward, by cutting the tree at a height.</p>
+    <div class="subtab-bar">
+      <button class="subtab-btn active" id="hcSubBtn0" onclick="hcShowSub(0)">Step-by-Step Merges</button>
+      <button class="subtab-btn" id="hcSubBtn1" onclick="hcShowSub(1)">Full Dendrogram &amp; Cut</button>
+    </div>
+    <div class="control-box" style="max-width:360px">
+      <span class="control-title">Linkage criterion</span>
+      <select id="hcLinkageSel">
+        <option value="single">Single (nearest point)</option>
+        <option value="complete">Complete (farthest point)</option>
+        <option value="average" selected>Average</option>
+      </select>
+    </div>
+
+    <div id="hcSub0">
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px">Uses a readable subset of <strong>8 points</strong> from the shared dataset &mdash; enough to watch every merge individually. Each of the 8 starting points keeps a fixed color; when two clusters merge, the merged cluster inherits the color of its larger parent, so you can trace a color from a lone point all the way to the final tree.</p>
+      <div class="two-panel">
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Points</h4><span class="panel-badge" id="hcStepBadge">Merge 0 of 7</span></div>
+          <div class="svg-wrap"><svg id="hcStepScatterSvg" viewBox="0 0 460 380"></svg></div>
+          <div class="legend" id="hcStepLegend"></div>
+          <div class="step-desc" id="hcStepDesc">Loading...</div>
+          <div class="action-row">
+            <button class="btn-primary" id="hcBtnNext" onclick="hcNextMerge()">Next Merge</button>
+            <button id="hcBtnRun" onclick="hcRunAllMerges()">Run All Merges</button>
+            <div style="flex:1"></div>
+            <button onclick="hcResetStep()">Reset Merges</button>
+            <button onclick="hcRebuildStep()">New Subset</button>
+          </div>
+        </div>
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Dendrogram</h4></div>
+          <div class="svg-wrap"><svg id="hcStepDendroSvg" viewBox="0 0 460 380"></svg></div>
+          <div class="metric-grid" style="margin-top:10px">
+            <div class="metric"><div class="metric-label">Merges so far</div><div class="metric-value" id="hcMergeCountVal">0</div></div>
+            <div class="metric"><div class="metric-label">Clusters remaining</div><div class="metric-value" id="hcRemainVal">8</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="hcSub1" style="display:none">
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px">Uses up to <strong>60 points</strong> sampled from the shared dataset for a readable full dendrogram.</p>
+      <div class="full-sim-grid">
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Full Dendrogram</h4></div>
+          <div class="svg-wrap"><svg id="hcFullDendroSvg" viewBox="0 0 460 340"></svg></div>
+          <div class="control-box" style="margin-top:10px">
+            <span class="control-title">Cut height</span>
+            <input type="range" id="hcCutSlider" min="0" max="100" step="0.5" value="50">
+            <div class="val-display" id="hcCutVal">--</div>
+          </div>
+          <div class="action-row"><button onclick="hcRebuildFull()">New Subset</button></div>
+        </div>
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Resulting Clusters</h4></div>
+          <p class="wtw" style="font-size:.78rem"><strong>What to look for:</strong> dragging the cut height changes how many clusters you get, low = many small clusters, high = few large clusters. The top 8 clusters by size are colored; any smaller remainder is shown as hollow rings.</p>
+          <div class="svg-wrap"><svg id="hcFullScatterSvg" viewBox="0 0 460 340"></svg></div>
+          <div class="legend" id="hcFullLegend"></div>
+          <div class="metric-grid" style="margin-top:10px">
+            <div class="metric"><div class="metric-label">Cut height</div><div class="metric-value" id="hcCutHeightVal">--</div></div>
+            <div class="metric"><div class="metric-label">Resulting clusters</div><div class="metric-value" id="hcResultKVal">--</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 3: DBSCAN (placeholder) ══ -->
+<div id="tab3" class="tab-content" style="display:none">
+  <div class="card">
+    <div class="panel-header">
+      <h3>DBSCAN <span style="font-weight:400;color:var(--muted)">(Density-Based Spatial Clustering)</span></h3>
+      <span class="panel-badge">Finds any shape &middot; flags noise</span>
+    </div>
+    <p class="wtw"><strong>What to look for:</strong> a point is a <strong>core</strong> point if at least <code>minPts</code> other points lie within radius <code>eps</code> of it. Clusters grow by chaining together density-reachable core points; anything left over is <strong>noise</strong>. No upfront k, and clusters can be any shape.</p>
+    <div class="subtab-bar">
+      <button class="subtab-btn active" id="dbSubBtn0" onclick="dbShowSub(0)">Step-by-Step</button>
+      <button class="subtab-btn" id="dbSubBtn1" onclick="dbShowSub(1)">Full Run</button>
+    </div>
+    <div class="controls-row">
+      <div class="control-box">
+        <span class="control-title">eps (neighborhood radius)</span>
+        <input type="range" id="dbEpsSlider" min="1" max="20" step="0.5" value="7">
+        <div class="val-display" id="dbEpsVal">7.0</div>
+      </div>
+      <div class="control-box">
+        <span class="control-title">minPts (density threshold)</span>
+        <input type="range" id="dbMinPtsSlider" min="2" max="12" step="1" value="4">
+        <div class="val-display" id="dbMinPtsVal">4</div>
+      </div>
+    </div>
+
+    <div id="dbSub0">
+      <div class="two-panel">
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">One Cluster, Point by Point</h4><span class="panel-badge" id="dbStepBadge">Step 1 of 4</span></div>
+          <div class="step-track">
+            <button class="step-btn active" id="db_sb0" onclick="dbGoToStep(0)">1 &middot; Probe</button>
+            <button class="step-btn" id="db_sb1" onclick="dbGoToStep(1)">2 &middot; Classify</button>
+            <button class="step-btn" id="db_sb2" onclick="dbGoToStep(2)">3 &middot; Expand</button>
+            <button class="step-btn" id="db_sb3" onclick="dbGoToStep(3)">4 &middot; Record</button>
+          </div>
+          <div class="svg-wrap"><svg id="dbStepSvg" viewBox="0 0 420 420"></svg></div>
+          <div class="legend"><div class="legend-item"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid #111827"></span>current probe</div><div class="legend-item"><span class="legend-ring"></span>noise</div></div>
+          <div class="step-desc" id="dbStepDesc">Loading...</div>
+          <div class="action-row">
+            <button class="btn-primary" id="dbBtnNext" onclick="dbNextStep()">Next Step</button>
+            <div style="flex:1"></div>
+            <button onclick="dbResetSteps()">Reset</button>
+          </div>
+        </div>
+        <div>
+          <div class="metric-grid">
+            <div class="metric"><div class="metric-label">Probe's neighbor count</div><div class="metric-value" id="dbNeighborCountVal">--</div></div>
+            <div class="metric"><div class="metric-label">Point type</div><div class="metric-value" id="dbPointTypeVal">--</div></div>
+            <div class="metric"><div class="metric-label">Current cluster id</div><div class="metric-value" id="dbClusterIdVal">--</div></div>
+            <div class="metric"><div class="metric-label">Points classified</div><div class="metric-value" id="dbClassifiedVal">0 / 0</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="dbSub1" style="display:none">
+      <div class="full-sim-grid">
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Full Clustering</h4></div>
+          <div class="svg-wrap"><svg id="dbFullSvg" viewBox="0 0 420 420"></svg></div>
+          <div class="legend" id="dbFullLegend"></div>
+          <div class="action-row"><button class="btn-primary" onclick="dbRunFullDataset()">Run DBSCAN</button></div>
+        </div>
+        <div>
+          <p class="wtw"><strong>What to look for:</strong> unlike k-Means, DBSCAN needs no target cluster count &mdash; the count emerges from eps and minPts. Compare this result to k-Means on the same scenario, especially on "Two moons" and "Varying density".</p>
+          <div class="metric-grid">
+            <div class="metric"><div class="metric-label">Clusters found</div><div class="metric-value" id="dbClusterCountVal">--</div></div>
+            <div class="metric"><div class="metric-label">Noise points</div><div class="metric-value" id="dbNoiseCountVal">--</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 4: GMM (placeholder) ══ -->
+<div id="tab4" class="tab-content" style="display:none">
+  <div class="card">
+    <div class="panel-header">
+      <h3>Gaussian Mixture Models (GMM)</h3>
+      <span class="panel-badge">Soft assignment &middot; elliptical clusters</span>
+    </div>
+    <p class="wtw"><strong>What to look for:</strong> GMM fits k elliptical Gaussian "blobs" to the data using Expectation-Maximization. Unlike k-Means, every point gets a <em>probability</em> of belonging to each cluster (soft assignment), and clusters can stretch and tilt instead of only being round.</p>
+    <div class="subtab-bar">
+      <button class="subtab-btn active" id="gmSubBtn0" onclick="gmShowSub(0)">Step-by-Step</button>
+      <button class="subtab-btn" id="gmSubBtn1" onclick="gmShowSub(1)">Run to Convergence</button>
+    </div>
+    <div class="control-box" style="max-width:360px">
+      <span class="control-title">Number of components (k)</span>
+      <input type="range" id="gmK" min="2" max="6" step="1" value="3">
+      <div class="val-display" id="gmKVal">k = 3</div>
+    </div>
+
+    <div id="gmSub0">
+      <div class="two-panel">
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">One EM Iteration</h4><span class="panel-badge" id="gmStepBadge">Step 1 of 4</span></div>
+          <div class="step-track">
+            <button class="step-btn active" id="gm_sb0" onclick="gmGoToStep(0)">1 &middot; Init</button>
+            <button class="step-btn" id="gm_sb1" onclick="gmGoToStep(1)">2 &middot; E-step</button>
+            <button class="step-btn" id="gm_sb2" onclick="gmGoToStep(2)">3 &middot; M-step</button>
+            <button class="step-btn" id="gm_sb3" onclick="gmGoToStep(3)">4 &middot; Check</button>
+          </div>
+          <div class="svg-wrap"><svg id="gmStepSvg" viewBox="0 0 420 420"></svg></div>
+          <p style="font-size:.74rem;color:var(--muted);margin-top:4px">Blended point colors show <strong>soft</strong> membership &mdash; a muddy mix means the point is genuinely ambiguous between two components.</p>
+          <div class="step-desc" id="gmStepDesc">Loading...</div>
+          <div class="action-row">
+            <button class="btn-primary" id="gmBtnNext" onclick="gmNextStep()">Next Step</button>
+            <button id="gmBtnRun10" onclick="gmRun10More()">Run 10 More Iterations</button>
+            <div style="flex:1"></div>
+            <button onclick="gmGoToStep(0)">Reset Steps</button>
+          </div>
+        </div>
+        <div>
+          <div class="metric-grid">
+            <div class="metric"><div class="metric-label">Iteration</div><div class="metric-value" id="gmIterVal">0</div></div>
+            <div class="metric"><div class="metric-label">Log-likelihood</div><div class="metric-value" id="gmLLVal">--</div></div>
+          </div>
+          <div class="panel-header" style="margin-top:12px"><h4 style="margin:0;font-size:.9rem">Log-likelihood so far</h4></div>
+          <div class="svg-wrap"><svg id="gmStepLLSvg" viewBox="0 0 460 200"></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="gmSub1" style="display:none">
+      <div class="full-sim-grid">
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Final Fit</h4><span class="panel-badge" id="gmFullBadge">not run</span></div>
+          <div class="svg-wrap"><svg id="gmFullSvg" viewBox="0 0 420 420"></svg></div>
+          <div class="legend" id="gmFullLegend"></div>
+          <div class="action-row">
+            <button class="btn-primary" onclick="gmRunToConvergence()">Run to Convergence</button>
+            <button onclick="gmReset()">Reset</button>
+          </div>
+        </div>
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Log-Likelihood by Iteration</h4></div>
+          <p class="wtw" style="font-size:.78rem"><strong>What to look for:</strong> log-likelihood never decreases &mdash; EM always improves (or holds) the fit each iteration, unlike inertia this curve rises toward a plateau instead of falling.</p>
+          <div class="svg-wrap"><svg id="gmFullLLSvg" viewBox="0 0 460 240"></svg></div>
+          <div id="gmInterpBox" class="interp-box pending" style="margin-top:10px">
+            <div class="interp-verdict" id="gmInterpVerdict">Run the algorithm to see an interpretation.</div>
+            <div class="interp-ctx" id="gmInterpCtx">Try the "Elongated (anisotropic)" scenario, then compare this fit to k-Means on the same data.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 5: DISTANCE METRICS (placeholder) ══ -->
+<div id="tab5" class="tab-content" style="display:none">
+  <div class="card">
+    <div class="panel-header">
+      <h3>Distance Metrics</h3>
+      <span class="panel-badge">The assumption underneath every technique above</span>
+    </div>
+    <p class="wtw"><strong>What to look for:</strong> every technique on the other tabs silently picks a notion of "close." Here you can see three of them side by side and watch how the choice reshapes what counts as a neighbor.</p>
+    <div class="subtab-bar">
+      <button class="subtab-btn active" id="dmSubBtn0" onclick="dmShowSub(0)">Compare Two Points</button>
+      <button class="subtab-btn" id="dmSubBtn1" onclick="dmShowSub(1)">Nearest-Anchor Regions</button>
+    </div>
+
+    <div id="dmSub0">
+      <div class="two-panel">
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Drag the red point</h4></div>
+          <div class="svg-wrap"><svg id="dmCompareSvg" viewBox="0 0 420 420"></svg></div>
+          <div class="legend">
+            <div class="legend-item"><span class="legend-dot" style="background:#2a78d6"></span>anchor A (fixed, diamond)</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#e34948"></span>query B (drag me)</div>
+            <div class="legend-item"><span style="display:inline-block;width:14px;height:0;border-top:1.4px dashed #1baf7a"></span>Euclidean unit circle</div>
+            <div class="legend-item"><span style="display:inline-block;width:14px;height:0;border-top:1.4px dashed #eda100"></span>Manhattan unit diamond</div>
+          </div>
+          <div class="action-row">
+            <button onclick="dmPresetSameDirection()">Preset: same direction</button>
+            <button onclick="dmPresetDiagonal()">Preset: diagonal offset</button>
+            <button onclick="dmResetPoints()">Randomize Points</button>
+          </div>
+        </div>
+        <div>
+          <div class="metric-grid">
+            <div class="metric"><div class="metric-label">Euclidean distance</div><div class="metric-value" id="dmEuclidVal">--</div></div>
+            <div class="metric"><div class="metric-label">Manhattan distance</div><div class="metric-value" id="dmManhattanVal">--</div></div>
+            <div class="metric"><div class="metric-label">Cosine distance</div><div class="metric-value" id="dmCosineVal">--</div></div>
+          </div>
+          <div class="step-desc" style="margin-top:12px"><strong>Try:</strong> "same direction" places B along the same ray from the origin as A &mdash; cosine distance drops to ~0 even though Euclidean and Manhattan stay large, because cosine only measures the angle between the two dashed rays, not how far out along them each point sits. "Diagonal offset" moves B one diagonal step from A &mdash; Euclidean (straight-line) and Manhattan (grid/taxicab, sum of axis-aligned steps) disagree on the distance because they trace different paths between the same two points.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="dmSub1" style="display:none">
+      <div class="full-sim-grid">
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Nearest-Anchor Partition</h4></div>
+          <div class="svg-wrap"><svg id="dmRegionSvg" viewBox="0 0 420 420"></svg></div>
+          <div class="legend" id="dmRegionLegend"></div>
+        </div>
+        <div>
+          <div class="control-box">
+            <span class="control-title">Metric</span>
+            <select id="dmMetricSel">
+              <option value="euclid" selected>Euclidean</option>
+              <option value="manhattan">Manhattan</option>
+              <option value="cosine">Cosine</option>
+            </select>
+          </div>
+          <div class="action-row"><button onclick="dmNewAnchors()">New Anchors</button></div>
+          <p class="wtw" style="margin-top:10px"><strong>What to look for:</strong> each shaded region shows which anchor point is nearest under the chosen metric &mdash; this is exactly the partition k-Means and hierarchical clustering implicitly draw. Euclidean gives straight bisector lines, Manhattan gives angled/diamond-shaped bisectors, and Cosine partitions by angle from the origin, ignoring distance from it entirely &mdash; notice how its boundaries are rays, not lines.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 6: CLUSTER VALIDATION (placeholder) ══ -->
+<div id="tab6" class="tab-content" style="display:none">
+  <div class="card">
+    <div class="panel-header">
+      <h3>Cluster Validation</h3>
+      <span class="panel-badge">No ground truth needed</span>
+    </div>
+    <p class="wtw"><strong>What to look for:</strong> in real use there is usually no "true" k to check against. The silhouette score judges each point purely from the data: does it sit closer to its own cluster (a) or to the nearest rival cluster (b)? The elbow and silhouette-vs-k curves help you choose k without labels.</p>
+    <div class="subtab-bar">
+      <button class="subtab-btn active" id="cvSubBtn0" onclick="cvShowSub(0)">One Point's Silhouette</button>
+      <button class="subtab-btn" id="cvSubBtn1" onclick="cvShowSub(1)">Validation Across k</button>
+    </div>
+
+    <div id="cvSub0">
+      <div class="control-box" style="max-width:360px">
+        <span class="control-title">k for this demonstration</span>
+        <input type="range" id="cvStepK" min="2" max="6" step="1" value="4">
+        <div class="val-display" id="cvStepKVal">k = 4</div>
+      </div>
+      <div class="two-panel">
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">One Point, Scored</h4><span class="panel-badge" id="cvStepBadge">Step 1 of 4</span></div>
+          <div class="svg-wrap"><svg id="cvStepSvg" viewBox="0 0 460 380"></svg></div>
+          <div class="step-desc" id="cvStepDesc">Loading...</div>
+          <div class="action-row">
+            <button class="btn-primary" id="cvBtnNext" onclick="cvNextStep()">Next Step</button>
+            <button onclick="cvNextPoint()">Try Another Point</button>
+          </div>
+        </div>
+        <div>
+          <div class="metric-grid">
+            <div class="metric"><div class="metric-label">a(i) &mdash; cohesion</div><div class="metric-value" id="cvAVal">--</div></div>
+            <div class="metric"><div class="metric-label">b(i) &mdash; separation</div><div class="metric-value" id="cvBVal">--</div></div>
+          </div>
+          <div id="cvInterpBox" class="interp-box pending" style="margin-top:10px">
+            <div class="interp-verdict" id="cvInterpVerdict">Step through to see this point's silhouette score.</div>
+            <div class="interp-ctx" id="cvInterpCtx">s(i) ranges from -1 (likely misclassified) to +1 (very well matched).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="cvSub1" style="display:none">
+      <div class="full-sim-grid">
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Elbow &amp; Silhouette vs. k</h4></div>
+          <p class="wtw" style="font-size:.78rem"><strong>What to look for:</strong> the elbow chart always falls (more clusters = less within-cluster spread); look for where it stops falling steeply. The silhouette chart can rise and fall &mdash; its peak is a genuine, label-free recommendation for k.</p>
+          <div class="svg-wrap"><svg id="cvElbowSvg" viewBox="0 0 460 220"></svg></div>
+          <div class="svg-wrap" style="margin-top:8px"><svg id="cvSilKSvg" viewBox="0 0 460 220"></svg></div>
+          <div class="action-row"><button class="btn-primary" onclick="cvRunSweep()">Run Validation Sweep (k = 2..8)</button></div>
+        </div>
+        <div>
+          <div class="panel-header"><h4 style="margin:0;font-size:.95rem">Silhouette Diagram</h4></div>
+          <div class="control-box" style="max-width:220px">
+            <span class="control-title">Show k</span>
+            <select id="cvDiagKSel"></select>
+          </div>
+          <div class="svg-wrap"><svg id="cvSilDiagramSvg" viewBox="0 0 460 340"></svg></div>
+          <div id="cvSweepInterpBox" class="interp-box pending" style="margin-top:10px">
+            <div class="interp-verdict" id="cvSweepVerdict">Run the sweep to get a recommendation.</div>
+            <div class="interp-ctx" id="cvSweepCtx">Each k re-runs k-Means (best of 5 restarts) and scores every point's silhouette.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FULL REFERENCE -->
+<div class="card help-card" id="helpCard" style="margin-top:0">
+  <h3 style="margin-bottom:14px">Full Reference</h3>
+  <div class="help-2col">
+    <div>
+      <div class="help-section">
+        <h4>Core Concepts</h4>
+        <p><strong>Clustering</strong> groups observations by similarity with no target label to predict against &mdash; it is unsupervised. Every method here needs a notion of distance between points (see the Distance Metrics tab).</p>
+        <p><strong>Hard vs. soft assignment:</strong> k-Means, Hierarchical, and DBSCAN each give every point exactly one cluster. GMM gives each point a probability of belonging to each cluster.</p>
+        <p><strong>No ground truth.</strong> In real use there are usually no true labels to check against &mdash; the Cluster Validation tab shows how to judge cluster quality from the data alone.</p>
+      </div>
+      <div class="help-section">
+        <h4>k-Means</h4>
+        <p>Alternates <strong>assign</strong> (each point to its nearest centroid) and <strong>update</strong> (each centroid to the mean of its points) until centroids stop moving. Minimizes inertia (total squared distance to assigned centroid), but only finds a <em>local</em> optimum &mdash; the result depends on the random starting centroids, so real implementations run several restarts and keep the best.</p>
+        <p><strong>Assumes:</strong> round, similarly-sized, similarly-dense clusters, and that Euclidean distance is meaningful for your features (scale your data first if features are on different units).</p>
+      </div>
+      <div class="help-section">
+        <h4>Hierarchical Clustering</h4>
+        <p>Builds a full tree (dendrogram) bottom-up by repeatedly merging the two closest clusters. <strong>Single linkage</strong> (nearest point) can chain long, straggly clusters together. <strong>Complete linkage</strong> (farthest point) favors compact, evenly-sized clusters. <strong>Average linkage</strong> is a middle ground.</p>
+        <p>No k is chosen upfront &mdash; you cut the finished tree at whatever height gives you the number of clusters you want, which is useful when you're not sure how many groups to expect.</p>
+      </div>
+      <div class="help-section">
+        <h4>DBSCAN</h4>
+        <p>A point is <strong>core</strong> if at least <code>minPts</code> points lie within radius <code>eps</code> of it. Clusters grow by chaining together density-reachable core points; <strong>border</strong> points are within eps of a core point but aren't core themselves; anything else is <strong>noise</strong>.</p>
+        <p>Needs no k and finds arbitrarily-shaped clusters, but a single global eps struggles when clusters have very different densities &mdash; try the "Varying density" scenario.</p>
+      </div>
+    </div>
+    <div>
+      <div class="help-section">
+        <h4>Gaussian Mixture Models (GMM)</h4>
+        <p>Fits k elliptical Gaussian components via Expectation-Maximization: the <strong>E-step</strong> computes each point's probability of belonging to each component (soft "responsibility"); the <strong>M-step</strong> re-estimates each component's mean, covariance, and weight as a responsibility-weighted average. Log-likelihood increases every iteration until convergence.</p>
+        <p>Generalizes k-Means &mdash; a GMM with equal, spherical, fixed covariance and hard assignment reduces to k-Means. The covariance matrix lets each component stretch and tilt to fit elongated clusters that defeat k-Means.</p>
+      </div>
+      <div class="help-section">
+        <h4>Distance Metrics</h4>
+        <p><strong>Euclidean:</strong> straight-line distance. The default for most clustering methods; sensitive to feature scale.</p>
+        <p><strong>Manhattan:</strong> sum of axis-aligned steps ("taxicab" distance). Less sensitive to outliers in any single dimension than Euclidean.</p>
+        <p><strong>Cosine:</strong> measures the angle between two vectors from the origin, ignoring magnitude entirely. Useful when direction matters more than scale (e.g. text/word-frequency vectors), but only meaningful relative to a meaningful origin &mdash; center your data first if "direction" isn't naturally defined.</p>
+      </div>
+      <div class="help-section">
+        <h4>Cluster Validation</h4>
+        <p><strong>Silhouette score</strong> s(i) = (b(i) &minus; a(i)) / max(a(i), b(i)), where a(i) is the mean distance to other points in the same cluster (cohesion) and b(i) is the mean distance to the nearest other cluster (separation). Ranges from &minus;1 (likely misclassified) to +1 (very well matched); near 0 means the point sits on a boundary.</p>
+        <p><strong>Elbow method:</strong> inertia always falls as k grows (more clusters can only reduce within-cluster spread) &mdash; look for where the drop stops being steep, not for a global minimum.</p>
+        <p>Neither method proves a "true" k exists &mdash; on genuinely unstructured data (try "No real structure") every k will score poorly, which is itself informative.</p>
+      </div>
+      <div class="help-section">
+        <h4>Choosing Among These Methods</h4>
+        <div class="case-grid">
+          <div class="case-box"><div class="case-label">Know roughly how many groups</div><div class="case-desc">k-Means or GMM &mdash; fast, and GMM handles elliptical/overlapping clusters better.</div></div>
+          <div class="case-box"><div class="case-label">Unsure how many groups</div><div class="case-desc">Hierarchical &mdash; inspect the dendrogram, then decide where to cut.</div></div>
+          <div class="case-box"><div class="case-label">Odd shapes, expect outliers</div><div class="case-desc">DBSCAN &mdash; no roundness assumption, and it explicitly flags noise.</div></div>
+          <div class="case-box"><div class="case-label">Need a data-driven k</div><div class="case-desc">Cluster Validation &mdash; sweep k with the elbow and silhouette curves.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+<script>
+// ══════════════════════════════════════════════════════
+// SHARED CONSTANTS & PALETTE
+// ══════════════════════════════════════════════════════
+const CLUSTER_COLORS = ['#2a78d6','#1baf7a','#eda100','#008300','#4a3aa7','#e34948','#e87ba4','#eb6834'];
+const NOISE_COLOR = '#9ca3af';
+const ANIM_MS = 520;
+
+// ══════════════════════════════════════════════════════
+// SHARED MATH HELPERS
+// ══════════════════════════════════════════════════════
+function randn() {
+  let u=0,v=0;
+  while(u===0)u=Math.random();
+  while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function fmt(v,d=2){ return typeof v==='number'&&isFinite(v) ? v.toFixed(d) : '--'; }
+function dist2(a,b){ const dx=a.x-b.x, dy=a.y-b.y; return dx*dx+dy*dy; }
+function euclid(a,b){ return Math.sqrt(dist2(a,b)); }
+function manhattan(a,b){ return Math.abs(a.x-b.x)+Math.abs(a.y-b.y); }
+function cosineDist(a,b){
+  const dot=a.x*b.x+a.y*b.y;
+  const na=Math.sqrt(a.x*a.x+a.y*a.y), nb=Math.sqrt(b.x*b.x+b.y*b.y);
+  if(na===0||nb===0) return 1;
+  return 1 - dot/(na*nb);
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// Random subset of the shared dataset (coordinates only), used by techniques that need a
+// smaller/readable n (e.g. hierarchical clustering's dendrogram).
+function sampleShared(n) {
+  const idx=[...Array(sharedPoints.length).keys()];
+  for(let i=idx.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+  return idx.slice(0, Math.min(n, sharedPoints.length)).map(i=>({x:sharedPoints[i].x, y:sharedPoints[i].y}));
+}
+
+// Generic rAF-driven animation: onFrame(t) called with eased t in [0,1]. Used to
+// interpolate centroid moves, ellipse resizes, and cut-height slides by redrawing
+// the whole SVG each frame, rather than animating individual DOM nodes.
+function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
+function animateFrames(duration, onFrame) {
+  return new Promise(resolve=>{
+    const start = performance.now();
+    function tick(now){
+      const raw = Math.min(1, (now-start)/duration);
+      onFrame(easeOutCubic(raw));
+      if(raw<1) requestAnimationFrame(tick); else resolve();
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// SHARED SVG SCATTER RENDERER
+// ══════════════════════════════════════════════════════
+function computeBounds(points, pad=0.1) {
+  const xs=points.map(p=>p.x), ys=points.map(p=>p.y);
+  let xMin=Math.min(...xs), xMax=Math.max(...xs), yMin=Math.min(...ys), yMax=Math.max(...ys);
+  if(xMax-xMin < 1e-6){ xMin-=5; xMax+=5; }
+  if(yMax-yMin < 1e-6){ yMin-=5; yMax+=5; }
+  const xPad=(xMax-xMin)*pad, yPad=(yMax-yMin)*pad;
+  return {xMin:xMin-xPad, xMax:xMax+xPad, yMin:yMin-yPad, yMax:yMax+yPad};
+}
+
+// Builds a reusable projection context {xPx,yPx,ML,MT,PW,PH,VW,VH,bounds}
+function makeCtx(bounds, vw=460, vh=380, margins={}) {
+  const ML=margins.ML??40, MR=margins.MR??14, MT=margins.MT??14, MB=margins.MB??14;
+  const PW=vw-ML-MR, PH=vh-MT-MB;
+  const xPx = x => ML + (x-bounds.xMin)/(bounds.xMax-bounds.xMin)*PW;
+  const yPx = y => MT + PH - (y-bounds.yMin)/(bounds.yMax-bounds.yMin)*PH;
+  return {xPx,yPx,ML,MT,MR,MB,PW,PH,VW:vw,VH:vh,bounds};
+}
+
+// Bounds padded to a square aspect ratio, for views where a data-space circle/ellipse
+// (DBSCAN's eps-neighborhood, GMM's covariance ellipses) must render as visually round.
+function computeSquareBounds(points, pad=0.1) {
+  const b = computeBounds(points, pad);
+  const w = b.xMax-b.xMin, h = b.yMax-b.yMin;
+  if(w>h) { const d=(w-h)/2; b.yMin-=d; b.yMax+=d; }
+  else if(h>w) { const d=(h-w)/2; b.xMin-=d; b.xMax+=d; }
+  return b;
+}
+// Equal-margin square viewport (use with computeSquareBounds so 1 data unit is the same
+// number of pixels in x and y).
+const SQUARE_MARGINS = {ML:30,MR:30,MT:30,MB:30};
+
+function frameRect(ctx) {
+  return `<rect x="${ctx.ML}" y="${ctx.MT}" width="${ctx.PW}" height="${ctx.PH}" fill="none" stroke="${'#e5e7eb'}" stroke-width="1"/>`;
+}
+
+// points: [{id,x,y,...}] ; opts.colorOf(p) -> hex string, or null for a hollow "noise" ring
+// opts.extrasBefore/extrasAfter(ctx) -> svg string, injected below/above the points
+function drawScatter(svgId, points, opts={}) {
+  const svg = document.getElementById(svgId);
+  if(!svg) return null;
+  const vw = opts.vw||460, vh = opts.vh||380;
+  const bounds = opts.bounds || computeBounds(points);
+  const ctx = makeCtx(bounds, vw, vh, opts.margins||{});
+  let h = frameRect(ctx);
+  if(opts.extrasBefore) h += opts.extrasBefore(ctx);
+  const r = opts.radius || 5.5;
+  points.forEach(p=>{
+    const col = opts.colorOf ? opts.colorOf(p) : '#2a78d6';
+    const px=ctx.xPx(p.x), py=ctx.yPx(p.y);
+    if(col===null){
+      h+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${r}" fill="none" stroke="${NOISE_COLOR}" stroke-width="1.8" data-pid="${p.id}"/>`;
+    } else {
+      h+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${r}" fill="${col}" opacity="0.88" stroke="#ffffff" stroke-width="1" data-pid="${p.id}"/>`;
+    }
+  });
+  if(opts.extrasAfter) h += opts.extrasAfter(ctx);
+  svg.innerHTML = h;
+  return ctx;
+}
+
+function legendHTML(items) {
+  // items: [{label, color}] color===null -> noise ring
+  return `<div class="legend">${items.map(it=>
+    it.color===null
+      ? `<div class="legend-item"><span class="legend-ring"></span>${it.label}</div>`
+      : `<div class="legend-item"><span class="legend-dot" style="background:${it.color}"></span>${it.label}</div>`
+  ).join('')}</div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// SHARED CONVERGENCE-CHART RENDERER (line chart vs. iteration)
+// used by k-Means (inertia, minimizing) and GMM (log-likelihood, maximizing)
+// ══════════════════════════════════════════════════════
+function drawConvergenceChart(svgId, series, opts={}) {
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const VW=opts.vw||460, VH=opts.vh||200;
+  const ML=44, MR=16, MT=14, MB=28, PW=VW-ML-MR, PH=VH-MT-MB;
+  if(!series.length){
+    svg.innerHTML = `<text x="${VW/2}" y="${VH/2}" text-anchor="middle" fill="#9ca3af" font-size="12" font-family="Arial">${opts.emptyText||'Run the algorithm to see convergence'}</text>`;
+    return;
+  }
+  const xs = series.map((_,i)=>i);
+  const ys = series;
+  const yMin = Math.min(...ys), yMax = Math.max(...ys);
+  const yPad = (yMax-yMin)*0.12 || 1;
+  const yLo = yMin-yPad, yHi = yMax+yPad;
+  const xPx = i => ML + (i/(Math.max(xs.length-1,1)))*PW;
+  const yPx = v => MT + PH - (v-yLo)/(yHi-yLo)*PH;
+  let h = `<line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT+PH}" stroke="#d1d5db" stroke-width="1"/>`;
+  h += `<line x1="${ML}" y1="${MT+PH}" x2="${ML+PW}" y2="${MT+PH}" stroke="#d1d5db" stroke-width="1"/>`;
+  [0,0.5,1].forEach(f=>{
+    const v = yLo+(yHi-yLo)*f, y=yPx(v);
+    h+=`<line x1="${ML-3}" y1="${y}" x2="${ML}" y2="${y}" stroke="#9ca3af" stroke-width="1"/>`;
+    h+=`<text x="${ML-6}" y="${y+4}" text-anchor="end" fill="#9ca3af" font-size="10" font-family="Arial">${v.toFixed(1)}</text>`;
+  });
+  xs.forEach(i=>{
+    if(xs.length>12 && i%Math.ceil(xs.length/8)!==0 && i!==xs.length-1) return;
+    const x=xPx(i);
+    h+=`<line x1="${x}" y1="${MT+PH}" x2="${x}" y2="${MT+PH+3}" stroke="#9ca3af" stroke-width="1"/>`;
+    h+=`<text x="${x}" y="${MT+PH+14}" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Arial">${i}</text>`;
+  });
+  const pathD = ys.map((v,i)=>`${i===0?'M':'L'}${xPx(i).toFixed(1)},${yPx(v).toFixed(1)}`).join(' ');
+  h += `<path d="${pathD}" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  ys.forEach((v,i)=>{ h+=`<circle cx="${xPx(i).toFixed(1)}" cy="${yPx(v).toFixed(1)}" r="3" fill="#6366f1"/>`; });
+  h += `<text x="${ML+PW/2}" y="${VH-2}" text-anchor="middle" fill="#6b7280" font-size="10" font-family="Arial">${opts.xLabel||'iteration'}</text>`;
+  h += `<text x="10" y="${MT+PH/2}" text-anchor="middle" fill="#6b7280" font-size="10" font-family="Arial" transform="rotate(-90,10,${MT+PH/2})">${opts.yLabel||'value'}</text>`;
+  svg.innerHTML = h;
+}
+
+// ══════════════════════════════════════════════════════
+// SCENARIO GENERATORS — build the shared point set
+// ══════════════════════════════════════════════════════
+function genBlobCenters(k, spread, area={x:[10,90],y:[10,90]}) {
+  const centers=[];
+  for(let i=0;i<k;i++){
+    centers.push({x: area.x[0]+Math.random()*(area.x[1]-area.x[0]), y: area.y[0]+Math.random()*(area.y[1]-area.y[0])});
+  }
+  return centers;
+}
+function genBlobs(n, noise) {
+  const k=4, centers=[{x:22,y:25},{x:75,y:22},{x:25,y:75},{x:78,y:78}];
+  const pts=[]; const per=Math.floor(n/k);
+  centers.forEach((c,ci)=>{
+    for(let i=0;i<per;i++) pts.push({x:c.x+randn()*(3+noise), y:c.y+randn()*(3+noise), trueLabel:ci});
+  });
+  return pts;
+}
+function genOverlap(n, noise) {
+  const k=3, centers=[{x:35,y:45},{x:55,y:50},{x:50,y:30}];
+  const pts=[]; const per=Math.floor(n/k);
+  centers.forEach((c,ci)=>{
+    for(let i=0;i<per;i++) pts.push({x:c.x+randn()*(9+noise*1.3), y:c.y+randn()*(9+noise*1.3), trueLabel:ci});
+  });
+  return pts;
+}
+function genAniso(n, noise) {
+  const k=3, centers=[{x:25,y:70,ang:0.5},{x:60,y:60,ang:-0.6},{x:45,y:25,ang:1.4}];
+  const pts=[]; const per=Math.floor(n/k);
+  centers.forEach((c,ci)=>{
+    for(let i=0;i<per;i++){
+      const u=randn()*(14+noise), v=randn()*(3+noise*0.4);
+      const x=c.x+u*Math.cos(c.ang)-v*Math.sin(c.ang);
+      const y=c.y+u*Math.sin(c.ang)+v*Math.cos(c.ang);
+      pts.push({x,y,trueLabel:ci});
+    }
+  });
+  return pts;
+}
+function genMoons(n, noise) {
+  const pts=[]; const per=Math.floor(n/2);
+  for(let i=0;i<per;i++){
+    const t=Math.PI*(i/per);
+    pts.push({x:32+38*Math.cos(t)+randn()*(2+noise*0.5), y:55+30*Math.sin(t)+randn()*(2+noise*0.5), trueLabel:0});
+  }
+  for(let i=0;i<per;i++){
+    const t=Math.PI*(i/per);
+    pts.push({x:68-38*Math.cos(t)+randn()*(2+noise*0.5), y:35-30*Math.sin(t)+randn()*(2+noise*0.5), trueLabel:1});
+  }
+  return pts;
+}
+function genVaryingDensity(n, noise) {
+  const pts=[];
+  const denseN=Math.floor(n*0.55), sparseN=Math.floor(n*0.30), extraN=n-denseN-sparseN;
+  for(let i=0;i<denseN;i++) pts.push({x:30+randn()*(4+noise*0.5), y:60+randn()*(4+noise*0.5), trueLabel:0});
+  for(let i=0;i<sparseN;i++) pts.push({x:72+randn()*(11+noise), y:35+randn()*(11+noise), trueLabel:1});
+  for(let i=0;i<extraN;i++) pts.push({x:20+Math.random()*70, y:15+Math.random()*20, trueLabel:2});
+  return pts;
+}
+function genNoisy(n, noise) {
+  const k=3, centers=[{x:28,y:65},{x:70,y:65},{x:50,y:25}];
+  const pts=[]; const clusterN=Math.floor(n*0.75), noiseN=n-clusterN; const per=Math.floor(clusterN/k);
+  centers.forEach((c,ci)=>{
+    for(let i=0;i<per;i++) pts.push({x:c.x+randn()*(5+noise), y:c.y+randn()*(5+noise), trueLabel:ci});
+  });
+  for(let i=0;i<noiseN;i++) pts.push({x:10+Math.random()*80, y:10+Math.random()*80, trueLabel:-1});
+  return pts;
+}
+function genSingleBlob(n, noise) {
+  const pts=[];
+  for(let i=0;i<n;i++) pts.push({x:50+randn()*(16+noise), y:50+randn()*(16+noise), trueLabel:0});
+  return pts;
+}
+
+const SCENARIOS = [
+  {id:'blobs',   label:'Well-separated blobs',        desc:'Four round, clearly separated clusters. Every algorithm should agree on the structure here.', gen:genBlobs},
+  {id:'overlap', label:'Overlapping blobs',            desc:'Three clusters with touching edges. Watch cluster boundaries become ambiguous near the middle.', gen:genOverlap},
+  {id:'aniso',   label:'Elongated (anisotropic)',      desc:'Stretched, tilted clusters. k-Means assumes round clusters and will cut these incorrectly — GMM should do better.', gen:genAniso},
+  {id:'moons',   label:'Two moons',                    desc:'Two curved, interleaved shapes. A classic case where k-Means fails and DBSCAN succeeds.', gen:genMoons},
+  {id:'density', label:'Varying density',               desc:'One dense tight cluster, one sparse spread-out cluster, and background scatter. Exposes DBSCAN’s single-eps limitation.', gen:genVaryingDensity},
+  {id:'noisy',   label:'Scattered noise',                desc:'Three clusters plus uniform background noise. Good for testing how each method handles outliers.', gen:genNoisy},
+  {id:'single',  label:'No real structure',              desc:'One big blob, no true sub-clusters. Any k a clustering algorithm reports here is spurious — useful in the Cluster Validation tab.', gen:genSingleBlob},
+];
+
+// ══════════════════════════════════════════════════════
+// SHARED STATE
+// ══════════════════════════════════════════════════════
+let sharedPoints = [];
+let currentScenario = SCENARIOS.find(s=>s.id==='blobs');
+let activeTopTab = 0;
+
+// ══════════════════════════════════════════════════════
+// SCENARIO / DATASET CONTROL
+// ══════════════════════════════════════════════════════
+function buildScenarioGrid() {
+  document.getElementById('scenarioGrid').innerHTML = SCENARIOS.map(sc =>
+    `<div class="sc-card${sc===currentScenario?' active':''}" onclick="applyScenario('${sc.id}')">
+      <div class="sc-name">${sc.label}</div>
+      <div class="sc-desc">${sc.desc}</div>
+    </div>`
+  ).join('');
+}
+
+function currentN() { return parseInt(document.getElementById('nPoints').value); }
+function currentNoise() { return parseFloat(document.getElementById('noiseLevel').value); }
+
+function applyScenario(id) {
+  currentScenario = SCENARIOS.find(s=>s.id===id);
+  regenerateShared();
+  buildScenarioGrid();
+  onDatasetChanged();
+}
+
+function reshuffleNoise() {
+  regenerateShared();
+  onDatasetChanged();
+}
+
+function regenerateShared() {
+  const n = currentN(), noise = currentNoise();
+  sharedPoints = currentScenario.gen(n, noise).map((p,i)=>({...p, id:i}));
+}
+
+// Called whenever sharedPoints changes — resets every technique tab.
+// Each technique's own <script> section will push a reset function into this array.
+const onDatasetChangedHandlers = [];
+function onDatasetChanged() {
+  drawOverview();
+  onDatasetChangedHandlers.forEach(fn=>fn());
+}
+
+function drawOverview() {
+  document.getElementById('ovBadge').textContent = `${sharedPoints.length} points`;
+  drawScatter('ovSvg', sharedPoints, {colorOf:()=> '#2563eb', radius:4.5});
+}
+
+// ══════════════════════════════════════════════════════
+// TOP-LEVEL TAB SWITCHING
+// ══════════════════════════════════════════════════════
+function switchTopTab(i) {
+  activeTopTab = i;
+  document.querySelectorAll('#topTabBar .tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  document.querySelectorAll('.tab-content').forEach((c,j)=>c.style.display=j===i?'':'none');
+}
+document.querySelectorAll('#topTabBar .tab-btn').forEach((btn,i)=>{
+  btn.addEventListener('click',()=>switchTopTab(i));
+});
+
+// ══════════════════════════════════════════════════════
+// OVERVIEW CONTROLS
+// ══════════════════════════════════════════════════════
+document.getElementById('nPoints').addEventListener('input',()=>{
+  document.getElementById('nPointsVal').textContent = `${currentN()} points`;
+});
+document.getElementById('nPoints').addEventListener('change',()=>{ regenerateShared(); onDatasetChanged(); });
+document.getElementById('noiseLevel').addEventListener('input',()=>{
+  document.getElementById('noiseLevelVal').textContent = currentNoise().toFixed(1);
+});
+document.getElementById('noiseLevel').addEventListener('change',()=>{ regenerateShared(); onDatasetChanged(); });
+
+document.getElementById('toggleGuide').addEventListener('click',()=>{
+  const g=document.getElementById('guideSection'),btn=document.getElementById('toggleGuide');
+  const open=g.classList.toggle('open');
+  btn.textContent=open?'▲ Hide Guide':'▼ Quick-Start Guide';
+});
+document.getElementById('toggleHelp').addEventListener('click',()=>{
+  const h=document.getElementById('helpCard'),btn=document.getElementById('toggleHelp');
+  h.classList.toggle('open');
+  btn.textContent=h.classList.contains('open')?'📖 Hide Reference':'📖 Full Reference';
+  if(h.classList.contains('open')) h.scrollIntoView({behavior:'smooth'});
+});
+
+// ══════════════════════════════════════════════════════
+// K-MEANS — CORE ALGORITHM (shared by step-through and full-run)
+// ══════════════════════════════════════════════════════
+function kmInitCentroids(points, k) {
+  const idx = [...Array(points.length).keys()];
+  for(let i=idx.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+  return idx.slice(0,k).map(i=>({x:points[i].x, y:points[i].y}));
+}
+function kmAssignPoints(points, centroids) {
+  return points.map(p=>{
+    let best=0, bestD=Infinity;
+    centroids.forEach((c,ci)=>{ const d=dist2(p,c); if(d<bestD){ bestD=d; best=ci; } });
+    return best;
+  });
+}
+function kmUpdateCentroids(points, assign, k, oldCentroids) {
+  const sums = Array.from({length:k},()=>({x:0,y:0,n:0}));
+  points.forEach((p,i)=>{ const c=assign[i]; sums[c].x+=p.x; sums[c].y+=p.y; sums[c].n++; });
+  return sums.map((s,ci)=> s.n>0 ? {x:s.x/s.n, y:s.y/s.n} : oldCentroids[ci]);
+}
+function kmInertia(points, assign, centroids) {
+  let total=0;
+  points.forEach((p,i)=>{ total += dist2(p, centroids[assign[i]]); });
+  return total;
+}
+function kmCentroidShift(oldC, newC) {
+  let total=0;
+  oldC.forEach((c,i)=>{ total += euclid(c, newC[i]); });
+  return total;
+}
+function kmLegendItems(k) {
+  return CLUSTER_COLORS.slice(0,k).map((c,i)=>({label:`Cluster ${i+1}`, color:c}));
+}
+function kmCentroidGlyphs(ctx, centroids) {
+  let s='';
+  centroids.forEach((c,ci)=>{
+    const px=ctx.xPx(c.x), py=ctx.yPx(c.y), col=CLUSTER_COLORS[ci];
+    s += `<path d="M${px.toFixed(1)} ${(py-9).toFixed(1)} L${(px+9).toFixed(1)} ${py.toFixed(1)} L${px.toFixed(1)} ${(py+9).toFixed(1)} L${(px-9).toFixed(1)} ${py.toFixed(1)} Z" fill="${col}" stroke="#111827" stroke-width="1.5"/>`;
+  });
+  return s;
+}
+
+// ══════════════════════════════════════════════════════
+// K-MEANS — STEP-THROUGH STATE
+// ══════════════════════════════════════════════════════
+let kmStepK = 4;
+let kmStepCentroids = [];
+let kmStepAssign = [];
+let kmStepPhase = 0;
+let kmStepIter = 0;
+let kmStepShift = null;
+let kmStepInertiaHistory = [];
+let kmStepAnimating = false;
+
+function kmGetStepDesc(s) {
+  switch(s) {
+    case 0: return `<strong>Step 1 &mdash; Initialize:</strong> ${kmStepK} initial centroids (diamonds) are placed at ${kmStepK} random data points. Points are not yet assigned to any cluster.`;
+    case 1: return `<strong>Step 2 &mdash; Assign:</strong> every point is colored by its nearest centroid using Euclidean distance. This carves the space into a Voronoi-like partition around the current centroids.`;
+    case 2: return `<strong>Step 3 &mdash; Update:</strong> each centroid moves to the mean position of the points currently assigned to it. A centroid that picked up very different points moves the furthest.`;
+    case 3: {
+      const conv = kmStepShift!==null && kmStepShift < 0.5;
+      return `<strong>Step 4 &mdash; Check convergence:</strong> inertia (total squared distance from points to their centroid) is recorded, centroid shift was <strong>${fmt(kmStepShift,2)}</strong>. ${conv ? '<strong style="color:var(--green)">Centroids barely moved — the algorithm has converged.</strong>' : 'Centroids are still moving, so assign and update will repeat.'}`;
+    }
+    default: return '';
+  }
+}
+
+function updateKmStepButtons(s) {
+  [0,1,2,3].forEach(i=>document.getElementById(`km_sb${i}`).classList.toggle('active', i===s));
+  document.getElementById('kmStepBadge').textContent = `Step ${s+1} of 4`;
+  document.getElementById('kmBtnNext').textContent = s<3 ? 'Next Step' : 'Next Iteration';
+}
+
+function kmDrawStep(interpCentroids) {
+  const centroids = interpCentroids || kmStepCentroids;
+  const colorOf = p => {
+    const c = kmStepAssign[p.id];
+    return (c===null || c===undefined) ? '#cbd5e1' : CLUSTER_COLORS[c];
+  };
+  const bounds = computeBounds(sharedPoints);
+  drawScatter('kmStepSvg', sharedPoints, {
+    colorOf, bounds,
+    extrasAfter: ctx => kmCentroidGlyphs(ctx, centroids),
+  });
+  const hasAssignment = kmStepAssign.some(a=>a!==null && a!==undefined);
+  document.getElementById('kmStepLegend').innerHTML = hasAssignment
+    ? legendHTML(kmLegendItems(kmStepK))
+    : `<div class="legend-item" style="color:var(--gray)">Points not yet assigned — diamonds are initial centroids</div>`;
+}
+
+function updateKmStepMetrics() {
+  document.getElementById('kmIterVal').textContent = kmStepIter;
+  const lastInertia = kmStepInertiaHistory.length ? kmStepInertiaHistory[kmStepInertiaHistory.length-1] : null;
+  document.getElementById('kmInertiaVal').textContent = lastInertia!==null ? fmt(lastInertia,1) : '--';
+  document.getElementById('kmShiftVal').textContent = kmStepShift!==null ? fmt(kmStepShift,2) : '--';
+  document.getElementById('kmConvVal').textContent = kmStepShift!==null ? (kmStepShift<0.5 ? 'Yes' : 'Not yet') : '--';
+}
+
+async function kmGoToStep(s) {
+  if(kmStepAnimating) return;
+  kmStepPhase = s;
+  updateKmStepButtons(s);
+  if(s===0) {
+    kmStepCentroids = kmInitCentroids(sharedPoints, kmStepK);
+    kmStepAssign = sharedPoints.map(()=>null);
+    kmStepIter = 0; kmStepShift = null; kmStepInertiaHistory = [];
+    kmDrawStep();
+    drawConvergenceChart('kmStepInertiaSvg', kmStepInertiaHistory, {yLabel:'inertia', xLabel:'iteration', emptyText:'Inertia will appear after step 4'});
+  } else if(s===1) {
+    kmStepAssign = kmAssignPoints(sharedPoints, kmStepCentroids);
+    kmDrawStep();
+  } else if(s===2) {
+    const oldC = kmStepCentroids;
+    const newC = kmUpdateCentroids(sharedPoints, kmStepAssign, kmStepK, oldC);
+    kmStepAnimating = true;
+    await animateFrames(ANIM_MS, t=>{
+      const interp = oldC.map((c,i)=>({x:c.x+(newC[i].x-c.x)*t, y:c.y+(newC[i].y-c.y)*t}));
+      kmDrawStep(interp);
+    });
+    kmStepAnimating = false;
+    kmStepShift = kmCentroidShift(oldC, newC);
+    kmStepCentroids = newC;
+    kmStepIter++;
+    kmDrawStep();
+  } else {
+    const inertia = kmInertia(sharedPoints, kmStepAssign, kmStepCentroids);
+    kmStepInertiaHistory.push(inertia);
+    kmDrawStep();
+    drawConvergenceChart('kmStepInertiaSvg', kmStepInertiaHistory, {yLabel:'inertia', xLabel:'iteration'});
+  }
+  updateKmStepMetrics();
+  document.getElementById('kmStepDesc').innerHTML = kmGetStepDesc(s);
+}
+
+function kmNextStep() {
+  if(kmStepAnimating) return;
+  if(kmStepPhase<3) kmGoToStep(kmStepPhase+1);
+  else kmGoToStep(1);
+}
+
+async function kmRun10More() {
+  if(kmStepAnimating) return;
+  const btnN=document.getElementById('kmBtnNext'), btnR=document.getElementById('kmBtnRun10');
+  btnN.disabled=true; btnR.disabled=true;
+  for(let i=0;i<10;i++){
+    await kmGoToStep(1); await sleep(70);
+    await kmGoToStep(2); await sleep(70);
+    await kmGoToStep(3); await sleep(140);
+  }
+  btnN.disabled=false; btnR.disabled=false;
+}
+
+// ══════════════════════════════════════════════════════
+// K-MEANS — FULL RUN STATE
+// ══════════════════════════════════════════════════════
+let kmFullCentroids = [], kmFullAssign = [], kmFullInertiaHistory = [];
+
+function kmReset() {
+  kmFullCentroids=[]; kmFullAssign=[]; kmFullInertiaHistory=[];
+  document.getElementById('kmFullBadge').textContent = 'not run';
+  drawScatter('kmFullSvg', sharedPoints, {colorOf:()=>'#cbd5e1', radius:4.5});
+  document.getElementById('kmFullLegend').innerHTML = '';
+  drawConvergenceChart('kmFullInertiaSvg', [], {yLabel:'inertia', xLabel:'iteration', emptyText:'Run k-Means to see inertia drop each iteration'});
+  const box=document.getElementById('kmInterpBox');
+  box.className='interp-box pending';
+  document.getElementById('kmInterpVerdict').textContent='Run the algorithm to see an interpretation.';
+  document.getElementById('kmInterpCtx').textContent='Inertia measures how tightly points cluster around their assigned centroid.';
+}
+
+function kmRunToConvergence() {
+  const k = parseInt(document.getElementById('kmK').value);
+  let centroids = kmInitCentroids(sharedPoints, k);
+  let assign=[], history=[], iter=0;
+  for(; iter<100; iter++){
+    assign = kmAssignPoints(sharedPoints, centroids);
+    const newCentroids = kmUpdateCentroids(sharedPoints, assign, k, centroids);
+    const inertia = kmInertia(sharedPoints, assign, newCentroids);
+    history.push(inertia);
+    const shift = kmCentroidShift(centroids, newCentroids);
+    centroids = newCentroids;
+    if(shift < 0.01) { iter++; break; }
+  }
+  kmFullCentroids=centroids; kmFullAssign=assign; kmFullInertiaHistory=history;
+  document.getElementById('kmFullBadge').textContent = `converged in ${iter} iterations`;
+  drawScatter('kmFullSvg', sharedPoints, {
+    colorOf: p => CLUSTER_COLORS[kmFullAssign[p.id]],
+    extrasAfter: ctx => kmCentroidGlyphs(ctx, kmFullCentroids),
+  });
+  document.getElementById('kmFullLegend').innerHTML = legendHTML(kmLegendItems(k));
+  drawConvergenceChart('kmFullInertiaSvg', history, {yLabel:'inertia', xLabel:'iteration'});
+
+  const box=document.getElementById('kmInterpBox');
+  box.className='interp-box good';
+  document.getElementById('kmInterpVerdict').textContent = `Converged after ${iter} iterations with final inertia ${fmt(history[history.length-1],1)}.`;
+  document.getElementById('kmInterpCtx').textContent = `Inertia dropped from ${fmt(history[0],1)} to ${fmt(history[history.length-1],1)}. Since k-Means only finds a local optimum, click Run to Convergence again to see the result change with a different random start — and check the Cluster Validation tab to see whether k=${k} is actually a good choice for this data.`;
+}
+
+function kmShowSub(i) {
+  document.getElementById('kmSubBtn0').classList.toggle('active', i===0);
+  document.getElementById('kmSubBtn1').classList.toggle('active', i===1);
+  document.getElementById('kmSub0').style.display = i===0 ? '' : 'none';
+  document.getElementById('kmSub1').style.display = i===1 ? '' : 'none';
+}
+
+document.getElementById('kmK').addEventListener('input', ()=>{
+  document.getElementById('kmKVal').textContent = `k = ${document.getElementById('kmK').value}`;
+});
+document.getElementById('kmK').addEventListener('change', ()=>{
+  kmStepK = parseInt(document.getElementById('kmK').value);
+  kmGoToStep(0);
+  kmReset();
+});
+
+function kmOnDatasetChanged() {
+  kmStepK = parseInt(document.getElementById('kmK').value);
+  kmGoToStep(0);
+  kmReset();
+}
+onDatasetChangedHandlers.push(kmOnDatasetChanged);
+
+// ══════════════════════════════════════════════════════
+// HIERARCHICAL CLUSTERING — CORE ALGORITHM
+// ══════════════════════════════════════════════════════
+function hcClusterDistance(c1, c2, points, linkage) {
+  let best = linkage==='complete' ? -Infinity : Infinity;
+  let sum = 0, cnt = 0;
+  c1.members.forEach(i=>c2.members.forEach(j=>{
+    const d = euclid(points[i], points[j]);
+    if(linkage==='single') { if(d<best) best=d; }
+    else if(linkage==='complete') { if(d>best) best=d; }
+    else { sum+=d; cnt++; }
+  }));
+  return linkage==='average' ? sum/cnt : best;
+}
+
+function hcAssignLeafOrder(node, counter) {
+  if(!node.left) { node._x = counter.n++; return; }
+  hcAssignLeafOrder(node.left, counter);
+  hcAssignLeafOrder(node.right, counter);
+  node._x = (node.left._x + node.right._x)/2;
+}
+
+// Builds the complete agglomerative tree. Returns {root, merges (creation order),
+// mergesByHeight (ascending, used for cut-height slicing), leaves}.
+function buildDendrogramTree(points, linkage) {
+  const n = points.length;
+  const leaves = points.map((p,i)=>({id:i, members:[i], height:0, _color: CLUSTER_COLORS[i % CLUSTER_COLORS.length]}));
+  let active = [...leaves];
+  const merges = [];
+  let nextId = n;
+  while(active.length>1) {
+    let bi=-1, bj=-1, bestD=Infinity;
+    for(let i=0;i<active.length;i++)
+      for(let j=i+1;j<active.length;j++) {
+        const d = hcClusterDistance(active[i], active[j], points, linkage);
+        if(d<bestD) { bestD=d; bi=i; bj=j; }
+      }
+    const left=active[bi], right=active[bj];
+    const merged = {
+      id: nextId++, members:[...left.members, ...right.members], height:bestD, left, right,
+      _color: left.members.length >= right.members.length ? left._color : right._color,
+    };
+    merges.push(merged);
+    active = active.filter(c => c!==left && c!==right);
+    active.push(merged);
+  }
+  const root = active[0];
+  hcAssignLeafOrder(root, {n:0});
+  const mergesByHeight = [...merges].sort((a,b)=>a.height-b.height);
+  return {root, merges, mergesByHeight, leaves};
+}
+
+// Replays the first `count` merges (in the given order) starting from singleton leaves,
+// returning the resulting list of active cluster nodes (a valid partition at that point).
+function partitionAfterMerges(leaves, orderedMerges, count) {
+  let active = [...leaves];
+  for(let i=0;i<count;i++) {
+    const m = orderedMerges[i];
+    active = active.filter(c => c!==m.left && c!==m.right);
+    active.push(m);
+  }
+  return active;
+}
+
+function activeClusterColorMap(active) {
+  const map = {};
+  active.forEach(c => c.members.forEach(idx => { map[idx]=c._color; }));
+  return map;
+}
+
+// Ranks clusters by size; the largest min(k,8) get categorical colors, any remainder
+// is bucketed as an uncolored "other" group (hollow ring) rather than reusing a hue.
+function rankedClusterColorMap(active) {
+  const sorted = [...active].sort((a,b)=>b.members.length-a.members.length);
+  const map = {}; const legendItems = [];
+  sorted.forEach((c,ci)=>{
+    const color = ci<CLUSTER_COLORS.length ? CLUSTER_COLORS[ci] : null;
+    c.members.forEach(idx=>{ map[idx]=color; });
+  });
+  const topN = Math.min(sorted.length, CLUSTER_COLORS.length);
+  for(let i=0;i<topN;i++) legendItems.push({label:`Cluster ${i+1} (n=${sorted[i].members.length})`, color:CLUSTER_COLORS[i]});
+  if(sorted.length>topN) {
+    const extra = sorted.slice(topN).reduce((s,c)=>s+c.members.length,0);
+    legendItems.push({label:`${sorted.length-topN} smaller cluster(s), n=${extra} (uncolored)`, color:null});
+  }
+  return {map, legendItems, k: sorted.length};
+}
+
+// ══════════════════════════════════════════════════════
+// HIERARCHICAL — SHARED DENDROGRAM RENDERER
+// ══════════════════════════════════════════════════════
+function hcChartCtx(nLeaves, maxHeight, vw, vh) {
+  const ML=46, MR=16, MT=14, MB=30, PW=vw-ML-MR, PH=vh-MT-MB;
+  return {
+    ML,MT,MR,MB,PW,PH,VW:vw,VH:vh,
+    xPx: leafPos => ML + (leafPos+0.5)/nLeaves*PW,
+    yPx: hgt => MT + PH - (hgt/(maxHeight||1))*PH,
+  };
+}
+
+function drawDendrogram(svgId, tree, opts={}) {
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const vw=opts.vw||460, vh=opts.vh||340;
+  const nLeaves = tree.leaves.length;
+  const maxHeight = opts.maxHeight!==undefined ? opts.maxHeight : tree.root.height;
+  const c = hcChartCtx(nLeaves, maxHeight, vw, vh);
+  const nodeXY = node => ({x:c.xPx(node._x), y:c.yPx(node.height||0)});
+  let h = `<line x1="${c.ML}" y1="${c.MT}" x2="${c.ML}" y2="${c.MT+c.PH}" stroke="#d1d5db" stroke-width="1"/>`;
+  h += `<line x1="${c.ML}" y1="${c.MT+c.PH}" x2="${c.ML+c.PW}" y2="${c.MT+c.PH}" stroke="#d1d5db" stroke-width="1"/>`;
+  [0,0.5,1].forEach(f=>{
+    const val=maxHeight*f, y=c.yPx(val);
+    h+=`<line x1="${c.ML-3}" y1="${y.toFixed(1)}" x2="${c.ML}" y2="${y.toFixed(1)}" stroke="#9ca3af" stroke-width="1"/>`;
+    h+=`<text x="${c.ML-6}" y="${(y+4).toFixed(1)}" text-anchor="end" fill="#9ca3af" font-size="9.5" font-family="Arial">${val.toFixed(1)}</text>`;
+  });
+  (opts.merges || tree.merges).forEach(m=>{
+    const L=nodeXY(m.left), R=nodeXY(m.right), my=c.yPx(m.height);
+    const col = opts.colorOf ? opts.colorOf(m) : '#6b7280';
+    h+=`<line x1="${L.x.toFixed(1)}" y1="${L.y.toFixed(1)}" x2="${L.x.toFixed(1)}" y2="${my.toFixed(1)}" stroke="${col}" stroke-width="2"/>`;
+    h+=`<line x1="${R.x.toFixed(1)}" y1="${R.y.toFixed(1)}" x2="${R.x.toFixed(1)}" y2="${my.toFixed(1)}" stroke="${col}" stroke-width="2"/>`;
+    h+=`<line x1="${L.x.toFixed(1)}" y1="${my.toFixed(1)}" x2="${R.x.toFixed(1)}" y2="${my.toFixed(1)}" stroke="${col}" stroke-width="2"/>`;
+  });
+  tree.leaves.forEach(leaf=>{
+    const {x,y}=nodeXY(leaf);
+    const col = opts.leafColorOf ? opts.leafColorOf(leaf) : '#6b7280';
+    h += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.4" fill="${col}"/>`;
+  });
+  if(opts.cutHeight!==undefined && opts.cutHeight!==null) {
+    const y=c.yPx(opts.cutHeight);
+    h += `<line x1="${c.ML}" y1="${y.toFixed(1)}" x2="${c.ML+c.PW}" y2="${y.toFixed(1)}" stroke="#2563eb" stroke-width="1.6" stroke-dasharray="6,4"/>`;
+    h += `<text x="${(c.ML+c.PW-2).toFixed(1)}" y="${(y-4).toFixed(1)}" text-anchor="end" fill="#2563eb" font-size="10" font-family="Arial" font-weight="700">cut height</text>`;
+  }
+  h += `<text x="${(c.ML+c.PW/2).toFixed(1)}" y="${c.VH-2}" text-anchor="middle" fill="#6b7280" font-size="10" font-family="Arial">points (leaves)</text>`;
+  h += `<text x="10" y="${(c.MT+c.PH/2).toFixed(1)}" text-anchor="middle" fill="#6b7280" font-size="10" font-family="Arial" transform="rotate(-90,10,${(c.MT+c.PH/2).toFixed(1)})">merge distance</text>`;
+  svg.innerHTML = h;
+}
+
+// ══════════════════════════════════════════════════════
+// HIERARCHICAL — STATE & SUBTABS
+// ══════════════════════════════════════════════════════
+const HC_STEP_N = 8, HC_FULL_N = 60;
+let hcLinkage = 'average';
+let hcStepPoints = [], hcStepTree = null, hcStepIdx = 0;
+let hcFullPoints = [], hcFullTree = null, hcCutHeight = 0;
+
+function hcShowSub(i) {
+  document.getElementById('hcSubBtn0').classList.toggle('active', i===0);
+  document.getElementById('hcSubBtn1').classList.toggle('active', i===1);
+  document.getElementById('hcSub0').style.display = i===0 ? '' : 'none';
+  document.getElementById('hcSub1').style.display = i===1 ? '' : 'none';
+}
+
+function hcRebuildStep() {
+  hcStepPoints = sampleShared(HC_STEP_N);
+  hcStepTree = buildDendrogramTree(hcStepPoints, hcLinkage);
+  hcStepIdx = 0;
+  hcDrawStep();
+}
+
+function hcGetStepDesc() {
+  const total = hcStepTree.merges.length;
+  if(hcStepIdx===0) return `<strong>Start:</strong> all ${HC_STEP_N} points begin as their own singleton cluster. Each keeps a fixed color for the rest of this walkthrough.`;
+  const m = hcStepTree.merges[hcStepIdx-1];
+  const remaining = HC_STEP_N - hcStepIdx;
+  return `<strong>Merge ${hcStepIdx} of ${total}:</strong> the two closest clusters (sizes ${m.left.members.length} and ${m.right.members.length}) were joined at ${hcLinkage}-linkage distance <strong>${fmt(m.height,2)}</strong>. ${remaining>1?`${remaining} clusters remain.`:'Only one cluster remains — the tree is complete.'}`;
+}
+
+function hcDrawStep() {
+  const active = partitionAfterMerges(hcStepTree.leaves, hcStepTree.merges, hcStepIdx);
+  const colorMap = activeClusterColorMap(active);
+  const scatterPts = hcStepPoints.map((p,i)=>({x:p.x, y:p.y, id:i}));
+  drawScatter('hcStepScatterSvg', scatterPts, {colorOf: p => colorMap[p.id], radius:7});
+  document.getElementById('hcStepLegend').innerHTML = legendHTML(
+    active.map(c=>({label:`n=${c.members.length}`, color:c._color}))
+  );
+  drawDendrogram('hcStepDendroSvg', hcStepTree, {
+    merges: hcStepTree.merges.slice(0, hcStepIdx),
+    colorOf: m => m._color,
+    leafColorOf: leaf => leaf._color,
+  });
+  document.getElementById('hcStepBadge').textContent = `Merge ${hcStepIdx} of ${hcStepTree.merges.length}`;
+  document.getElementById('hcMergeCountVal').textContent = hcStepIdx;
+  document.getElementById('hcRemainVal').textContent = active.length;
+  document.getElementById('hcStepDesc').innerHTML = hcGetStepDesc();
+  const done = hcStepIdx>=hcStepTree.merges.length;
+  document.getElementById('hcBtnNext').disabled = done;
+}
+
+function hcNextMerge() {
+  if(hcStepIdx>=hcStepTree.merges.length) return;
+  hcStepIdx++;
+  hcDrawStep();
+}
+
+function hcResetStep() { hcStepIdx=0; hcDrawStep(); }
+
+async function hcRunAllMerges() {
+  const btn=document.getElementById('hcBtnRun'), btnN=document.getElementById('hcBtnNext');
+  btn.disabled=true; btnN.disabled=true;
+  while(hcStepIdx<hcStepTree.merges.length) { hcNextMerge(); await sleep(280); }
+  btn.disabled=false;
+}
+
+function hcRebuildFull() {
+  hcFullPoints = sampleShared(HC_FULL_N);
+  hcFullTree = buildDendrogramTree(hcFullPoints, hcLinkage);
+  hcCutHeight = hcFullTree.root.height * 0.5;
+  const slider = document.getElementById('hcCutSlider');
+  slider.max = hcFullTree.root.height.toFixed(2);
+  slider.value = hcCutHeight.toFixed(2);
+  document.getElementById('hcCutVal').textContent = fmt(hcCutHeight,2);
+  hcDrawFull();
+}
+
+function hcDrawFull() {
+  drawDendrogram('hcFullDendroSvg', hcFullTree, {cutHeight: hcCutHeight});
+  const count = hcFullTree.mergesByHeight.filter(m=>m.height<=hcCutHeight).length;
+  const active = partitionAfterMerges(hcFullTree.leaves, hcFullTree.mergesByHeight, count);
+  const {map, legendItems, k} = rankedClusterColorMap(active);
+  const scatterPts = hcFullPoints.map((p,i)=>({x:p.x, y:p.y, id:i}));
+  drawScatter('hcFullScatterSvg', scatterPts, {colorOf: p => map[p.id], radius:5});
+  document.getElementById('hcFullLegend').innerHTML = legendHTML(legendItems);
+  document.getElementById('hcCutHeightVal').textContent = fmt(hcCutHeight,2);
+  document.getElementById('hcResultKVal').textContent = k;
+}
+
+document.getElementById('hcLinkageSel').addEventListener('change', ()=>{
+  hcLinkage = document.getElementById('hcLinkageSel').value;
+  hcRebuildStep();
+  hcRebuildFull();
+});
+document.getElementById('hcCutSlider').addEventListener('input', ()=>{
+  hcCutHeight = parseFloat(document.getElementById('hcCutSlider').value);
+  document.getElementById('hcCutVal').textContent = fmt(hcCutHeight,2);
+  hcDrawFull();
+});
+
+function hcOnDatasetChanged() {
+  hcRebuildStep();
+  hcRebuildFull();
+}
+onDatasetChangedHandlers.push(hcOnDatasetChanged);
+
+// ══════════════════════════════════════════════════════
+// DBSCAN — CORE ALGORITHM
+// ══════════════════════════════════════════════════════
+function dbNeighborLists(points, eps) {
+  const n = points.length;
+  const lists = Array.from({length:n},()=>[]);
+  for(let i=0;i<n;i++) for(let j=0;j<n;j++) if(euclid(points[i],points[j])<=eps) lists[i].push(j);
+  return lists;
+}
+
+function dbRunFull(points, eps, minPts) {
+  const n = points.length;
+  const neighborLists = dbNeighborLists(points, eps);
+  const visited = new Array(n).fill(false);
+  const labels = new Array(n).fill(null);
+  const types = new Array(n).fill('noise');
+  let clusterId = -1;
+  for(let i=0;i<n;i++) {
+    if(visited[i]) continue;
+    visited[i]=true;
+    const N = neighborLists[i];
+    if(N.length < minPts) continue;
+    clusterId++;
+    labels[i]=clusterId; types[i]='core';
+    const seeds=[...N];
+    for(let qi=0; qi<seeds.length; qi++) {
+      const j = seeds[qi];
+      if(!visited[j]) {
+        visited[j]=true;
+        const Nj = neighborLists[j];
+        if(Nj.length>=minPts) Nj.forEach(k=>seeds.push(k));
+      }
+      if(labels[j]===null) {
+        labels[j]=clusterId;
+        if(types[j]!=='core') types[j]='border';
+      }
+    }
+  }
+  return {labels, types, numClusters: clusterId+1};
+}
+
+// ══════════════════════════════════════════════════════
+// DBSCAN — SHARED STATE
+// ══════════════════════════════════════════════════════
+let dbEps = 7, dbMinPts = 4;
+let dbNeighborListsCache = null;
+
+function dbRebuildNeighborLists() { dbNeighborListsCache = dbNeighborLists(sharedPoints, dbEps); }
+
+function dbShowSub(i) {
+  document.getElementById('dbSubBtn0').classList.toggle('active', i===0);
+  document.getElementById('dbSubBtn1').classList.toggle('active', i===1);
+  document.getElementById('dbSub0').style.display = i===0 ? '' : 'none';
+  document.getElementById('dbSub1').style.display = i===1 ? '' : 'none';
+}
+
+// ══════════════════════════════════════════════════════
+// DBSCAN — STEP-THROUGH (one cluster, point by point)
+// ══════════════════════════════════════════════════════
+let dbStepLabels = [], dbStepTypes = [], dbStepClusterId = -1, dbStepPhase = 0;
+let dbStepProbe = null, dbStepExpansionQueue = [], dbStepAnimating = false;
+
+function dbResetSteps() {
+  dbStepLabels = sharedPoints.map(()=>null);
+  dbStepTypes = sharedPoints.map(()=>null);
+  dbStepClusterId = -1;
+  dbGoToStep(0);
+}
+
+function dbPickNextProbe() {
+  for(let i=0;i<sharedPoints.length;i++) if(dbStepLabels[i]===null) return i;
+  return null;
+}
+
+function dbDrawStep(highlightIdx) {
+  const bounds = computeSquareBounds(sharedPoints);
+  const colorOf = p => {
+    const lab = dbStepLabels[p.id];
+    if(lab===null || lab===undefined) return dbStepTypes[p.id]==='noise' ? null : '#cbd5e1';
+    return CLUSTER_COLORS[lab % CLUSTER_COLORS.length];
+  };
+  const probeForCircle = dbStepPhase<=1 ? dbStepProbe : (highlightIdx!==undefined ? highlightIdx : null);
+  drawScatter('dbStepSvg', sharedPoints, {
+    bounds, margins:SQUARE_MARGINS, vw:420, vh:420, colorOf, radius:5.5,
+    extrasBefore: ctx => {
+      if(probeForCircle===null || probeForCircle===undefined) return '';
+      const p = sharedPoints[probeForCircle];
+      const cx=ctx.xPx(p.x), cy=ctx.yPx(p.y);
+      const rPx = (dbEps/(bounds.xMax-bounds.xMin))*ctx.PW;
+      return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${rPx.toFixed(1)}" fill="rgba(37,99,235,0.08)" stroke="#2563eb" stroke-width="1.4" stroke-dasharray="4,3"/>`;
+    },
+    extrasAfter: ctx => {
+      if(dbStepProbe===null || dbStepProbe===undefined) return '';
+      const p = sharedPoints[dbStepProbe];
+      const px=ctx.xPx(p.x), py=ctx.yPx(p.y);
+      return `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="8.5" fill="none" stroke="#111827" stroke-width="2"/>`;
+    },
+  });
+}
+
+function dbGetStepDesc() {
+  if(dbStepProbe===null || dbStepProbe===undefined) return `<strong>All points classified.</strong> Every point in the shared dataset is now either in a cluster or marked as noise. Switch to Full Run for the same result computed instantly, or Reset to redo this walkthrough.`;
+  switch(dbStepPhase) {
+    case 0: return `<strong>Step 1 &mdash; Pick a probe point:</strong> the outlined point is examined next. Its eps-neighborhood (dashed circle, radius ${fmt(dbEps,1)}) shows every point within reach.`;
+    case 1: {
+      const nCount = dbNeighborListsCache[dbStepProbe].length;
+      const isCore = nCount >= dbMinPts;
+      return `<strong>Step 2 &mdash; Classify:</strong> the probe has <strong>${nCount}</strong> neighbor(s) within eps. Since minPts = ${dbMinPts}, it is classified as ${isCore ? '<strong style="color:var(--green)">core</strong>' : '<strong>noise (tentative)</strong>'}. ${isCore ? 'A new cluster starts here.' : 'It may still be reclaimed as a border point of another cluster later.'}`;
+    }
+    case 2: return `<strong>Step 3 &mdash; Expand:</strong> starting from this core point, DBSCAN absorbs every density-reachable point into the same cluster, breadth-first. Newly found core points extend the search further; border points stop it.`;
+    case 3: {
+      const size = dbStepLabels.filter(l=>l===dbStepClusterId).length;
+      const coreN = dbStepTypes.filter((t,i)=>t==='core'&&dbStepLabels[i]===dbStepClusterId).length;
+      const borderN = size-coreN;
+      return dbStepClusterId>=0
+        ? `<strong>Step 4 &mdash; Record:</strong> cluster ${dbStepClusterId+1} is complete with <strong>${size}</strong> points (${coreN} core, ${borderN} border). Click Next Step to pick another unclassified point.`
+        : `<strong>Step 4 &mdash; Record:</strong> this point stayed noise for now &mdash; it had too few neighbors to seed a cluster. Click Next Step to pick another unclassified point.`;
+    }
+    default: return '';
+  }
+}
+
+function updateDbStepButtons(s) {
+  [0,1,2,3].forEach(i=>document.getElementById(`db_sb${i}`).classList.toggle('active', i===s));
+  document.getElementById('dbStepBadge').textContent = `Step ${s+1} of 4`;
+  document.getElementById('dbBtnNext').textContent = s<3 ? 'Next Step' : 'Next Step';
+}
+
+function updateDbStepMetrics() {
+  const probe = dbStepProbe;
+  document.getElementById('dbNeighborCountVal').textContent = (probe!==null && probe!==undefined) ? dbNeighborListsCache[probe].length : '--';
+  document.getElementById('dbPointTypeVal').textContent = (probe!==null && probe!==undefined && dbStepTypes[probe]) ? dbStepTypes[probe] : '--';
+  document.getElementById('dbClusterIdVal').textContent = dbStepClusterId>=0 ? (dbStepClusterId+1) : '--';
+  const classified = dbStepLabels.filter(l=>l!==null).length + dbStepTypes.filter((t,i)=>t==='noise'&&dbStepLabels[i]===null).length;
+  document.getElementById('dbClassifiedVal').textContent = `${Math.min(classified,sharedPoints.length)} / ${sharedPoints.length}`;
+}
+
+async function dbAnimateExpansion() {
+  const queue = [...dbStepExpansionQueue];
+  const seedSet = new Set(queue);
+  seedSet.add(dbStepProbe);
+  while(queue.length) {
+    const j = queue.shift();
+    if(dbStepLabels[j]===null) {
+      dbStepLabels[j] = dbStepClusterId;
+      const jNeighbors = dbNeighborListsCache[j];
+      if(jNeighbors.length>=dbMinPts) {
+        dbStepTypes[j]='core';
+        jNeighbors.forEach(k=>{ if(!seedSet.has(k)) { seedSet.add(k); queue.push(k); } });
+      } else {
+        dbStepTypes[j]='border';
+      }
+    }
+    dbDrawStep(j);
+    await sleep(50);
+  }
+  dbDrawStep();
+}
+
+async function dbGoToStep(s) {
+  if(dbStepAnimating) return;
+  dbStepPhase = s;
+  updateDbStepButtons(s);
+  if(s===0) {
+    const probe = dbPickNextProbe();
+    dbStepProbe = probe;
+    dbDrawStep();
+  } else if(s===1) {
+    if(dbStepProbe!==null) {
+      const neighbors = dbNeighborListsCache[dbStepProbe];
+      if(neighbors.length >= dbMinPts) {
+        dbStepClusterId++;
+        dbStepLabels[dbStepProbe] = dbStepClusterId;
+        dbStepTypes[dbStepProbe] = 'core';
+        dbStepExpansionQueue = neighbors.filter(j=>j!==dbStepProbe);
+      } else {
+        dbStepTypes[dbStepProbe] = 'noise';
+        dbStepExpansionQueue = [];
+      }
+    }
+    dbDrawStep();
+  } else if(s===2) {
+    if(dbStepProbe!==null && dbStepExpansionQueue.length) {
+      dbStepAnimating = true;
+      await dbAnimateExpansion();
+      dbStepAnimating = false;
+    }
+  } else {
+    dbDrawStep();
+  }
+  updateDbStepMetrics();
+  document.getElementById('dbStepDesc').innerHTML = dbGetStepDesc();
+}
+
+function dbNextStep() {
+  if(dbStepAnimating) return;
+  if(dbStepPhase<3) dbGoToStep(dbStepPhase+1);
+  else dbGoToStep(0);
+}
+
+// ══════════════════════════════════════════════════════
+// DBSCAN — FULL RUN
+// ══════════════════════════════════════════════════════
+let dbFullResult = null;
+
+function dbDrawFull() {
+  const bounds = computeSquareBounds(sharedPoints);
+  if(!dbFullResult) {
+    drawScatter('dbFullSvg', sharedPoints, {bounds, margins:SQUARE_MARGINS, vw:420, vh:420, colorOf:()=> '#cbd5e1', radius:5});
+    document.getElementById('dbFullLegend').innerHTML = '';
+    document.getElementById('dbClusterCountVal').textContent = '--';
+    document.getElementById('dbNoiseCountVal').textContent = '--';
+    return;
+  }
+  const {labels, numClusters} = dbFullResult;
+  drawScatter('dbFullSvg', sharedPoints, {
+    bounds, margins:SQUARE_MARGINS, vw:420, vh:420,
+    colorOf: p => labels[p.id]===null ? null : CLUSTER_COLORS[labels[p.id]%CLUSTER_COLORS.length],
+    radius:5,
+  });
+  const noiseCount = labels.filter(l=>l===null).length;
+  document.getElementById('dbFullLegend').innerHTML = legendHTML([
+    ...Array.from({length:Math.min(numClusters,CLUSTER_COLORS.length)},(_,i)=>({label:`Cluster ${i+1}`, color:CLUSTER_COLORS[i]})),
+    {label:'Noise', color:null},
+  ]);
+  document.getElementById('dbClusterCountVal').textContent = numClusters;
+  document.getElementById('dbNoiseCountVal').textContent = noiseCount;
+}
+
+function dbRunFullDataset() {
+  dbFullResult = dbRunFull(sharedPoints, dbEps, dbMinPts);
+  dbDrawFull();
+}
+
+document.getElementById('dbEpsSlider').addEventListener('input', ()=>{
+  dbEps = parseFloat(document.getElementById('dbEpsSlider').value);
+  document.getElementById('dbEpsVal').textContent = dbEps.toFixed(1);
+});
+document.getElementById('dbEpsSlider').addEventListener('change', ()=>{
+  dbRebuildNeighborLists(); dbResetSteps(); dbFullResult=null; dbDrawFull();
+});
+document.getElementById('dbMinPtsSlider').addEventListener('input', ()=>{
+  dbMinPts = parseInt(document.getElementById('dbMinPtsSlider').value);
+  document.getElementById('dbMinPtsVal').textContent = dbMinPts;
+});
+document.getElementById('dbMinPtsSlider').addEventListener('change', ()=>{
+  dbResetSteps(); dbFullResult=null; dbDrawFull();
+});
+
+function dbOnDatasetChanged() {
+  dbRebuildNeighborLists();
+  dbResetSteps();
+  dbFullResult = null;
+  dbDrawFull();
+}
+onDatasetChangedHandlers.push(dbOnDatasetChanged);
+
+// ══════════════════════════════════════════════════════
+// GMM — CORE ALGORITHM (2×2 covariance, closed-form eigen-decomposition)
+// ══════════════════════════════════════════════════════
+function gmmDensity(p, mean, cov) {
+  const dx=p.x-mean.x, dy=p.y-mean.y;
+  const det = Math.max(cov.a*cov.d - cov.b*cov.b, 1e-6);
+  const invA=cov.d/det, invB=-cov.b/det, invD=cov.a/det;
+  const quad = dx*dx*invA + 2*dx*dy*invB + dy*dy*invD;
+  const norm = 1/(2*Math.PI*Math.sqrt(det));
+  return norm*Math.exp(-0.5*quad);
+}
+
+function gmmInit(points, k) {
+  const idx=[...Array(points.length).keys()];
+  for(let i=idx.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [idx[i],idx[j]]=[idx[j],idx[i]]; }
+  const means = idx.slice(0,k).map(i=>({x:points[i].x, y:points[i].y}));
+  const mx=points.reduce((s,p)=>s+p.x,0)/points.length, my=points.reduce((s,p)=>s+p.y,0)/points.length;
+  const varX=points.reduce((s,p)=>s+(p.x-mx)**2,0)/points.length;
+  const varY=points.reduce((s,p)=>s+(p.y-my)**2,0)/points.length;
+  const v0 = Math.max((varX+varY)/2/k, 4);
+  const covs = means.map(()=>({a:v0, b:0, d:v0}));
+  const weights = means.map(()=>1/k);
+  return {means, covs, weights};
+}
+
+function gmmEStep(points, means, covs, weights) {
+  const k = means.length;
+  return points.map(p=>{
+    const dens = means.map((m,ci)=>weights[ci]*gmmDensity(p,m,covs[ci]));
+    const total = dens.reduce((a,b)=>a+b,0) || 1e-12;
+    return dens.map(d=>d/total);
+  });
+}
+
+function gmmMStep(points, resp, k) {
+  const REG = 1.0; // ridge term, avoids degenerate/singular covariance when a component owns few points
+  const Nk = new Array(k).fill(0);
+  resp.forEach(r=>r.forEach((v,ci)=>Nk[ci]+=v));
+  const means = Array.from({length:k},()=>({x:0,y:0}));
+  points.forEach((p,i)=>resp[i].forEach((r,ci)=>{ means[ci].x+=r*p.x; means[ci].y+=r*p.y; }));
+  means.forEach((m,ci)=>{ if(Nk[ci]>1e-6){ m.x/=Nk[ci]; m.y/=Nk[ci]; } });
+  const covs = Array.from({length:k},()=>({a:0,b:0,d:0}));
+  points.forEach((p,i)=>resp[i].forEach((r,ci)=>{
+    const dx=p.x-means[ci].x, dy=p.y-means[ci].y;
+    covs[ci].a+=r*dx*dx; covs[ci].b+=r*dx*dy; covs[ci].d+=r*dy*dy;
+  }));
+  covs.forEach((c,ci)=>{
+    if(Nk[ci]>1e-6){ c.a=c.a/Nk[ci]+REG; c.b/=Nk[ci]; c.d=c.d/Nk[ci]+REG; }
+    else { c.a=REG*4; c.b=0; c.d=REG*4; }
+  });
+  const n = points.length;
+  const weights = Nk.map(v=>Math.max(v,1e-6)/n);
+  return {means, covs, weights};
+}
+
+function gmmLogLikelihood(points, means, covs, weights) {
+  let total=0;
+  points.forEach(p=>{
+    const s = means.reduce((acc,m,ci)=>acc+weights[ci]*gmmDensity(p,m,covs[ci]), 0);
+    total += Math.log(Math.max(s,1e-300));
+  });
+  return total;
+}
+
+// Closed-form eigen-decomposition of a symmetric 2x2 matrix [[a,b],[b,d]] — gives the
+// covariance ellipse's semi-axes and tilt angle without any linear-algebra library.
+function gmmEllipseParams(cov, scale=2) {
+  const {a,b,d} = cov;
+  const tr=a+d, det=a*d-b*b;
+  const disc = Math.max(tr*tr/4-det, 0);
+  const l1 = tr/2+Math.sqrt(disc), l2 = Math.max(tr/2-Math.sqrt(disc), 0);
+  const angle = Math.abs(b)<1e-9 ? (a>=d?0:Math.PI/2) : Math.atan2(l1-a, b);
+  return {rx: Math.sqrt(Math.max(l1,0))*scale, ry: Math.sqrt(l2)*scale, angle};
+}
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1),16);
+  return {r:(n>>16)&255, g:(n>>8)&255, b:n&255};
+}
+function gmmBlendColor(resp) {
+  let r=0,g=0,b=0;
+  resp.forEach((w,ci)=>{ const c=hexToRgb(CLUSTER_COLORS[ci%CLUSTER_COLORS.length]); r+=w*c.r; g+=w*c.g; b+=w*c.b; });
+  return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+}
+
+function gmmEllipseSVG(ctx, mean, cov, color) {
+  const {rx, ry, angle} = gmmEllipseParams(cov);
+  const pxPerUnit = ctx.PW/(ctx.bounds.xMax-ctx.bounds.xMin);
+  const cx=ctx.xPx(mean.x), cy=ctx.yPx(mean.y);
+  const angleDeg = -angle*180/Math.PI; // data y is flipped in yPx, so mirror the rotation sense
+  return `<ellipse cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="${(rx*pxPerUnit).toFixed(1)}" ry="${(ry*pxPerUnit).toFixed(1)}" transform="rotate(${angleDeg.toFixed(1)} ${cx.toFixed(1)} ${cy.toFixed(1)})" fill="none" stroke="${color}" stroke-width="2.2"/>`
+       + `<path d="M${(cx-6).toFixed(1)} ${cy.toFixed(1)} L${(cx+6).toFixed(1)} ${cy.toFixed(1)} M${cx.toFixed(1)} ${(cy-6).toFixed(1)} L${cx.toFixed(1)} ${(cy+6).toFixed(1)}" stroke="${color}" stroke-width="1.6"/>`;
+}
+
+function gmmLerp(a,b,t){ return a+(b-a)*t; }
+
+// ══════════════════════════════════════════════════════
+// GMM — SUBTAB TOGGLE
+// ══════════════════════════════════════════════════════
+function gmShowSub(i) {
+  document.getElementById('gmSubBtn0').classList.toggle('active', i===0);
+  document.getElementById('gmSubBtn1').classList.toggle('active', i===1);
+  document.getElementById('gmSub0').style.display = i===0 ? '' : 'none';
+  document.getElementById('gmSub1').style.display = i===1 ? '' : 'none';
+}
+
+// ══════════════════════════════════════════════════════
+// GMM — STEP-THROUGH STATE
+// ══════════════════════════════════════════════════════
+let gmStepK = 3, gmStepMeans=[], gmStepCovs=[], gmStepWeights=[], gmStepResp=null;
+let gmStepPhase=0, gmStepIter=0, gmStepLLHistory=[], gmStepAnimating=false;
+
+function gmGetStepDesc(s) {
+  switch(s) {
+    case 0: return `<strong>Step 1 &mdash; Initialize:</strong> ${gmStepK} components are placed at random data points, each starting as a plain circle (identity covariance) with equal weight.`;
+    case 1: return `<strong>Step 2 &mdash; E-step:</strong> for every point, compute its probability of belonging to each component given the current ellipses. Blended colors show points with genuinely ambiguous membership.`;
+    case 2: return `<strong>Step 3 &mdash; M-step:</strong> each component's mean, covariance (shape/tilt), and weight are re-estimated as a <em>weighted</em> average using those probabilities &mdash; points contribute to every component, in proportion to their responsibility.`;
+    case 3: {
+      const ll = gmStepLLHistory[gmStepLLHistory.length-1];
+      const prev = gmStepLLHistory.length>1 ? gmStepLLHistory[gmStepLLHistory.length-2] : null;
+      const delta = prev!==null ? ll-prev : null;
+      return `<strong>Step 4 &mdash; Check:</strong> log-likelihood is now <strong>${fmt(ll,1)}</strong>${delta!==null?` (+${fmt(delta,2)} from last iteration)`:''}. ${delta!==null && delta<0.05 ? '<strong style="color:var(--green)">Barely improving — close to convergence.</strong>' : 'Still improving — more iterations will refine the fit.'}`;
+    }
+    default: return '';
+  }
+}
+
+function updateGmStepButtons(s) {
+  [0,1,2,3].forEach(i=>document.getElementById(`gm_sb${i}`).classList.toggle('active', i===s));
+  document.getElementById('gmStepBadge').textContent = `Step ${s+1} of 4`;
+  document.getElementById('gmBtnNext').textContent = s<3 ? 'Next Step' : 'Next Iteration';
+}
+
+function gmDrawStep(interp) {
+  const bounds = computeSquareBounds(sharedPoints);
+  const means = interp ? interp.means : gmStepMeans;
+  const covs = interp ? interp.covs : gmStepCovs;
+  const colorOf = p => {
+    if(!gmStepResp) return '#cbd5e1';
+    return gmmBlendColor(gmStepResp[p.id]);
+  };
+  drawScatter('gmStepSvg', sharedPoints, {
+    bounds, margins:SQUARE_MARGINS, vw:420, vh:420, colorOf, radius:5,
+    extrasAfter: ctx => means.map((m,ci)=>gmmEllipseSVG(ctx, m, covs[ci], CLUSTER_COLORS[ci%CLUSTER_COLORS.length])).join(''),
+  });
+}
+
+function updateGmStepMetrics() {
+  document.getElementById('gmIterVal').textContent = gmStepIter;
+  const ll = gmStepLLHistory.length ? gmStepLLHistory[gmStepLLHistory.length-1] : null;
+  document.getElementById('gmLLVal').textContent = ll!==null ? fmt(ll,1) : '--';
+}
+
+async function gmGoToStep(s) {
+  if(gmStepAnimating) return;
+  gmStepPhase = s;
+  updateGmStepButtons(s);
+  if(s===0) {
+    const init = gmmInit(sharedPoints, gmStepK);
+    gmStepMeans=init.means; gmStepCovs=init.covs; gmStepWeights=init.weights;
+    gmStepResp=null; gmStepIter=0; gmStepLLHistory=[];
+    gmDrawStep();
+    drawConvergenceChart('gmStepLLSvg', gmStepLLHistory, {yLabel:'log-lik', xLabel:'iteration', emptyText:'Log-likelihood appears after step 4'});
+  } else if(s===1) {
+    gmStepResp = gmmEStep(sharedPoints, gmStepMeans, gmStepCovs, gmStepWeights);
+    gmDrawStep();
+  } else if(s===2) {
+    const oldMeans=gmStepMeans, oldCovs=gmStepCovs;
+    const upd = gmmMStep(sharedPoints, gmStepResp, gmStepK);
+    gmStepAnimating = true;
+    await animateFrames(ANIM_MS, t=>{
+      const iMeans = oldMeans.map((m,ci)=>({x:gmmLerp(m.x,upd.means[ci].x,t), y:gmmLerp(m.y,upd.means[ci].y,t)}));
+      const iCovs = oldCovs.map((c,ci)=>({a:gmmLerp(c.a,upd.covs[ci].a,t), b:gmmLerp(c.b,upd.covs[ci].b,t), d:gmmLerp(c.d,upd.covs[ci].d,t)}));
+      gmDrawStep({means:iMeans, covs:iCovs});
+    });
+    gmStepAnimating = false;
+    gmStepMeans=upd.means; gmStepCovs=upd.covs; gmStepWeights=upd.weights;
+    gmStepIter++;
+    gmDrawStep();
+  } else {
+    const ll = gmmLogLikelihood(sharedPoints, gmStepMeans, gmStepCovs, gmStepWeights);
+    gmStepLLHistory.push(ll);
+    gmDrawStep();
+    drawConvergenceChart('gmStepLLSvg', gmStepLLHistory, {yLabel:'log-lik', xLabel:'iteration'});
+  }
+  updateGmStepMetrics();
+  document.getElementById('gmStepDesc').innerHTML = gmGetStepDesc(s);
+}
+
+function gmNextStep() {
+  if(gmStepAnimating) return;
+  if(gmStepPhase<3) gmGoToStep(gmStepPhase+1);
+  else gmGoToStep(1);
+}
+
+async function gmRun10More() {
+  if(gmStepAnimating) return;
+  const btnN=document.getElementById('gmBtnNext'), btnR=document.getElementById('gmBtnRun10');
+  btnN.disabled=true; btnR.disabled=true;
+  for(let i=0;i<10;i++) {
+    await gmGoToStep(1); await sleep(60);
+    await gmGoToStep(2); await sleep(60);
+    await gmGoToStep(3); await sleep(120);
+  }
+  btnN.disabled=false; btnR.disabled=false;
+}
+
+// ══════════════════════════════════════════════════════
+// GMM — FULL RUN STATE
+// ══════════════════════════════════════════════════════
+let gmFullMeans=[], gmFullCovs=[], gmFullResp=null, gmFullLLHistory=[];
+
+function gmReset() {
+  gmFullMeans=[]; gmFullCovs=[]; gmFullResp=null; gmFullLLHistory=[];
+  document.getElementById('gmFullBadge').textContent='not run';
+  const bounds = computeSquareBounds(sharedPoints);
+  drawScatter('gmFullSvg', sharedPoints, {bounds, margins:SQUARE_MARGINS, vw:420, vh:420, colorOf:()=>'#cbd5e1', radius:5});
+  document.getElementById('gmFullLegend').innerHTML='';
+  drawConvergenceChart('gmFullLLSvg', [], {yLabel:'log-lik', xLabel:'iteration', emptyText:'Run GMM to see log-likelihood rise each iteration'});
+  const box=document.getElementById('gmInterpBox');
+  box.className='interp-box pending';
+  document.getElementById('gmInterpVerdict').textContent='Run the algorithm to see an interpretation.';
+  document.getElementById('gmInterpCtx').textContent='Try the "Elongated (anisotropic)" scenario, then compare this fit to k-Means on the same data.';
+}
+
+function gmRunToConvergence() {
+  const k = parseInt(document.getElementById('gmK').value);
+  let {means, covs, weights} = gmmInit(sharedPoints, k);
+  let resp, history=[], iter=0;
+  for(; iter<80; iter++) {
+    resp = gmmEStep(sharedPoints, means, covs, weights);
+    ({means, covs, weights} = gmmMStep(sharedPoints, resp, k));
+    const ll = gmmLogLikelihood(sharedPoints, means, covs, weights);
+    const prev = history.length ? history[history.length-1] : null;
+    history.push(ll);
+    if(prev!==null && Math.abs(ll-prev)<0.05) { iter++; break; }
+  }
+  gmFullMeans=means; gmFullCovs=covs; gmFullResp=resp; gmFullLLHistory=history;
+  document.getElementById('gmFullBadge').textContent = `converged in ${iter} iterations`;
+  const bounds = computeSquareBounds(sharedPoints);
+  drawScatter('gmFullSvg', sharedPoints, {
+    bounds, margins:SQUARE_MARGINS, vw:420, vh:420,
+    colorOf: p => {
+      const r = resp[p.id];
+      const best = r.indexOf(Math.max(...r));
+      return CLUSTER_COLORS[best%CLUSTER_COLORS.length];
+    },
+    radius:5,
+    extrasAfter: ctx => means.map((m,ci)=>gmmEllipseSVG(ctx, m, covs[ci], CLUSTER_COLORS[ci%CLUSTER_COLORS.length])).join(''),
+  });
+  document.getElementById('gmFullLegend').innerHTML = legendHTML(kmLegendItems(k));
+  drawConvergenceChart('gmFullLLSvg', history, {yLabel:'log-lik', xLabel:'iteration'});
+  const box=document.getElementById('gmInterpBox');
+  box.className='interp-box good';
+  document.getElementById('gmInterpVerdict').textContent = `Converged after ${iter} iterations with final log-likelihood ${fmt(history[history.length-1],1)}.`;
+  document.getElementById('gmInterpCtx').textContent = `Points are colored by their most likely component (argmax responsibility), but every point actually has a full probability vector across all ${k} components. Ellipses show each component's 2-standard-deviation region — compare their tilt/shape here to k-Means' circular boundaries on the same scenario.`;
+}
+
+document.getElementById('gmK').addEventListener('input', ()=>{
+  document.getElementById('gmKVal').textContent = `k = ${document.getElementById('gmK').value}`;
+});
+document.getElementById('gmK').addEventListener('change', ()=>{
+  gmStepK = parseInt(document.getElementById('gmK').value);
+  gmGoToStep(0);
+  gmReset();
+});
+
+function gmOnDatasetChanged() {
+  gmStepK = parseInt(document.getElementById('gmK').value);
+  gmGoToStep(0);
+  gmReset();
+}
+onDatasetChangedHandlers.push(gmOnDatasetChanged);
+
+// ══════════════════════════════════════════════════════
+// DISTANCE METRICS
+// ══════════════════════════════════════════════════════
+function dmShowSub(i) {
+  document.getElementById('dmSubBtn0').classList.toggle('active', i===0);
+  document.getElementById('dmSubBtn1').classList.toggle('active', i===1);
+  document.getElementById('dmSub0').style.display = i===0 ? '' : 'none';
+  document.getElementById('dmSub1').style.display = i===1 ? '' : 'none';
+  if(i===1) dmDrawRegions();
+}
+
+function dmBounds() { return computeSquareBounds([...sharedPoints, {x:0,y:0}]); }
+
+// --- Sub 0: compare two points across all three metrics ---
+let dmAnchor = {x:24, y:20}, dmQuery = {x:58, y:48};
+
+function dmDrawCompare() {
+  const bounds = dmBounds();
+  drawScatter('dmCompareSvg', [], {
+    bounds, margins:SQUARE_MARGINS, vw:420, vh:420,
+    extrasBefore: ctx => {
+      const ox=ctx.xPx(0), oy=ctx.yPx(0);
+      const ax=ctx.xPx(dmAnchor.x), ay=ctx.yPx(dmAnchor.y);
+      const bx=ctx.xPx(dmQuery.x), by=ctx.yPx(dmQuery.y);
+      const pxPerUnit = ctx.PW/(ctx.bounds.xMax-ctx.bounds.xMin);
+      const rp = 16*pxPerUnit;
+      let s = `<path d="M${(ox-6).toFixed(1)} ${oy.toFixed(1)} L${(ox+6).toFixed(1)} ${oy.toFixed(1)} M${ox.toFixed(1)} ${(oy-6).toFixed(1)} L${ox.toFixed(1)} ${(oy+6).toFixed(1)}" stroke="#6b7280" stroke-width="1.4"/>`;
+      s += `<line x1="${ox.toFixed(1)}" y1="${oy.toFixed(1)}" x2="${ax.toFixed(1)}" y2="${ay.toFixed(1)}" stroke="#2a78d6" stroke-width="1.2" stroke-dasharray="3,3" opacity="0.7"/>`;
+      s += `<line x1="${ox.toFixed(1)}" y1="${oy.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="#e34948" stroke-width="1.2" stroke-dasharray="3,3" opacity="0.7"/>`;
+      s += `<circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="${rp.toFixed(1)}" fill="none" stroke="#1baf7a" stroke-width="1.4" stroke-dasharray="5,3"/>`;
+      s += `<path d="M${ax.toFixed(1)} ${(ay-rp).toFixed(1)} L${(ax+rp).toFixed(1)} ${ay.toFixed(1)} L${ax.toFixed(1)} ${(ay+rp).toFixed(1)} L${(ax-rp).toFixed(1)} ${ay.toFixed(1)} Z" fill="none" stroke="#eda100" stroke-width="1.4" stroke-dasharray="5,3"/>`;
+      return s;
+    },
+    extrasAfter: ctx => {
+      const ax=ctx.xPx(dmAnchor.x), ay=ctx.yPx(dmAnchor.y);
+      const bx=ctx.xPx(dmQuery.x), by=ctx.yPx(dmQuery.y);
+      let s = `<line x1="${ax.toFixed(1)}" y1="${ay.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="#111827" stroke-width="1.4" stroke-dasharray="2,2"/>`;
+      s += `<path d="M${ax.toFixed(1)} ${(ay-8).toFixed(1)} L${(ax+8).toFixed(1)} ${ay.toFixed(1)} L${ax.toFixed(1)} ${(ay+8).toFixed(1)} L${(ax-8).toFixed(1)} ${ay.toFixed(1)} Z" fill="#2a78d6" stroke="#111827" stroke-width="1.5"/>`;
+      s += `<circle cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="9" fill="#e34948" stroke="#111827" stroke-width="1.5" id="dmQueryHandle" style="cursor:grab"/>`;
+      return s;
+    },
+  });
+  document.getElementById('dmEuclidVal').textContent = fmt(euclid(dmAnchor,dmQuery),2);
+  document.getElementById('dmManhattanVal').textContent = fmt(manhattan(dmAnchor,dmQuery),2);
+  document.getElementById('dmCosineVal').textContent = fmt(cosineDist(dmAnchor,dmQuery),3);
+}
+
+function dmPresetSameDirection() { dmAnchor={x:20,y:15}; dmQuery={x:60,y:45}; dmDrawCompare(); }
+function dmPresetDiagonal() { dmAnchor={x:40,y:40}; dmQuery={x:56,y:56}; dmDrawCompare(); }
+function dmResetPoints() {
+  dmAnchor = {x:20+Math.random()*30, y:20+Math.random()*30};
+  dmQuery = {x:50+Math.random()*30, y:50+Math.random()*30};
+  dmDrawCompare();
+}
+
+function dmSetupDrag() {
+  const svg = document.getElementById('dmCompareSvg');
+  let dragging = false;
+  svg.addEventListener('pointerdown', e=>{
+    if(e.target.id==='dmQueryHandle') { dragging=true; svg.setPointerCapture(e.pointerId); }
+  });
+  svg.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const bounds = dmBounds();
+    const ctx = makeCtx(bounds, 420, 420, SQUARE_MARGINS);
+    const rect = svg.getBoundingClientRect();
+    const vb = svg.viewBox.baseVal;
+    const px = (e.clientX-rect.left)/rect.width*vb.width + vb.x;
+    const py = (e.clientY-rect.top)/rect.height*vb.height + vb.y;
+    const dataX = bounds.xMin + (px-ctx.ML)/ctx.PW*(bounds.xMax-bounds.xMin);
+    const dataY = bounds.yMin + (ctx.MT+ctx.PH-py)/ctx.PH*(bounds.yMax-bounds.yMin);
+    dmQuery = {x:Math.max(bounds.xMin,Math.min(bounds.xMax,dataX)), y:Math.max(bounds.yMin,Math.min(bounds.yMax,dataY))};
+    dmDrawCompare();
+  });
+  svg.addEventListener('pointerup', ()=>{ dragging=false; });
+  svg.addEventListener('pointerleave', ()=>{ dragging=false; });
+}
+
+// --- Sub 1: nearest-anchor Voronoi-like regions per metric ---
+let dmAnchors = [];
+let dmRegionMetric = 'euclid';
+
+function dmNearestAnchorIdx(x, y, anchors, metric) {
+  const q={x,y};
+  let best=-1, bestD=Infinity;
+  anchors.forEach((a,ai)=>{
+    const d = metric==='euclid' ? euclid(q,a) : metric==='manhattan' ? manhattan(q,a) : cosineDist(q,a);
+    if(d<bestD) { bestD=d; best=ai; }
+  });
+  return best;
+}
+
+function dmDrawRegions() {
+  const bounds = dmBounds();
+  drawScatter('dmRegionSvg', [], {
+    bounds, margins:SQUARE_MARGINS, vw:420, vh:420,
+    extrasBefore: ctx => {
+      const GRID=36;
+      let s='';
+      for(let gx=0; gx<GRID; gx++) {
+        for(let gy=0; gy<GRID; gy++) {
+          const cx = bounds.xMin+(gx+0.5)/GRID*(bounds.xMax-bounds.xMin);
+          const cy = bounds.yMin+(gy+0.5)/GRID*(bounds.yMax-bounds.yMin);
+          const ai = dmNearestAnchorIdx(cx, cy, dmAnchors, dmRegionMetric);
+          const col = CLUSTER_COLORS[ai%CLUSTER_COLORS.length];
+          const x0=ctx.xPx(bounds.xMin+gx/GRID*(bounds.xMax-bounds.xMin));
+          const x1=ctx.xPx(bounds.xMin+(gx+1)/GRID*(bounds.xMax-bounds.xMin));
+          const y0=ctx.yPx(bounds.yMin+(gy+1)/GRID*(bounds.yMax-bounds.yMin));
+          const y1=ctx.yPx(bounds.yMin+gy/GRID*(bounds.yMax-bounds.yMin));
+          s+=`<rect x="${x0.toFixed(1)}" y="${y0.toFixed(1)}" width="${(x1-x0).toFixed(1)}" height="${(y1-y0).toFixed(1)}" fill="${col}" opacity="0.22"/>`;
+        }
+      }
+      return s;
+    },
+    extrasAfter: ctx => dmAnchors.map((a,ai)=>{
+      const px=ctx.xPx(a.x), py=ctx.yPx(a.y), col=CLUSTER_COLORS[ai%CLUSTER_COLORS.length];
+      return `<path d="M${px.toFixed(1)} ${(py-9).toFixed(1)} L${(px+9).toFixed(1)} ${py.toFixed(1)} L${px.toFixed(1)} ${(py+9).toFixed(1)} L${(px-9).toFixed(1)} ${py.toFixed(1)} Z" fill="${col}" stroke="#111827" stroke-width="1.5"/>`;
+    }).join(''),
+  });
+  document.getElementById('dmRegionLegend').innerHTML = legendHTML(dmAnchors.map((a,ai)=>({label:`Anchor ${ai+1}`, color:CLUSTER_COLORS[ai%CLUSTER_COLORS.length]})));
+}
+
+function dmNewAnchors() { dmAnchors = sampleShared(5); dmDrawRegions(); }
+
+document.getElementById('dmMetricSel').addEventListener('change', ()=>{
+  dmRegionMetric = document.getElementById('dmMetricSel').value;
+  dmDrawRegions();
+});
+
+function dmOnDatasetChanged() {
+  dmNewAnchors();
+  dmDrawCompare();
+}
+onDatasetChangedHandlers.push(dmOnDatasetChanged);
+
+// ══════════════════════════════════════════════════════
+// CLUSTER VALIDATION — CORE (reuses kmInitCentroids/kmAssignPoints/kmUpdateCentroids/
+// kmCentroidShift/kmInertia from the k-Means tab)
+// ══════════════════════════════════════════════════════
+function cvRunKMeansBest(points, k, restarts=5) {
+  let best = null;
+  for(let r=0;r<restarts;r++) {
+    let centroids = kmInitCentroids(points, k);
+    let assign = [];
+    for(let iter=0; iter<100; iter++) {
+      assign = kmAssignPoints(points, centroids);
+      const newC = kmUpdateCentroids(points, assign, k, centroids);
+      const shift = kmCentroidShift(centroids, newC);
+      centroids = newC;
+      if(shift<0.01) break;
+    }
+    const inertia = kmInertia(points, assign, centroids);
+    if(!best || inertia<best.inertia) best = {centroids, assign, inertia};
+  }
+  return best;
+}
+
+function silhouetteScores(points, assign, k) {
+  const n = points.length;
+  const clusters = Array.from({length:k},()=>[]);
+  assign.forEach((c,i)=>clusters[c].push(i));
+  const s = new Array(n).fill(0);
+  for(let i=0;i<n;i++) {
+    const ci = assign[i];
+    const sameCluster = clusters[ci].filter(j=>j!==i);
+    const a = sameCluster.length ? sameCluster.reduce((sum,j)=>sum+euclid(points[i],points[j]),0)/sameCluster.length : 0;
+    let b = Infinity;
+    for(let c=0;c<k;c++) {
+      if(c===ci || !clusters[c].length) continue;
+      const meanD = clusters[c].reduce((sum,j)=>sum+euclid(points[i],points[j]),0)/clusters[c].length;
+      if(meanD<b) b=meanD;
+    }
+    if(!isFinite(b)) b=0;
+    s[i] = sameCluster.length===0 ? 0 : (b-a)/Math.max(a,b,1e-9);
+  }
+  return s;
+}
+
+function cvNearestOtherCluster(points, assign, k, probe) {
+  const ci = assign[probe];
+  let bestC=-1, bestD=Infinity;
+  for(let c=0;c<k;c++) {
+    if(c===ci) continue;
+    const members = points.filter((_,i)=>assign[i]===c);
+    if(!members.length) continue;
+    const meanD = members.reduce((s,q)=>s+euclid(points[probe],q),0)/members.length;
+    if(meanD<bestD) { bestD=meanD; bestC=c; }
+  }
+  return {bestC, bestD};
+}
+
+// ══════════════════════════════════════════════════════
+// CLUSTER VALIDATION — CHART HELPERS
+// ══════════════════════════════════════════════════════
+function drawKSweepChart(svgId, ks, ys, opts={}) {
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const VW=opts.vw||460, VH=opts.vh||220, ML=44,MR=16,MT=14,MB=28,PW=VW-ML-MR,PH=VH-MT-MB;
+  if(!ys.length) {
+    svg.innerHTML = `<text x="${VW/2}" y="${VH/2}" text-anchor="middle" fill="#9ca3af" font-size="12" font-family="Arial">${opts.emptyText||'Run the sweep to see this chart'}</text>`;
+    return;
+  }
+  const yMin=Math.min(...ys), yMax=Math.max(...ys), yPad=(yMax-yMin)*0.15||1, yLo=yMin-yPad, yHi=yMax+yPad;
+  const xPx = k => ML + (k-ks[0])/(ks[ks.length-1]-ks[0]||1)*PW;
+  const yPx = v => MT+PH-(v-yLo)/(yHi-yLo)*PH;
+  let h = `<line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT+PH}" stroke="#d1d5db" stroke-width="1"/>`;
+  h += `<line x1="${ML}" y1="${MT+PH}" x2="${ML+PW}" y2="${MT+PH}" stroke="#d1d5db" stroke-width="1"/>`;
+  ks.forEach(k=>{
+    const x=xPx(k);
+    h+=`<line x1="${x.toFixed(1)}" y1="${MT+PH}" x2="${x.toFixed(1)}" y2="${MT+PH+3}" stroke="#9ca3af" stroke-width="1"/>`;
+    h+=`<text x="${x.toFixed(1)}" y="${MT+PH+14}" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Arial">${k}</text>`;
+  });
+  [0,0.5,1].forEach(f=>{
+    const v=yLo+(yHi-yLo)*f, y=yPx(v);
+    h+=`<line x1="${ML-3}" y1="${y.toFixed(1)}" x2="${ML}" y2="${y.toFixed(1)}" stroke="#9ca3af" stroke-width="1"/>`;
+    h+=`<text x="${ML-6}" y="${(y+4).toFixed(1)}" text-anchor="end" fill="#9ca3af" font-size="10" font-family="Arial">${v.toFixed(2)}</text>`;
+  });
+  const pathD = ks.map((k,i)=>`${i===0?'M':'L'}${xPx(k).toFixed(1)},${yPx(ys[i]).toFixed(1)}`).join(' ');
+  h += `<path d="${pathD}" fill="none" stroke="#6366f1" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  ks.forEach((k,i)=>{
+    const isRec = opts.highlightK===k;
+    h+=`<circle cx="${xPx(k).toFixed(1)}" cy="${yPx(ys[i]).toFixed(1)}" r="${isRec?5.5:3}" fill="${isRec?'#dc2626':'#6366f1'}"/>`;
+  });
+  h += `<text x="${(ML+PW/2).toFixed(1)}" y="${VH-2}" text-anchor="middle" fill="#6b7280" font-size="10" font-family="Arial">${opts.xLabel||'k'}</text>`;
+  h += `<text x="10" y="${(MT+PH/2).toFixed(1)}" text-anchor="middle" fill="#6b7280" font-size="10" font-family="Arial" transform="rotate(-90,10,${(MT+PH/2).toFixed(1)})">${opts.yLabel||'value'}</text>`;
+  svg.innerHTML = h;
+}
+
+function drawSilhouetteDiagram(svgId, sil, assign, k, meanSil) {
+  const svg = document.getElementById(svgId);
+  if(!svg) return;
+  const VW=460, VH=340, ML=50, MR=20, MT=14, MB=30, PW=VW-ML-MR, PH=VH-MT-MB;
+  const n = sil.length;
+  const groups = Array.from({length:k},()=>[]);
+  sil.forEach((s,i)=>groups[assign[i]].push(i));
+  groups.forEach(g=>g.sort((a,b)=>sil[b]-sil[a]));
+  const order = groups.flat();
+  const xMin=Math.min(-0.1, Math.min(...sil)), xMax=Math.max(0.1, Math.max(...sil));
+  const xPx = v => ML + (v-xMin)/(xMax-xMin)*PW;
+  const barH = PH/Math.max(n,1);
+  let h='';
+  order.forEach((idx,rank)=>{
+    const y = MT+rank*barH, val=sil[idx];
+    const x0=xPx(Math.min(0,val)), x1=xPx(Math.max(0,val));
+    const col = CLUSTER_COLORS[assign[idx]%CLUSTER_COLORS.length];
+    h += `<rect x="${x0.toFixed(1)}" y="${y.toFixed(2)}" width="${Math.max(0.3,x1-x0).toFixed(1)}" height="${Math.max(0.4,barH-0.3).toFixed(2)}" fill="${col}" opacity="0.85"/>`;
+  });
+  const zx = xPx(0);
+  h += `<line x1="${zx.toFixed(1)}" y1="${MT}" x2="${zx.toFixed(1)}" y2="${MT+PH}" stroke="#374151" stroke-width="1"/>`;
+  const mx = xPx(meanSil);
+  h += `<line x1="${mx.toFixed(1)}" y1="${MT}" x2="${mx.toFixed(1)}" y2="${MT+PH}" stroke="#dc2626" stroke-width="1.6" stroke-dasharray="5,3"/>`;
+  h += `<text x="${mx.toFixed(1)}" y="${MT-3}" text-anchor="middle" fill="#dc2626" font-size="10" font-family="Arial" font-weight="700">mean=${fmt(meanSil,2)}</text>`;
+  [xMin,0,xMax].forEach(v=>{
+    h+=`<text x="${xPx(v).toFixed(1)}" y="${(MT+PH+14).toFixed(1)}" text-anchor="middle" fill="#9ca3af" font-size="9.5" font-family="Arial">${v.toFixed(2)}</text>`;
+  });
+  h += `<text x="${(ML+PW/2).toFixed(1)}" y="${VH-2}" text-anchor="middle" fill="#6b7280" font-size="10" font-family="Arial">silhouette value (one bar per point, grouped by cluster)</text>`;
+  svg.innerHTML = h;
+}
+
+function cvSilhouetteTier(s) {
+  if(s>=0.5) return 'great';
+  if(s>=0.25) return 'good';
+  if(s>=0) return 'fair';
+  return 'poor';
+}
+
+// ══════════════════════════════════════════════════════
+// CLUSTER VALIDATION — SUBTABS
+// ══════════════════════════════════════════════════════
+function cvShowSub(i) {
+  document.getElementById('cvSubBtn0').classList.toggle('active', i===0);
+  document.getElementById('cvSubBtn1').classList.toggle('active', i===1);
+  document.getElementById('cvSub0').style.display = i===0 ? '' : 'none';
+  document.getElementById('cvSub1').style.display = i===1 ? '' : 'none';
+}
+
+// --- Sub 0: one point's silhouette, step by step ---
+let cvStepK = 4, cvStepAssign=null, cvStepCentroids=null, cvStepAssignK=null;
+let cvStepProbe = 0, cvStepPhase = 0;
+
+function cvEnsureStepRun() {
+  if(!cvStepAssign || cvStepAssignK!==cvStepK) {
+    const best = cvRunKMeansBest(sharedPoints, cvStepK, 5);
+    cvStepAssign = best.assign; cvStepCentroids = best.centroids; cvStepAssignK = cvStepK;
+    if(cvStepProbe >= sharedPoints.length) cvStepProbe = 0;
+  }
+}
+
+function cvDrawStep() {
+  cvEnsureStepRun();
+  const probe = cvStepProbe, ci = cvStepAssign[probe];
+  const bestOther = cvStepPhase>=2 ? cvNearestOtherCluster(sharedPoints, cvStepAssign, cvStepK, probe) : {bestC:-1};
+  const bounds = computeBounds(sharedPoints);
+  drawScatter('cvStepSvg', sharedPoints, {
+    bounds, radius:5,
+    colorOf: p => CLUSTER_COLORS[cvStepAssign[p.id]%CLUSTER_COLORS.length],
+    extrasAfter: ctx => {
+      let s='';
+      sharedPoints.forEach(p=>{
+        const px=ctx.xPx(p.x), py=ctx.yPx(p.y);
+        if(cvStepPhase>=1 && cvStepAssign[p.id]===ci && p.id!==probe) s+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="7.5" fill="none" stroke="#111827" stroke-width="1" opacity="0.45"/>`;
+        if(cvStepPhase>=2 && cvStepAssign[p.id]===bestOther.bestC) s+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="7.5" fill="none" stroke="#dc2626" stroke-width="1" opacity="0.55" stroke-dasharray="2,2"/>`;
+      });
+      const pp = sharedPoints[probe], ppx=ctx.xPx(pp.x), ppy=ctx.yPx(pp.y);
+      s += `<circle cx="${ppx.toFixed(1)}" cy="${ppy.toFixed(1)}" r="9" fill="none" stroke="#111827" stroke-width="2.4"/>`;
+      return s;
+    },
+  });
+}
+
+function cvGetStepDesc() {
+  const probe=cvStepProbe, ci=cvStepAssign[probe];
+  const sameCluster = sharedPoints.filter((p,i)=>cvStepAssign[i]===ci && i!==probe);
+  const a = sameCluster.length ? sameCluster.reduce((s,p)=>s+euclid(sharedPoints[probe],p),0)/sameCluster.length : 0;
+  switch(cvStepPhase) {
+    case 0: return `<strong>Step 1 &mdash; Pick a point:</strong> the outlined point belongs to cluster ${ci+1} (from a fresh k-Means run with k=${cvStepK}). Click Next Step to evaluate how well it fits.`;
+    case 1: return `<strong>Step 2 &mdash; a(i), cohesion:</strong> the ${sameCluster.length} other points in cluster ${ci+1} (dark rings) are, on average, <strong>${fmt(a,2)}</strong> away from this point. Lower a(i) means a snugger fit with its own cluster.`;
+    case 2: {
+      const {bestC,bestD} = cvNearestOtherCluster(sharedPoints, cvStepAssign, cvStepK, probe);
+      return `<strong>Step 3 &mdash; b(i), separation:</strong> the nearest <em>other</em> cluster is cluster ${bestC+1} (red dashed rings), averaging <strong>${fmt(bestD,2)}</strong> away. Higher b(i) means better separation from the next-closest rival.`;
+    }
+    default: {
+      const {bestD} = cvNearestOtherCluster(sharedPoints, cvStepAssign, cvStepK, probe);
+      const s = (bestD-a)/Math.max(a,bestD,1e-9);
+      const tier = cvSilhouetteTier(s);
+      const msg = {great:'Very well matched to its cluster.', good:'Reasonably well matched.', fair:'Sitting on the boundary between two clusters.', poor:'Likely assigned to the wrong cluster — b(i) < a(i).'}[tier];
+      return `<strong>Step 4 &mdash; s(i) = (b&minus;a) / max(a,b):</strong> (${fmt(bestD,2)} &minus; ${fmt(a,2)}) / ${fmt(Math.max(a,bestD),2)} = <strong>${fmt(s,3)}</strong>. ${msg}`;
+    }
+  }
+}
+
+function updateCvStepUI() {
+  document.getElementById('cvStepBadge').textContent = `Step ${cvStepPhase+1} of 4`;
+  const probe=cvStepProbe, ci=cvStepAssign[probe];
+  const sameCluster = sharedPoints.filter((p,i)=>cvStepAssign[i]===ci && i!==probe);
+  const a = sameCluster.length ? sameCluster.reduce((s,p)=>s+euclid(sharedPoints[probe],p),0)/sameCluster.length : 0;
+  document.getElementById('cvAVal').textContent = cvStepPhase>=1 ? fmt(a,2) : '--';
+  if(cvStepPhase>=2) {
+    const {bestD} = cvNearestOtherCluster(sharedPoints, cvStepAssign, cvStepK, probe);
+    document.getElementById('cvBVal').textContent = fmt(bestD,2);
+  } else {
+    document.getElementById('cvBVal').textContent = '--';
+  }
+  document.getElementById('cvStepDesc').innerHTML = cvGetStepDesc();
+  const box = document.getElementById('cvInterpBox');
+  if(cvStepPhase<3) {
+    box.className = 'interp-box pending';
+    document.getElementById('cvInterpVerdict').textContent = 'Step through to see this point\'s silhouette score.';
+    document.getElementById('cvInterpCtx').textContent = 's(i) ranges from -1 (likely misclassified) to +1 (very well matched).';
+  } else {
+    const {bestD} = cvNearestOtherCluster(sharedPoints, cvStepAssign, cvStepK, probe);
+    const s = (bestD-a)/Math.max(a,bestD,1e-9);
+    const tier = cvSilhouetteTier(s);
+    box.className = `interp-box ${tier}`;
+    document.getElementById('cvInterpVerdict').textContent = `s(i) = ${fmt(s,3)}`;
+    document.getElementById('cvInterpCtx').textContent = {great:'Very well matched to its cluster.', good:'Reasonably well matched.', fair:'On the boundary between two clusters.', poor:'Likely in the wrong cluster.'}[tier];
+  }
+}
+
+function cvGoToStep(s) {
+  cvStepPhase = s;
+  cvDrawStep();
+  updateCvStepUI();
+}
+function cvNextStep() {
+  if(cvStepPhase<3) cvGoToStep(cvStepPhase+1);
+  else cvGoToStep(0);
+}
+function cvNextPoint() {
+  cvStepProbe = (cvStepProbe+1) % sharedPoints.length;
+  cvGoToStep(0);
+}
+
+document.getElementById('cvStepK').addEventListener('input', ()=>{
+  document.getElementById('cvStepKVal').textContent = `k = ${document.getElementById('cvStepK').value}`;
+});
+document.getElementById('cvStepK').addEventListener('change', ()=>{
+  cvStepK = parseInt(document.getElementById('cvStepK').value);
+  cvStepAssign = null; cvStepProbe = 0;
+  cvGoToStep(0);
+});
+
+// --- Sub 1: validation sweep across k ---
+let cvSweepResults = null;
+
+function cvRunSweep() {
+  const ks=[2,3,4,5,6,7,8];
+  const results = ks.map(k=>{
+    const best = cvRunKMeansBest(sharedPoints, k, 5);
+    const sil = silhouetteScores(sharedPoints, best.assign, k);
+    const meanSil = sil.reduce((a,b)=>a+b,0)/sil.length;
+    return {k, inertia:best.inertia, assign:best.assign, sil, meanSil};
+  });
+  cvSweepResults = results;
+  const best = results.reduce((b,r)=>r.meanSil>b.meanSil?r:b, results[0]);
+  drawKSweepChart('cvElbowSvg', ks, results.map(r=>r.inertia), {yLabel:'inertia', xLabel:'k'});
+  drawKSweepChart('cvSilKSvg', ks, results.map(r=>r.meanSil), {yLabel:'mean silhouette', xLabel:'k', highlightK:best.k});
+
+  const sel = document.getElementById('cvDiagKSel');
+  sel.innerHTML = ks.map(k=>`<option value="${k}"${k===best.k?' selected':''}>k = ${k}${k===best.k?' (recommended)':''}</option>`).join('');
+  cvDrawDiagramForK(best.k);
+
+  const tier = cvSilhouetteTier(best.meanSil);
+  const box = document.getElementById('cvSweepInterpBox');
+  box.className = `interp-box ${tier}`;
+  document.getElementById('cvSweepVerdict').textContent = `Recommended: k = ${best.k} (mean silhouette ${fmt(best.meanSil,3)})`;
+  document.getElementById('cvSweepCtx').textContent = `This is the k with the highest average silhouette across the sweep — the most internally-consistent partition found, not necessarily the "true" number of groups. Compare against the elbow chart, and check the "No real structure" scenario to see what a bad case looks like (silhouette stays low for every k).`;
+}
+
+function cvDrawDiagramForK(k) {
+  if(!cvSweepResults) return;
+  const r = cvSweepResults.find(r=>r.k===k);
+  if(!r) return;
+  drawSilhouetteDiagram('cvSilDiagramSvg', r.sil, r.assign, k, r.meanSil);
+}
+
+document.getElementById('cvDiagKSel').addEventListener('change', ()=>{
+  cvDrawDiagramForK(parseInt(document.getElementById('cvDiagKSel').value));
+});
+
+function cvOnDatasetChanged() {
+  cvStepAssign = null; cvStepProbe = 0; cvStepK = parseInt(document.getElementById('cvStepK').value);
+  cvGoToStep(0);
+  cvSweepResults = null;
+  drawKSweepChart('cvElbowSvg', [], [], {emptyText:'Run the sweep to see this chart'});
+  drawKSweepChart('cvSilKSvg', [], [], {emptyText:'Run the sweep to see this chart'});
+  document.getElementById('cvSilDiagramSvg').innerHTML = '';
+  document.getElementById('cvDiagKSel').innerHTML = '';
+  const box = document.getElementById('cvSweepInterpBox');
+  box.className = 'interp-box pending';
+  document.getElementById('cvSweepVerdict').textContent = 'Run the sweep to get a recommendation.';
+  document.getElementById('cvSweepCtx').textContent = 'Each k re-runs k-Means (best of 5 restarts) and scores every point\'s silhouette.';
+}
+onDatasetChangedHandlers.push(cvOnDatasetChanged);
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+buildScenarioGrid();
+regenerateShared();
+onDatasetChanged();
+dmSetupDrag();
+switchTopTab(0);
+</script>
+</body>
+</html>

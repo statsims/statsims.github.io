@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Confidence Intervals &amp; Significance</title>
+<style>
+:root {
+  --bg:#f6f7f9; --card:#ffffff; --border:#d9dde3;
+  --text:#1f2937; --muted:#6b7280; --soft:#f3f4f6;
+  --blue:#2563eb; --red:#dc2626; --green:#16a34a;
+  --amber:#d97706; --gray:#9ca3af;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px;font-size:14px;line-height:1.5}
+.container{max-width:1380px;margin:auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+
+/* Tab bar */
+.tab-bar{display:flex;align-items:center;border-bottom:2px solid var(--border);margin-bottom:16px}
+.tab-btn{padding:10px 18px;border:none;border-bottom:2px solid transparent;background:none;font-family:Arial,sans-serif;font-size:.85rem;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:-2px;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-hint{font-size:.76rem;color:var(--gray);font-style:italic;margin-left:auto;padding-right:6px}
+
+/* Header */
+.intro-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.intro-title{flex:1 1 400px}
+.intro-title h2{margin:0 0 5px;font-size:1.2rem}
+.intro-subtitle{font-size:.9rem;color:var(--muted);margin:0;line-height:1.5}
+.header-btns{display:flex;flex-direction:column;gap:8px;flex-shrink:0;margin-top:2px}
+
+/* Concept strip */
+.concept-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.concept-card{border:1px solid var(--border);border-radius:10px;padding:11px 13px;background:var(--soft)}
+.concept-label{font-weight:700;font-size:.84rem;color:var(--text)}
+.concept-desc{font-size:.76rem;color:var(--muted);margin-top:4px;line-height:1.4}
+
+/* Guide */
+.guide-section{display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.guide-section.open{display:block}
+.guide-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.guide-col h4{margin:0 0 7px;font-size:.9rem;color:var(--text)}
+.guide-col ul{padding-left:18px;margin:0}
+.guide-col li{font-size:.83rem;color:var(--muted);line-height:1.5;margin-bottom:3px}
+.guide-col li strong{color:var(--text)}
+
+/* Buttons */
+button{padding:8px 13px;border:1px solid #bfc6d1;border-radius:10px;background:white;cursor:pointer;font-family:Arial,sans-serif;font-size:.84rem;color:var(--text);transition:background .15s}
+button:hover{background:#f8fafc}
+.btn-primary{background:var(--blue);border-color:var(--blue);color:white}
+.btn-primary:hover{background:#1d4ed8}
+
+/* Layouts */
+.two-panel{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start}
+.sc-tab-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:start}
+.scenario-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+
+/* Scenario cards */
+.sc-card{border:1px solid var(--border);border-radius:10px;padding:11px 13px;background:var(--soft);cursor:pointer;transition:all .15s}
+.sc-card:hover{border-color:var(--blue);background:#eff6ff}
+.sc-card.active{border-color:var(--blue);background:#eff6ff}
+.sc-name{font-weight:700;font-size:.88rem;margin-bottom:4px}
+.sc-desc{font-size:.78rem;color:var(--muted);line-height:1.4}
+
+/* Controls */
+.control-box{background:var(--soft);padding:10px;border-radius:10px;border:1px solid var(--border);margin-bottom:10px}
+.control-title{font-size:.82rem;font-weight:700;display:block;margin-bottom:6px}
+input[type=range]{width:100%;accent-color:var(--blue)}
+select{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:Arial,sans-serif;font-size:.84rem;background:white}
+.val-display{font-size:.8rem;color:var(--muted);margin-top:3px}
+
+/* Panel header */
+.panel-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.panel-header h3{margin:0;font-size:1rem}
+.panel-badge{font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--border);background:var(--soft);color:var(--muted)}
+
+/* What-to-watch */
+.wtw{margin:0 0 10px;padding:9px 11px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:.82rem;color:#075985;line-height:1.45}
+.wtw strong{color:#0c4a6e}
+
+/* Metrics */
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.metric{border:1px solid var(--border);background:var(--soft);border-radius:8px;padding:8px 10px}
+.metric-label{font-size:.72rem;color:var(--muted)}
+.metric-value{font-weight:700;font-size:.95rem;font-family:ui-monospace,monospace;margin-top:1px}
+
+/* Interpretation */
+.interp-box{padding:12px 14px;border:1px solid;border-left:5px solid;border-radius:10px;transition:all .35s;margin-bottom:10px}
+.interp-box.pending{background:#eff6ff;border-color:#c7d2fe;border-left-color:var(--blue)}
+.interp-box.not-sig{background:var(--soft);border-color:var(--border);border-left-color:var(--gray)}
+.interp-box.marginal{background:#fff7ed;border-color:#fdba74;border-left-color:var(--amber)}
+.interp-box.sig{background:#ecfdf5;border-color:#86efac;border-left-color:var(--green)}
+.interp-box.very-sig{background:#f0fdf4;border-color:#4ade80;border-left-color:#15803d}
+.interp-verdict{font-weight:700;margin-bottom:4px}
+.interp-ctx{font-size:.84rem;color:var(--muted)}
+
+/* Null value prominent control */
+.null-hero{background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.null-hero-label{font-size:.82rem;font-weight:700;color:var(--text);display:block;margin-bottom:4px}
+.null-hero-val{font-size:1.5rem;font-weight:700;font-family:ui-monospace,monospace;margin:6px 0;text-align:center;padding:6px;border-radius:8px;transition:color .3s,background .3s}
+.null-hero-val.excludes{color:#15803d;background:#f0fdf4}
+.null-hero-val.includes{color:#b91c1c;background:#fef2f2}
+.null-hero-sub{font-size:.74rem;color:var(--muted);text-align:center;margin-top:4px}
+.null-preset-row{display:flex;gap:6px;margin-top:8px}
+.null-preset-row button{flex:1;font-size:.78rem;padding:5px 8px}
+
+/* SVG charts */
+.chart-wrap svg{width:100%;display:block}
+
+/* Help / reference */
+.help-card{display:none}
+.help-card.open{display:block}
+.help-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.help-section{margin-bottom:18px}
+.help-section h4{margin:0 0 6px;font-size:.93rem;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px}
+.help-section p,.help-section li{font-size:.86rem;color:var(--muted);line-height:1.5;margin:4px 0}
+.help-section ul{padding-left:18px;margin:6px 0}
+.help-section li strong{color:var(--text)}
+.formula-box{background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:ui-monospace,monospace;font-size:.82rem;color:var(--text);margin:6px 0;line-height:1.7}
+
+@media(max-width:900px){
+  .two-panel,.sc-tab-grid,.guide-cols,.scenario-grid,.help-2col,.concept-row,.metric-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<div class="card">
+  <div class="intro-header">
+    <div class="intro-title">
+      <h2>Confidence Intervals &amp; Significance</h2>
+      <p class="intro-subtitle">A confidence interval contains all null values the data cannot rule out at the matching level. When the null falls outside the interval, the result is "significant" — not because of a threshold, but because the data are incompatible with that null. This app makes that link visual and movable.</p>
+    </div>
+    <div class="header-btns">
+      <button id="btnGuide">&#9660; Quick-Start Guide</button>
+      <button id="btnRef">&#128218; Full Reference</button>
+    </div>
+  </div>
+  <div class="concept-row">
+    <div class="concept-card">
+      <div class="concept-label">The Core Link</div>
+      <div class="concept-desc">A null value outside the CI → "significant" at the matching α. A null inside → consistent with the data. Same logic, different framing.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-label">Width Depends On n and Confidence</div>
+      <div class="concept-desc">Larger samples narrow the interval (more precision). Higher confidence level widens it (more coverage). Both are independent of the true effect.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-label">The Null Slider</div>
+      <div class="concept-desc">Moving the null value doesn't change the data or the interval — only what you compare it to. The boundary of the interval is the exact significance threshold.</div>
+    </div>
+  </div>
+  <div class="guide-section" id="guideSection">
+    <div class="guide-cols">
+      <div class="guide-col">
+        <h4>Start Here</h4>
+        <ul>
+          <li>Go to <strong>Scenarios &amp; Controls</strong> and load a preset. Each one sets up a classic situation.</li>
+          <li>Then switch to <strong>Explore the Interval</strong> to see both plots and the interpretation.</li>
+          <li>Drag the <strong>Null Value</strong> slider on the right. Watch the CI plot change colour as the null crosses the interval boundary.</li>
+        </ul>
+      </div>
+      <div class="guide-col">
+        <h4>Reading the Plots</h4>
+        <ul>
+          <li><strong>Top plot:</strong> raw data for both groups. Wide overlap → wide CI. Clear separation → narrow CI.</li>
+          <li><strong>Bottom plot:</strong> the interval for the difference in means. Green = excludes null, red = includes null.</li>
+          <li><strong>The dot</strong> is the observed difference. The bars are the interval bounds.</li>
+          <li>The <strong>dashed vertical line</strong> is your null value (default: 0).</li>
+        </ul>
+      </div>
+      <div class="guide-col">
+        <h4>The Key Insight</h4>
+        <ul>
+          <li>The <strong>two boundaries of the interval</strong> are the exact null values at which significance flips.</li>
+          <li>Drag the null to the interval boundary — that is the <em>p</em> = α point.</li>
+          <li>Increase n and the interval <strong>narrows</strong>. The same effect becomes "significant."</li>
+          <li>Significance is about the null's position relative to the interval, not about the effect's size or importance.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="0">Scenarios &amp; Controls</button>
+  <button class="tab-btn" data-tab="1">Explore the Interval</button>
+  <span class="tab-hint">Pick a scenario, then explore on Tab 2.</span>
+</div>
+
+<!-- ══ TAB 0: SCENARIOS & CONTROLS ══ -->
+<div id="tab0" class="tab-content">
+  <div class="sc-tab-grid">
+    <div class="card">
+      <h3 style="margin-bottom:6px">Teaching Scenarios</h3>
+      <p style="font-size:.84rem;color:var(--muted);margin-bottom:0">Each scenario sets up a classic situation. Load one, then switch to the Explore tab. Try adjusting Group size after loading — watch the interval narrow without the true effect changing.</p>
+      <div class="scenario-grid" id="scenarioGrid"></div>
+      <button class="btn-primary" onclick="switchToTab(1)" style="margin-top:14px;width:100%">→ Explore the Interval</button>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Controls</h3>
+      <div class="control-box">
+        <span class="control-title">Group size</span>
+        <input type="range" id="groupSize" min="5" max="100" value="25">
+        <div class="val-display" id="groupSizeVal">25 per group</div>
+      </div>
+      <div class="control-box">
+        <span class="control-title">Noise / spread</span>
+        <input type="range" id="noise" min="0.5" max="15" step="0.1" value="4">
+        <div class="val-display" id="noiseVal">4.0</div>
+      </div>
+      <div class="control-box">
+        <span class="control-title">Observed separation</span>
+        <input type="range" id="effectSize" min="0" max="15" step="0.1" value="3">
+        <div class="val-display" id="effectSizeVal">3.0</div>
+      </div>
+      <div class="control-box">
+        <span class="control-title">Direction</span>
+        <select id="direction">
+          <option value="positive">Group B higher than Group A</option>
+          <option value="negative">Group A higher than Group B</option>
+        </select>
+      </div>
+      <div class="control-box">
+        <span class="control-title">Confidence level</span>
+        <select id="confLevel">
+          <option value="0.90">90%</option>
+          <option value="0.95" selected>95%</option>
+          <option value="0.99">99%</option>
+        </select>
+      </div>
+      <div class="control-box">
+        <span class="control-title">Method</span>
+        <select id="method">
+          <option value="welch" selected>Welch (unequal variances)</option>
+          <option value="pooled">Pooled variance</option>
+        </select>
+      </div>
+      <button class="btn-primary" id="btnNewData" style="width:100%">New Observed Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 1: EXPLORE ══ -->
+<div id="tab1" class="tab-content" style="display:none">
+  <div class="two-panel">
+    <!-- Left: both plots -->
+    <div>
+      <div class="card">
+        <div class="panel-header">
+          <h3>Observed Groups</h3>
+          <span class="panel-badge" id="groupsBadge">n = -- per group</span>
+        </div>
+        <p class="wtw"><strong>What to look for:</strong> how much the two distributions overlap. Wide overlap → large SE → wide CI. Clear separation → narrower CI. The mean markers show the observed difference the CI is built from.</p>
+        <div class="chart-wrap"><svg id="observedSvg" viewBox="0 0 560 260"></svg></div>
+      </div>
+      <div class="card">
+        <div class="panel-header">
+          <h3>Confidence Interval for the Difference in Means (B &minus; A)</h3>
+          <span class="panel-badge" id="ciBadge">95% CI</span>
+        </div>
+        <p class="wtw"><strong>What to look for:</strong> does the dashed null line cross the interval? Move the null slider on the right — the exact moment it crosses the boundary is where significance flips. The interval itself never moves when you drag the null.</p>
+        <div class="chart-wrap"><svg id="ciSvg" viewBox="0 0 560 160"></svg></div>
+      </div>
+    </div>
+    <!-- Right: null control + interpretation + metrics -->
+    <div>
+      <!-- Null value hero control -->
+      <div class="null-hero">
+        <span class="null-hero-label">Null value (hypothesized difference)</span>
+        <input type="range" id="nullSlider" min="-12" max="12" step="0.1" value="0" style="width:100%;accent-color:var(--blue);margin:6px 0">
+        <div class="null-hero-val includes" id="nullHeroVal">0.0</div>
+        <div class="null-hero-sub" id="nullHeroSub">Drag to change the null — the interval stays fixed</div>
+        <div class="null-preset-row">
+          <button id="btnNullZero">0 (no difference)</button>
+          <button id="btnNullObs">Set to observed diff</button>
+        </div>
+      </div>
+      <!-- Confidence level (quick access) -->
+      <div class="control-box">
+        <span class="control-title">Confidence level</span>
+        <select id="confLevelExplore">
+          <option value="0.90">90%</option>
+          <option value="0.95" selected>95%</option>
+          <option value="0.99">99%</option>
+        </select>
+      </div>
+      <!-- Interpretation box -->
+      <div class="interp-box pending" id="interpBox">
+        <div class="interp-verdict" id="interpFriendly">Load data to see interpretation.</div>
+        <div style="font-size:.84rem;font-weight:700;margin:4px 0 2px" id="interpVerdict"></div>
+        <div class="interp-ctx" id="interpCtx"></div>
+      </div>
+      <!-- Metrics -->
+      <div class="metric-grid">
+        <div class="metric"><div class="metric-label">Group A mean</div><div class="metric-value" id="mA">--</div></div>
+        <div class="metric"><div class="metric-label">Group B mean</div><div class="metric-value" id="mB">--</div></div>
+        <div class="metric"><div class="metric-label">Observed diff (B−A)</div><div class="metric-value" id="mDiff">--</div></div>
+        <div class="metric"><div class="metric-label">Standard error</div><div class="metric-value" id="mSE">--</div></div>
+        <div class="metric"><div class="metric-label">df</div><div class="metric-value" id="mDF">--</div></div>
+        <div class="metric"><div class="metric-label">t-critical</div><div class="metric-value" id="mCrit">--</div></div>
+        <div class="metric" style="grid-column:span 2"><div class="metric-label">Confidence interval</div><div class="metric-value" id="mCI">--</div></div>
+        <div class="metric"><div class="metric-label">Null value</div><div class="metric-value" id="mNull">0.0</div></div>
+        <div class="metric"><div class="metric-label">Excludes null?</div><div class="metric-value" id="mExcludes">--</div></div>
+      </div>
+      <button id="btnNewDataExplore" style="width:100%;margin-top:10px">New Observed Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- FULL REFERENCE -->
+<div class="card help-card" id="refCard">
+  <h3 style="margin-bottom:14px">Full Reference</h3>
+  <div class="help-2col">
+    <div>
+      <div class="help-section">
+        <h4>What a Confidence Interval Is</h4>
+        <p>A <strong>confidence interval</strong> is a range of parameter values that are consistent with the data at the chosen confidence level. Specifically: if you repeated the study many times and computed a 95% CI each time, approximately 95% of those intervals would contain the true parameter value.</p>
+        <p>A single CI either contains the true value or it does not. But a procedure with 95% coverage is correct 95% of the time across the long run.</p>
+      </div>
+      <div class="help-section">
+        <h4>The Significance Link</h4>
+        <p>A two-sided <em>α</em>-level test rejects the null when the null value falls outside the 1−α confidence interval. This is not a coincidence — they are algebraically equivalent. The CI boundary is the exact null value at which the test statistic equals the critical value.</p>
+        <div class="formula-box">CI: x̄_diff ± t* · SE<br>Reject H₀ when: null &lt; lower OR null &gt; upper<br>Equivalent to: |t| &gt; t*  where α = 1 − confidence level</div>
+        <p><strong>Moving the null slider</strong> to an interval boundary shows you the exact significance threshold for your data — not a number from a table, but derived from what you observed.</p>
+      </div>
+      <div class="help-section">
+        <h4>Welch vs Pooled Interval</h4>
+        <p><strong>Welch (default):</strong> allows unequal variances between groups. The degrees of freedom are approximated by the Welch-Satterthwaite formula and are typically not an integer. This is the safer default when variances may differ.</p>
+        <p><strong>Pooled:</strong> assumes both groups have the same population variance and uses df = n_A + n_B − 2. More powerful when the assumption holds; misleading when it does not.</p>
+      </div>
+    </div>
+    <div>
+      <div class="help-section">
+        <h4>What Makes the Interval Wide or Narrow</h4>
+        <ul>
+          <li><strong>Sample size n:</strong> Two-sample SE = √(s²_A/n_A + s²_B/n_B). When n_A = n_B = n, this simplifies to ~s√(2/n). Doubling both group sizes shrinks SE by roughly √2 and narrows the interval.</li>
+          <li><strong>Noise / spread:</strong> Higher variability → larger SE → wider interval.</li>
+          <li><strong>Confidence level:</strong> 99% CI is wider than 95% CI for the same data — more coverage requires more width.</li>
+          <li><strong>Effect size does not change width</strong> — only shifts the interval's location. A larger true difference does not make the interval narrower.</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h4>Five Teaching Scenarios</h4>
+        <ul>
+          <li><strong>Clear signal:</strong> Large effect, ample n. CI sits well away from zero.</li>
+          <li><strong>Borderline:</strong> Real but small effect. CI just barely excludes or includes zero — a genuinely ambiguous result.</li>
+          <li><strong>No effect:</strong> True difference is zero. CI spans zero comfortably.</li>
+          <li><strong>Small n, wide CI:</strong> Genuine effect but tiny sample. The interval is wide enough to span zero.</li>
+          <li><strong>Large n, tiny effect:</strong> Trivial difference becomes "significant" with enough observations. Significance without practical importance.</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h4>Common Misinterpretations</h4>
+        <ul>
+          <li><strong>Not</strong> "95% probability the true value is in this interval" — that is a Bayesian credible interval statement.</li>
+          <li><strong>Not</strong> "contains 95% of the data" — the CI is about the parameter, not individual observations.</li>
+          <li><strong>Not</strong> evidence of a large or important effect — only evidence the data are inconsistent with the null value. A very narrow CI around 0.001 is significant and trivial simultaneously.</li>
+          <li>Two CIs that do not overlap does <strong>not</strong> mean p &lt; 0.05 — the non-overlap criterion is more conservative than that.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+<script>
+// ══════════════════════════════════════════════════════
+// STATS MATH
+// ══════════════════════════════════════════════════════
+function randn() {
+  let u=0,v=0;
+  while(u===0) u=Math.random();
+  while(v===0) v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function arrMean(a) { return a.reduce((s,v)=>s+v,0)/a.length; }
+function arrVar(a) {
+  const m=arrMean(a);
+  return a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1);
+}
+function arrSD(a) { return Math.sqrt(arrVar(a)); }
+
+// Acklam's rational approximation for the normal quantile
+function invNorm(p) {
+  const a=[-3.969683028665376e+01,2.209460984245205e+02,-2.759285104469687e+02,1.383577518672690e+02,-3.066479806614716e+01,2.506628277459239e+00];
+  const b=[-5.447609879822406e+01,1.615858368580409e+02,-1.556989798598866e+02,6.680131188771972e+01,-1.328068155288572e+01];
+  const c=[-7.784894002430293e-03,-3.223964580411365e-01,-2.400758277161838e+00,-2.549732539343734e+00,4.374664141464968e+00,2.938163982698783e+00];
+  const d=[7.784695709041462e-03,3.224671290700398e-01,2.445134137142996e+00,3.754408661907416e+00];
+  const plo=0.02425,phi=1-plo;
+  if(p<plo){const q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  if(p<=phi){const q=p-0.5,r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  const q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+}
+
+// Cornish-Fisher expansion for t-quantile (accurate to <0.01 for df≥3)
+function invT(p, df) {
+  if(df>=500) return invNorm(p);
+  const z=invNorm(p),z2=z*z,df2=df*df,df3=df2*df,df4=df3*df;
+  return z+(z2*z+z)/(4*df)+(5*z2*z2*z+16*z2*z+3*z)/(96*df2)+(3*z2*z2*z2*z+19*z2*z2*z+17*z2*z-15*z)/(384*df3)+(79*z2*z2*z2*z2*z+776*z2*z2*z2*z+1482*z2*z2*z-1920*z2*z-945*z)/(92160*df4);
+}
+
+function fmt(v,d=2){return typeof v==='number'&&isFinite(v)?v.toFixed(d):'--';}
+
+// ══════════════════════════════════════════════════════
+// SCENARIOS
+// ══════════════════════════════════════════════════════
+const SCENARIOS = [
+  {id:'clear',     label:'Clear signal',       desc:'Large effect, ample n. The CI sits well away from zero — a straightforward result.',                          n:30, noise:4,   effect:6,   dir:'positive', conf:0.95},
+  {id:'border',    label:'Borderline',          desc:'Small effect, moderate n. Whether the CI excludes zero varies with the draw — genuine ambiguity.',             n:14, noise:4,   effect:2.2, dir:'positive', conf:0.95},
+  {id:'null',      label:'No effect',           desc:'True difference is zero. The CI will typically span zero comfortably — consistent with the null.',             n:25, noise:5,   effect:0,   dir:'positive', conf:0.95},
+  {id:'smalln',    label:'Small n, wide CI',    desc:'A genuine effect, but so few observations the interval is wide enough to include zero.',                       n:6,  noise:5,   effect:4,   dir:'positive', conf:0.95},
+  {id:'largeN',    label:'Large n, tiny effect',desc:'A trivial difference becomes statistically detectable at large n. Significance without practical importance.', n:80, noise:3,   effect:0.5, dir:'positive', conf:0.95},
+];
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let groupA=[], groupB=[];  // [{value, jitter}]
+let ciRes=null;            // {mA,mB,diff,se,df,crit,lower,upper}
+let activeScenario=null;
+let activeTab=0;
+
+// ══════════════════════════════════════════════════════
+// DATA GENERATION
+// ══════════════════════════════════════════════════════
+function generateGroups() {
+  const n   = +document.getElementById('groupSize').value;
+  const noi = +document.getElementById('noise').value;
+  const eff = +document.getElementById('effectSize').value;
+  const dir = document.getElementById('direction').value;
+  const muA = 10, muB = dir==='positive' ? 10+eff : 10-eff;
+  groupA = Array.from({length:n},()=>({value:muA+randn()*noi, jitter:(Math.random()-0.5)*2}));
+  groupB = Array.from({length:n},()=>({value:muB+randn()*noi, jitter:(Math.random()-0.5)*2}));
+}
+
+function computeCI() {
+  const conf   = +document.getElementById('confLevelExplore').value;
+  const method = document.getElementById('method').value;
+  const valsA  = groupA.map(p=>p.value), valsB = groupB.map(p=>p.value);
+  const nA=valsA.length, nB=valsB.length;
+  const mA=arrMean(valsA), mB=arrMean(valsB);
+  const vA=arrVar(valsA),  vB=arrVar(valsB);
+  const diff=mB-mA;
+  let se,df;
+  if(method==='welch'){
+    se=Math.sqrt(vA/nA+vB/nB);
+    const num=(vA/nA+vB/nB)**2, den=(vA/nA)**2/(nA-1)+(vB/nB)**2/(nB-1);
+    df=Math.max(3,num/den);  // floor at 3: Cornish-Fisher diverges below df≈3
+  } else {
+    const sp2=((nA-1)*vA+(nB-1)*vB)/(nA+nB-2);
+    se=Math.sqrt(sp2*(1/nA+1/nB)); df=nA+nB-2;
+  }
+  const alpha=1-conf, crit=invT(1-alpha/2, df);  // pass raw df — Cornish-Fisher handles non-integers
+  ciRes={mA,mB,diff,se,df,crit,lower:diff-crit*se,upper:diff+crit*se,conf};
+}
+
+// ══════════════════════════════════════════════════════
+// INTERPRETATION
+// ══════════════════════════════════════════════════════
+function getInterp(lower,upper,nullVal,conf) {
+  const halfW=(upper-lower)/2;
+  const excludes=lower>nullVal||upper<nullVal;
+  const dist=Math.min(Math.abs(lower-nullVal),Math.abs(upper-nullVal));
+  const rel=dist/halfW;
+  const pct=Math.round(conf*100);
+  const nStr=nullVal.toFixed(1);
+  if(excludes) {
+    if(rel>0.3) return {cls:'very-sig',
+      friendly:`The observed difference is clearly inconsistent with a null of ${nStr}.`,
+      verdict:'Null value lies well outside the interval.',
+      ctx:`The null sits ${(rel*100).toFixed(0)}% of the half-width beyond the interval edge. Strong evidence the true difference is not ${nStr}.`};
+    return {cls:'sig',
+      friendly:`The observed difference is inconsistent with a null of ${nStr} at the ${pct}% level.`,
+      verdict:'Null value lies outside the interval.',
+      ctx:`The null just falls outside the ${pct}% CI. The data are inconsistent with a difference of ${nStr} at this confidence level.`};
+  } else {
+    if(rel<0.15) return {cls:'marginal',
+      friendly:`Borderline result — the null (${nStr}) sits very close to the interval edge.`,
+      verdict:'Null value is inside but near the boundary.',
+      ctx:`Only ${(rel*100).toFixed(0)}% of the half-width separates the null from the boundary. A slightly larger sample or effect could flip this result.`};
+    return {cls:'not-sig',
+      friendly:`The data are consistent with a null of ${nStr} at the ${pct}% level.`,
+      verdict:'Null value lies inside the interval.',
+      ctx:`The null sits comfortably within the ${pct}% CI. No evidence against a difference of ${nStr}.`};
+  }
+}
+
+function updateInterpAndMetrics() {
+  if(!ciRes) return;
+  const nullVal=+document.getElementById('nullSlider').value;
+  const excludes=ciRes.lower>nullVal||ciRes.upper<nullVal;
+  const conf=+document.getElementById('confLevelExplore').value;
+  const t=getInterp(ciRes.lower,ciRes.upper,nullVal,conf);
+
+  // Interpretation box
+  const box=document.getElementById('interpBox');
+  box.className=`interp-box ${t.cls}`;
+  document.getElementById('interpFriendly').textContent=t.friendly;
+  document.getElementById('interpVerdict').textContent=t.verdict;
+  document.getElementById('interpCtx').textContent=t.ctx;
+
+  // Null hero value
+  const heroVal=document.getElementById('nullHeroVal');
+  heroVal.textContent=nullVal.toFixed(1);
+  heroVal.className=`null-hero-val ${excludes?'excludes':'includes'}`;
+  document.getElementById('nullHeroSub').textContent=excludes
+    ? 'The null lies OUTSIDE the interval — inconsistent with the data'
+    : 'The null lies INSIDE the interval — consistent with the data';
+
+  // Metrics
+  document.getElementById('mA').textContent=fmt(ciRes.mA);
+  document.getElementById('mB').textContent=fmt(ciRes.mB);
+  document.getElementById('mDiff').textContent=fmt(ciRes.diff);
+  document.getElementById('mSE').textContent=fmt(ciRes.se,3);
+  document.getElementById('mDF').textContent=fmt(ciRes.df,1);
+  document.getElementById('mCrit').textContent=fmt(ciRes.crit,3);
+  document.getElementById('mCI').textContent=`[${fmt(ciRes.lower,3)}, ${fmt(ciRes.upper,3)}]`;
+  document.getElementById('mNull').textContent=nullVal.toFixed(1);
+  document.getElementById('mExcludes').textContent=excludes?'Yes':'No';
+  document.getElementById('mExcludes').style.color=excludes?'var(--green)':'var(--muted)';
+
+  // Badge
+  document.getElementById('ciBadge').textContent=`${Math.round(conf*100)}% CI`;
+}
+
+// ══════════════════════════════════════════════════════
+// SVG: OBSERVED GROUPS PLOT
+// ══════════════════════════════════════════════════════
+function normalCurvePath(mu,sigma,xMin,xMax,xPx,yMid,maxHalf,nPts=80) {
+  const sig=Math.max(sigma,0.1);
+  const top=[],bot=[];
+  for(let i=0;i<=nPts;i++){
+    const x=xMin+(xMax-xMin)*i/nPts;
+    const pdf=Math.exp(-0.5*((x-mu)/sig)**2)/(sig*Math.sqrt(2*Math.PI));
+    const maxPDF=1/(sig*Math.sqrt(2*Math.PI));
+    const h=(pdf/maxPDF)*maxHalf;
+    const px=xPx(x).toFixed(1);
+    top.push(`${i===0?'M':'L'}${px},${(yMid-h).toFixed(1)}`);
+    bot.unshift(`L${px},${(yMid+h).toFixed(1)}`);
+  }
+  return top.join(' ')+' '+bot.join(' ')+' Z';
+}
+
+function drawObservedSVG() {
+  const svg=document.getElementById('observedSvg'); if(!svg)return;
+  const VW=560,VH=260,ML=52,MR=14,MT=14,MB=44;
+  const PW=VW-ML-MR;
+  const stripH=85,gap=14;
+  const yTopA=MT,yBotA=MT+stripH,yMidA=MT+stripH/2;
+  const yTopB=yBotA+gap,yBotB=yTopB+stripH,yMidB=yTopB+stripH/2;
+  const yAxis=yBotB+12;
+
+  const vA=groupA.map(p=>p.value),vB=groupB.map(p=>p.value);
+  const allVals=[...vA,...vB];
+  const raw_pad=(Math.max(...allVals)-Math.min(...allVals))*0.14;
+  const pad=Math.max(raw_pad,1.5);
+  const xMin=Math.min(...allVals)-pad, xMax=Math.max(...allVals)+pad;
+  const xPx=v=>ML+(v-xMin)/(xMax-xMin)*PW;
+
+  let h='';
+
+  // Strip backgrounds
+  h+=`<rect x="${ML}" y="${yTopA}" width="${PW}" height="${stripH}" fill="#eff6ff" opacity="0.6" rx="5"/>`;
+  h+=`<rect x="${ML}" y="${yTopB}" width="${PW}" height="${stripH}" fill="#fef2f2" opacity="0.6" rx="5"/>`;
+
+  // Normal curve backdrops
+  const sdA=arrSD(vA),sdB=arrSD(vB);
+  h+=`<path d="${normalCurvePath(ciRes.mA,sdA,xMin,xMax,xPx,yMidA,stripH*0.42)}" fill="rgba(37,99,235,0.10)" stroke="rgba(37,99,235,0.30)" stroke-width="1.2"/>`;
+  h+=`<path d="${normalCurvePath(ciRes.mB,sdB,xMin,xMax,xPx,yMidB,stripH*0.42)}" fill="rgba(220,38,38,0.08)" stroke="rgba(220,38,38,0.25)" stroke-width="1.2"/>`;
+
+  // Dots — Group A
+  groupA.forEach(p=>{
+    const x=xPx(p.value).toFixed(1);
+    const y=(yMidA+p.jitter*(stripH*0.36)).toFixed(1);
+    h+=`<circle cx="${x}" cy="${y}" r="4" fill="#2563eb" opacity="0.55" stroke="white" stroke-width="0.8"/>`;
+  });
+  // Dots — Group B
+  groupB.forEach(p=>{
+    const x=xPx(p.value).toFixed(1);
+    const y=(yMidB+p.jitter*(stripH*0.36)).toFixed(1);
+    h+=`<circle cx="${x}" cy="${y}" r="4" fill="#dc2626" opacity="0.55" stroke="white" stroke-width="0.8"/>`;
+  });
+
+  // Mean lines
+  const mAx=xPx(ciRes.mA).toFixed(1), mBx=xPx(ciRes.mB).toFixed(1);
+  h+=`<line x1="${mAx}" y1="${yTopA+3}" x2="${mAx}" y2="${yBotA-3}" stroke="#2563eb" stroke-width="2.5"/>`;
+  h+=`<line x1="${mBx}" y1="${yTopB+3}" x2="${mBx}" y2="${yBotB-3}" stroke="#dc2626" stroke-width="2.5"/>`;
+
+  // Mean value labels (above lines)
+  const mALabelX=parseFloat(mAx)>ML+PW*0.7?parseFloat(mAx)-4:parseFloat(mAx)+4;
+  const mAanchor=parseFloat(mAx)>ML+PW*0.7?'end':'start';
+  const mBLabelX=parseFloat(mBx)>ML+PW*0.7?parseFloat(mBx)-4:parseFloat(mBx)+4;
+  const mBanchor=parseFloat(mBx)>ML+PW*0.7?'end':'start';
+  h+=`<text x="${mALabelX}" y="${yTopA+11}" text-anchor="${mAanchor}" fill="#2563eb" font-size="10" font-family="Arial" font-weight="700">x̄=${fmt(ciRes.mA,1)}</text>`;
+  h+=`<text x="${mBLabelX}" y="${yTopB+11}" text-anchor="${mBanchor}" fill="#dc2626" font-size="10" font-family="Arial" font-weight="700">x̄=${fmt(ciRes.mB,1)}</text>`;
+
+  // Group labels (left side)
+  h+=`<text x="${ML-5}" y="${yMidA+4}" text-anchor="end" fill="#2563eb" font-size="12" font-weight="700" font-family="Arial">A</text>`;
+  h+=`<text x="${ML-5}" y="${yMidB+4}" text-anchor="end" fill="#dc2626" font-size="12" font-weight="700" font-family="Arial">B</text>`;
+
+  // X axis
+  h+=`<line x1="${ML}" y1="${yAxis}" x2="${ML+PW}" y2="${yAxis}" stroke="#d1d5db" stroke-width="1"/>`;
+  const nTk=6;
+  for(let i=0;i<=nTk;i++){
+    const v=xMin+(xMax-xMin)*i/nTk, x=xPx(v).toFixed(1);
+    h+=`<line x1="${x}" y1="${yAxis}" x2="${x}" y2="${yAxis+4}" stroke="#9ca3af" stroke-width="1"/>`;
+    h+=`<text x="${x}" y="${yAxis+15}" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Arial">${v.toFixed(1)}</text>`;
+  }
+  h+=`<text x="${ML+PW/2}" y="${VH-3}" text-anchor="middle" fill="#6b7280" font-size="11" font-family="Arial">Value</text>`;
+
+  svg.innerHTML=h;
+}
+
+// ══════════════════════════════════════════════════════
+// SVG: CI PLOT
+// ══════════════════════════════════════════════════════
+function drawCISVG() {
+  const svg=document.getElementById('ciSvg'); if(!svg||!ciRes)return;
+  const VW=560,VH=160,ML=52,MR=50,MT=46,MB=38;
+  const PW=VW-ML-MR,PH=VH-MT-MB;
+
+  const nullVal=+document.getElementById('nullSlider').value;
+  const {lower,upper,diff}=ciRes;
+  const excludes=lower>nullVal||upper<nullVal;
+  const color=excludes?'#16a34a':'#dc2626';
+  const fillColor=excludes?'rgba(22,163,74,0.07)':'rgba(220,38,38,0.05)';
+
+  // X range — show CI and null comfortably
+  const ciMid=(lower+upper)/2;
+  const span=Math.max(upper-lower,Math.abs(nullVal-ciMid)*2+1)*0.7+1;
+  const xMin=Math.min(ciMid-span,nullVal)-0.8;
+  const xMax=Math.max(ciMid+span,nullVal)+0.8;
+  const xPx=v=>ML+(v-xMin)/(xMax-xMin)*PW;
+  const ciY=MT+PH/2; // vertical center
+
+  let h='';
+
+  // Background tint for CI region
+  h+=`<rect x="${xPx(lower).toFixed(1)}" y="${MT+2}" width="${(xPx(upper)-xPx(lower)).toFixed(1)}" height="${PH-4}" fill="${fillColor}" rx="4"/>`;
+
+  // Null band
+  const nb=8;
+  const nullX=Math.max(ML+1,Math.min(ML+PW-1,xPx(nullVal)));
+  h+=`<rect x="${(nullX-nb/2).toFixed(1)}" y="${MT}" width="${nb}" height="${PH}" fill="rgba(107,114,128,0.12)" rx="3"/>`;
+
+  // CI horizontal bar
+  const lx=xPx(lower).toFixed(1),ux=xPx(upper).toFixed(1),dx=xPx(diff).toFixed(1);
+  h+=`<line x1="${lx}" y1="${ciY}" x2="${ux}" y2="${ciY}" stroke="${color}" stroke-width="4" stroke-linecap="round"/>`;
+  // End caps
+  h+=`<line x1="${lx}" y1="${ciY-10}" x2="${lx}" y2="${ciY+10}" stroke="${color}" stroke-width="2.5"/>`;
+  h+=`<line x1="${ux}" y1="${ciY-10}" x2="${ux}" y2="${ciY+10}" stroke="${color}" stroke-width="2.5"/>`;
+  // Center dot
+  h+=`<circle cx="${dx}" cy="${ciY}" r="6.5" fill="${color}" stroke="white" stroke-width="2"/>`;
+
+  // Bound labels (below the line)
+  h+=`<text x="${lx}" y="${ciY+24}" text-anchor="middle" fill="${color}" font-size="10.5" font-weight="700" font-family="Arial">${fmt(lower,2)}</text>`;
+  h+=`<text x="${ux}" y="${ciY+24}" text-anchor="middle" fill="${color}" font-size="10.5" font-weight="700" font-family="Arial">${fmt(upper,2)}</text>`;
+  // Diff label (above dot)
+  h+=`<text x="${dx}" y="${ciY-16}" text-anchor="middle" fill="${color}" font-size="11" font-weight="700" font-family="Arial">${fmt(diff,2)}</text>`;
+
+  // Null line
+  h+=`<line x1="${nullX.toFixed(1)}" y1="${MT-6}" x2="${nullX.toFixed(1)}" y2="${VH-MB}" stroke="#374151" stroke-width="2" stroke-dasharray="6,3"/>`;
+  // Null label
+  const nAnchor=nullX>ML+PW*0.72?'end':'start';
+  const nLX=nullX>ML+PW*0.72?nullX-5:nullX+5;
+  h+=`<text x="${nLX.toFixed(1)}" y="${MT-9}" text-anchor="${nAnchor}" fill="#374151" font-size="10.5" font-weight="700" font-family="Arial">Null = ${nullVal.toFixed(1)}</text>`;
+
+  // Decision label (top center)
+  const decText=excludes?'Interval EXCLUDES the null  ✓':'Interval INCLUDES the null';
+  h+=`<text x="${ML+PW/2}" y="${MT-22}" text-anchor="middle" fill="${color}" font-size="12" font-weight="700" font-family="Arial">${decText}</text>`;
+
+  // X axis
+  h+=`<line x1="${ML}" y1="${VH-MB}" x2="${ML+PW}" y2="${VH-MB}" stroke="#d1d5db" stroke-width="1"/>`;
+  const nTk=5;
+  for(let i=0;i<=nTk;i++){
+    const v=xMin+(xMax-xMin)*i/nTk,x=xPx(v).toFixed(1);
+    h+=`<line x1="${x}" y1="${VH-MB}" x2="${x}" y2="${VH-MB+4}" stroke="#9ca3af" stroke-width="1"/>`;
+    h+=`<text x="${x}" y="${VH-MB+15}" text-anchor="middle" fill="#9ca3af" font-size="10" font-family="Arial">${v.toFixed(1)}</text>`;
+  }
+  h+=`<text x="${ML+PW/2}" y="${VH-4}" text-anchor="middle" fill="#6b7280" font-size="11" font-family="Arial">Difference in means (B − A)</text>`;
+
+  svg.innerHTML=h;
+}
+
+// ══════════════════════════════════════════════════════
+// ORCHESTRATION
+// ══════════════════════════════════════════════════════
+function syncConfLevel() {
+  // Keep both confidence selects in sync
+  const v=document.getElementById('confLevelExplore').value;
+  document.getElementById('confLevel').value=v;
+}
+
+function redrawAll() {
+  computeCI();
+  drawObservedSVG();
+  drawCISVG();
+  updateInterpAndMetrics();
+  document.getElementById('groupsBadge').textContent=`n = ${groupA.length} per group`;
+  document.getElementById('ciBadge').textContent=`${Math.round(ciRes.conf*100)}% CI`;
+}
+
+function newData() {
+  generateGroups();
+  redrawAll();
+  switchToTab(1);
+}
+
+// CI-only redraw (null slider or confidence level change — no new data)
+function redrawCI() {
+  // Sync confidence selects
+  syncConfLevel();
+  computeCI();
+  drawCISVG();
+  updateInterpAndMetrics();
+  document.getElementById('ciBadge').textContent=`${Math.round(ciRes.conf*100)}% CI`;
+}
+
+// ══════════════════════════════════════════════════════
+// SCENARIOS
+// ══════════════════════════════════════════════════════
+function buildScenarioGrid() {
+  document.getElementById('scenarioGrid').innerHTML=SCENARIOS.map(sc=>
+    `<div class="sc-card${sc===activeScenario?' active':''}" onclick="applyScenario('${sc.id}')">
+      <div class="sc-name">${sc.label}</div>
+      <div class="sc-desc">${sc.desc}</div>
+    </div>`
+  ).join('');
+}
+
+function applyScenario(id) {
+  activeScenario=SCENARIOS.find(s=>s.id===id);
+  const s=activeScenario;
+  document.getElementById('groupSize').value=s.n;
+  document.getElementById('noise').value=s.noise;
+  document.getElementById('effectSize').value=s.effect;
+  document.getElementById('direction').value=s.dir;
+  document.getElementById('confLevel').value=s.conf;
+  document.getElementById('confLevelExplore').value=s.conf;
+  document.getElementById('groupSizeVal').textContent=`${s.n} per group`;
+  document.getElementById('noiseVal').textContent=s.noise.toFixed(1);
+  document.getElementById('effectSizeVal').textContent=s.effect.toFixed(1);
+  // Reset null slider to 0
+  document.getElementById('nullSlider').value=0;
+  buildScenarioGrid();
+  newData();
+}
+
+// ══════════════════════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════════════════════
+function switchToTab(i) {
+  activeTab=i;
+  document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  document.querySelectorAll('.tab-content').forEach((c,j)=>c.style.display=j===i?'':'none');
+}
+
+document.querySelectorAll('.tab-btn').forEach((btn,i)=>{
+  btn.addEventListener('click',()=>switchToTab(i));
+});
+
+// ══════════════════════════════════════════════════════
+// EVENTS
+// ══════════════════════════════════════════════════════
+// Controls tab sliders → regenerate data
+['groupSize','noise','effectSize'].forEach(id=>{
+  const el=document.getElementById(id);
+  const disp={groupSize:'groupSizeVal',noise:'noiseVal',effectSize:'effectSizeVal'};
+  const fmt_fn={groupSize:v=>`${v} per group`,noise:v=>parseFloat(v).toFixed(1),effectSize:v=>parseFloat(v).toFixed(1)};
+  el.addEventListener('input',()=>{
+    document.getElementById(disp[id]).textContent=fmt_fn[id](el.value);
+    generateGroups(); redrawAll();
+  });
+});
+document.getElementById('direction').addEventListener('change',()=>{generateGroups();redrawAll();});
+document.getElementById('method').addEventListener('change',()=>{if(ciRes){redrawAll();}});
+document.getElementById('confLevel').addEventListener('change',()=>{
+  document.getElementById('confLevelExplore').value=document.getElementById('confLevel').value;
+  if(ciRes){redrawCI();}
+});
+
+// Explore tab controls (CI-only updates)
+document.getElementById('nullSlider').addEventListener('input',()=>{
+  if(ciRes){drawCISVG();updateInterpAndMetrics();}
+});
+document.getElementById('confLevelExplore').addEventListener('change',()=>{
+  document.getElementById('confLevel').value=document.getElementById('confLevelExplore').value;
+  if(ciRes){redrawCI();}
+});
+
+// Null preset buttons
+document.getElementById('btnNullZero').addEventListener('click',()=>{
+  document.getElementById('nullSlider').value=0;
+  if(ciRes){drawCISVG();updateInterpAndMetrics();}
+});
+document.getElementById('btnNullObs').addEventListener('click',()=>{
+  if(!ciRes)return;
+  document.getElementById('nullSlider').value=ciRes.diff.toFixed(1);
+  drawCISVG();updateInterpAndMetrics();
+});
+
+// New data buttons
+document.getElementById('btnNewData').addEventListener('click',newData);
+document.getElementById('btnNewDataExplore').addEventListener('click',newData);
+
+// Guide / reference toggles
+document.getElementById('btnGuide').addEventListener('click',()=>{
+  const g=document.getElementById('guideSection'),btn=document.getElementById('btnGuide');
+  const open=g.classList.toggle('open');
+  btn.textContent=open?'▲ Hide Guide':'▼ Quick-Start Guide';
+});
+document.getElementById('btnRef').addEventListener('click',()=>{
+  const r=document.getElementById('refCard'),btn=document.getElementById('btnRef');
+  r.classList.toggle('open');
+  btn.textContent=r.classList.contains('open')?'▲ Hide Reference':'📖 Full Reference';
+  if(r.classList.contains('open')) r.scrollIntoView({behavior:'smooth'});
+});
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+buildScenarioGrid();
+applyScenario('clear');
+switchToTab(0); // start on Scenarios tab
+</script>
+</body>
+</html>

@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bayesian vs. Frequentist — Statistics Lab</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg:#f6f7f9; --card:#ffffff; --border:#d9dde3;
+      --text:#1f2937; --muted:#6b7280; --soft:#f3f4f6;
+      --blue:#2563eb; --red:#dc2626; --green:#16a34a;
+      --amber:#d97706; --gray:#9ca3af; --purple:#7c3aed;
+      --teal:#0891b2;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px;font-size:14px;line-height:1.5}
+    .container{max-width:1380px;margin:auto}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+    /* ── Header ── */
+    .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+    .app-header h1{font-size:1.45rem;font-weight:700;margin-bottom:4px}
+    .app-header p{font-size:.93rem;color:var(--muted)}
+    .header-btns{display:flex;gap:8px;flex-shrink:0;align-self:flex-start;flex-wrap:wrap}
+
+    /* ── Concept strip ── */
+    .concept-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+    .concept-card{border:1px solid var(--border);border-radius:10px;padding:11px 13px;background:var(--card)}
+    .concept-label{font-weight:700;font-size:.84rem;color:var(--text)}
+    .concept-desc{font-size:.76rem;color:var(--muted);margin-top:4px;line-height:1.4}
+
+    /* ── Guide ── */
+    .guide-section{margin-top:14px;border-top:1px solid var(--border);padding-top:14px;display:none}
+    .guide-section.open{display:block}
+    .guide-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .guide-col h4{margin:0 0 8px;font-size:.9rem;color:var(--text)}
+    .guide-col ol,.guide-col ul{margin:0;padding-left:18px}
+    .guide-col li{font-size:.83rem;color:var(--muted);line-height:1.55;margin-bottom:5px}
+    .guide-col li strong{color:var(--text)}
+
+    /* ── Reference card ── */
+    .ref-card{display:none;margin-bottom:16px}
+    .ref-card.open{display:block}
+    .ref-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    .ref-sec{margin-bottom:14px}
+    .ref-sec h4{margin:0 0 5px;font-size:.88rem;font-weight:700;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:4px}
+    .ref-sec p{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:5px}
+    .ref-sec p strong{color:var(--text)}
+    .ref-sec ul{padding-left:18px;margin:4px 0}
+    .ref-sec li{font-size:.82rem;color:var(--muted);line-height:1.55;margin-bottom:4px}
+    .ref-sec li strong{color:var(--text)}
+    .formula-box{background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-family:ui-monospace,monospace;font-size:.82rem;color:var(--text);margin:7px 0;line-height:1.7}
+
+    /* ── Lesson rail ── */
+    .lesson-rail{display:flex;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+    .lesson-btn{flex:1;padding:11px 6px;background:var(--card);border:none;border-right:1px solid var(--border);cursor:pointer;font-size:.75rem;font-weight:600;color:var(--muted);line-height:1.35;text-align:center;transition:background .15s,color .15s}
+    .lesson-btn:last-child{border-right:none}
+    .lesson-btn:hover{background:var(--soft)}
+    .lesson-btn.active{background:var(--blue);color:#fff}
+    .lesson-num{display:block;font-size:.64rem;font-weight:400;opacity:.75;margin-bottom:2px}
+
+    /* ── Main grid ── */
+    .main-grid{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+
+    /* ── Lesson card ── */
+    .lesson-card{border:1px solid #bfdbfe;border-left:5px solid var(--blue);background:#eff6ff;border-radius:10px;padding:14px 16px;margin-bottom:14px}
+    .lesson-card h3{font-size:.95rem;color:#1e40af;margin:0 0 6px}
+    .lesson-card p{font-size:.83rem;color:#1d4ed8;line-height:1.65;margin:0}
+    .lesson-card strong{color:#1e3a8a}
+
+    /* ── Plot card ── */
+    .plot-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:0}
+    #plot{width:100%;height:390px}
+
+    /* ── Stat bar ── */
+    .stat-bar{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border)}
+    .stat-cell{padding:12px 14px;border-right:1px solid var(--border)}
+    .stat-cell:last-child{border-right:none}
+    .stat-name{font-size:.71rem;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+    .stat-val{font-family:ui-monospace,monospace;font-size:1.3rem;font-weight:700;line-height:1;transition:color .35s}
+    .stat-sub{font-size:.71rem;color:var(--muted);margin-top:4px;line-height:1.35}
+    .decision-badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:.76rem;font-weight:700;margin-top:4px;border:1px solid}
+    .decision-reject{background:#fef2f2;color:#991b1b;border-color:#fca5a5}
+    .decision-ftr{background:#f1f5f9;color:#475569;border-color:var(--border)}
+    .info-tip{display:inline-block;width:14px;height:14px;background:#e0e7ff;color:#3730a3;border-radius:50%;font-size:.64rem;font-weight:700;text-align:center;line-height:14px;cursor:default;position:relative;flex-shrink:0}
+    .info-tip:hover .tip-text{display:block}
+    .tip-text{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100%+6px);background:#1f2937;color:#fff;font-size:.72rem;padding:8px 10px;border-radius:7px;width:230px;line-height:1.5;font-family:Arial,sans-serif;font-weight:400;z-index:20;white-space:normal;pointer-events:none}
+
+    /* ── Obs card ── */
+    .obs-card{border-radius:10px;padding:13px 15px;margin-top:12px;border:1px solid var(--border);background:var(--soft);font-size:.83rem;line-height:1.7;color:var(--text)}
+    .obs-card.blue{border-color:#bfdbfe;background:#eff6ff;color:#1e3a8a}
+    .obs-card.amber{border-color:#fde68a;background:#fffbeb;color:#78350f}
+    .obs-card.green{border-color:#86efac;background:#f0fdf4;color:#14532d}
+    .obs-card.red{border-color:#fca5a5;background:#fef2f2;color:#7f1d1d}
+    .obs-card.purple{border-color:#ddd6fe;background:#f5f3ff;color:#4c1d95}
+    .obs-card.teal{border-color:#a5f3fc;background:#ecfeff;color:#164e63}
+
+    /* ── Sidebar ── */
+    .sidebar{display:flex;flex-direction:column;gap:12px}
+    .ctrl-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+    .ctrl-card h3{font-size:.9rem;font-weight:700;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+    .ctrl-sec{margin-bottom:11px}
+    .ctrl-sec:last-child{margin-bottom:0}
+    .ctrl-label{font-size:.78rem;font-weight:600;color:var(--text);display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+    .ctrl-val{font-family:ui-monospace,monospace;font-size:.78rem;color:var(--blue);font-weight:700}
+    .ctrl-note{font-size:.72rem;color:var(--muted);margin-top:3px;line-height:1.4}
+    .slider-row{display:flex;align-items:center;gap:8px}
+    .slider-row input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--border);border-radius:2px;cursor:pointer;outline:none}
+    .slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue);border:2px solid #fff;box-shadow:0 0 0 1px var(--blue);cursor:pointer}
+    select{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:Arial,sans-serif;font-size:.83rem;background:white;color:var(--text)}
+    .chip-group{display:flex;gap:4px;flex-wrap:wrap}
+    .chip{padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:var(--soft);font-size:.76rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s}
+    .chip.active{background:var(--blue);border-color:var(--blue);color:white}
+
+    /* ── Mini metrics ── */
+    .mini-metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+    .mini-metric{background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+    .mm-label{font-size:.69rem;color:var(--muted)}
+    .mm-val{font-family:ui-monospace,monospace;font-size:.9rem;font-weight:700;margin-top:2px}
+
+    /* ── Buttons ── */
+    .btn{padding:8px 13px;border:1px solid var(--border);border-radius:9px;background:var(--card);cursor:pointer;font-family:Arial,sans-serif;font-size:.82rem;font-weight:600;color:var(--text);transition:background .15s;display:inline-flex;align-items:center;gap:5px}
+    .btn:hover{background:var(--soft)}
+    .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .btn.primary:hover{background:#1d4ed8}
+
+    @media(max-width:1100px){.concept-row{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:980px){
+      .main-grid{grid-template-columns:1fr}
+      .stat-bar{grid-template-columns:1fr 1fr}
+      .stat-cell:nth-child(2){border-right:none}
+      .stat-cell:nth-child(3){border-top:1px solid var(--border)}
+      .guide-cols,.ref-2col{grid-template-columns:1fr}
+    }
+    @media(max-width:640px){
+      .stat-bar{grid-template-columns:1fr}
+      .stat-cell{border-right:none;border-top:1px solid var(--border)}
+      .stat-cell:first-child{border-top:none}
+      .concept-row{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ── Header ── -->
+  <div class="app-header">
+    <div>
+      <h1>Bayesian vs. Frequentist — Statistics Lab</h1>
+      <p>Build intuition for two fundamentally different answers to the question: <em>what does "probability" mean?</em></p>
+    </div>
+    <div class="header-btns">
+      <button class="btn" id="btnGuide">▼ Quick Guide</button>
+      <button class="btn" id="btnRef">📖 Reference</button>
+    </div>
+  </div>
+
+  <!-- ── Concept strip + collapsible guide ── -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="concept-row">
+      <div class="concept-card">
+        <div class="concept-label">P-value</div>
+        <div class="concept-desc">P(data | H₀) — How surprising is our data assuming the null is true? Not a probability about the hypothesis.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">Prior P(θ)</div>
+        <div class="concept-desc">Bayesian belief about the parameter θ before observing data. Encoded as a probability distribution.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">Posterior P(θ|data)</div>
+        <div class="concept-desc">Updated belief after data: Posterior ∝ Likelihood × Prior. The Bayesian answer to inference.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">Confidence Interval</div>
+        <div class="concept-desc">A procedure with 95% coverage: 95% of all such intervals will contain θ. Not a probability about θ.</div>
+      </div>
+      <div class="concept-card">
+        <div class="concept-label">Credible Interval</div>
+        <div class="concept-desc">P(θ ∈ interval | data) = 95%. A direct probability statement about the parameter — what people want.</div>
+      </div>
+    </div>
+    <div class="guide-section" id="guideSection">
+      <div class="guide-cols">
+        <div class="guide-col">
+          <h4>How to Use This App</h4>
+          <ol>
+            <li><strong>Lesson 1 — Two Philosophies:</strong> See the exact same coin-flip data interpreted through both lenses simultaneously. Understand what question each approach is actually asking.</li>
+            <li><strong>Lesson 2 — The Coin:</strong> Drag sliders and watch the posterior and p-value react. Look for cases where they agree and disagree.</li>
+            <li><strong>Lesson 3 — CI vs CrI:</strong> Run the interval simulation to see why CIs and credible intervals mean very different things.</li>
+            <li><strong>Lesson 4 — Prior Power:</strong> Watch three researchers with different priors converge as data grows.</li>
+          </ol>
+        </div>
+        <div class="guide-col">
+          <h4>The Core Intuitions</h4>
+          <ul>
+            <li><strong>Frequentist treats data as random</strong> — imagine repeating the experiment many times. Parameters are fixed unknowns.</li>
+            <li><strong>Bayesian treats parameters as random</strong> — they have distributions representing uncertainty. Data is fixed once observed.</li>
+            <li>Frequentist output: a decision (reject/fail to reject) + a p-value. No probability on hypotheses.</li>
+            <li>Bayesian output: a full posterior distribution. Direct probability statements about parameters.</li>
+            <li>With large n, both approaches usually agree. Small n and strong priors is where they diverge most.</li>
+          </ul>
+        </div>
+        <div class="guide-col">
+          <h4>The Classic Misconceptions</h4>
+          <ul>
+            <li><strong>"p &lt; .05 means H₀ has &lt;5% chance of being true."</strong> Wrong — that requires a prior (Bayes' theorem).</li>
+            <li><strong>"95% CI means 95% probability θ is inside."</strong> Wrong — the CI either covers θ or it doesn't. The 95% is about the long-run procedure, not any single interval.</li>
+            <li><strong>"Failing to reject H₀ means it's true."</strong> Wrong — absence of evidence ≠ evidence of absence.</li>
+            <li>All three of these <em>sound</em> Bayesian. Only Bayesian inference can actually make these statements.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Reference (collapsible) ── -->
+  <div class="card ref-card" id="refCard">
+    <h3 style="margin-bottom:14px">Full Reference — Bayesian vs. Frequentist Inference</h3>
+    <div class="ref-2col">
+      <div>
+        <div class="ref-sec">
+          <h4>Frequentist Inference</h4>
+          <p><strong>Philosophical stance:</strong> Probability = long-run relative frequency. A parameter either has a value or it doesn't — it cannot have a probability distribution.</p>
+          <p><strong>The question asked:</strong> P(data as extreme as observed | H₀ is true). If this probability is small, the data are surprising under H₀ — we reject it.</p>
+          <div class="formula-box">p-value = P(|X − n·p₀| ≥ |k − n·p₀| | H₀: p = p₀)</div>
+          <p><strong>Confidence interval:</strong> Constructed so that 95% of all intervals built this way will contain θ. For any single experiment, the interval either does or doesn't contain θ — no probability applies to it.</p>
+          <p><strong>What it cannot do:</strong> Assign a probability to a hypothesis being true or false. Cannot make statements like "there's a 73% chance the drug works."</p>
+        </div>
+        <div class="ref-sec">
+          <h4>The Binomial Test (Coin Flip)</h4>
+          <p>H₀: p = 0.5 (fair coin). Two-sided p-value for k heads in n flips:</p>
+          <div class="formula-box">p = P(X ≤ min(k, n−k)) + P(X ≥ max(k, n−k))<br>where X ~ Binomial(n, 0.5)</div>
+          <p>Wilson confidence interval for proportions:</p>
+          <div class="formula-box">CI = (p̂ + z²/2n ± z√(p̂(1−p̂)/n + z²/4n²)) / (1 + z²/n)</div>
+        </div>
+      </div>
+      <div>
+        <div class="ref-sec">
+          <h4>Bayesian Inference</h4>
+          <p><strong>Philosophical stance:</strong> Probability = degree of belief. Parameters are uncertain, so they get probability distributions. Updating beliefs rationally is the core operation.</p>
+          <p><strong>The operation:</strong> Use Bayes' rule to update a prior with the likelihood of the data:</p>
+          <div class="formula-box">P(θ | data) ∝ P(data | θ) · P(θ)<br>Posterior ∝ Likelihood × Prior</div>
+          <p><strong>Conjugate prior for coin flips:</strong> Beta prior × Binomial likelihood → Beta posterior.</p>
+          <div class="formula-box">Prior: Beta(α₀, β₀)<br>Data: k heads, n−k tails<br>Posterior: Beta(α₀ + k, β₀ + n − k)<br>Posterior mean: (α₀ + k) / (α₀ + β₀ + n)</div>
+          <p><strong>Credible interval:</strong> The central 95% of the posterior. Directly interpreted as: "Given the data and prior, P(θ ∈ interval) = 95%."</p>
+        </div>
+        <div class="ref-sec">
+          <h4>Prior Choices for a Coin</h4>
+          <ul>
+            <li><strong>Beta(1,1) Uniform:</strong> All values of p equally plausible. No prior information.</li>
+            <li><strong>Beta(5,5):</strong> Weakly believes coin is fair. Equivalent to having seen 5 heads and 5 tails previously.</li>
+            <li><strong>Beta(20,20):</strong> Strongly believes coin is fair. Needs ~40+ flips of strong evidence to shift.</li>
+            <li><strong>Asymmetric priors:</strong> Beta(2,5) favors low p; Beta(5,2) favors high p.</li>
+          </ul>
+          <p style="margin-top:6px">With n >> α₀ + β₀ (the "prior sample size"), data overwhelms the prior and the posterior converges to the MLE.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Lesson rail ── -->
+  <div class="lesson-rail">
+    <button class="lesson-btn active" onclick="setLesson('philosophy')">
+      <span class="lesson-num">Lesson 1</span>Two Philosophies
+    </button>
+    <button class="lesson-btn" onclick="setLesson('coin')">
+      <span class="lesson-num">Lesson 2</span>The Coin Experiment
+    </button>
+    <button class="lesson-btn" onclick="setLesson('intervals')">
+      <span class="lesson-num">Lesson 3</span>CI vs. Credible Interval
+    </button>
+    <button class="lesson-btn" onclick="setLesson('prior')">
+      <span class="lesson-num">Lesson 4</span>The Power of Priors
+    </button>
+  </div>
+
+  <!-- ── Main grid ── -->
+  <div class="main-grid">
+
+    <!-- Left: main content -->
+    <div>
+      <div class="lesson-card" id="lessonCard"></div>
+
+      <div class="plot-card card" style="padding:0">
+        <div id="plot"></div>
+      </div>
+
+      <div class="card" style="padding:0;margin-top:12px">
+        <div class="stat-bar" id="statBar"></div>
+      </div>
+
+      <div class="obs-card blue" id="obsPanel"></div>
+    </div>
+
+    <!-- Right: sidebar -->
+    <div class="sidebar">
+
+      <div class="ctrl-card">
+        <h3>Coin Flip Data</h3>
+        <div class="ctrl-sec" id="nFlipsCtrl">
+          <div class="ctrl-label">
+            <span>Number of flips (n)</span>
+            <span class="ctrl-val" id="nFlipsLabel">30</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="nFlips" min="5" max="200" value="30" oninput="onFlipsChange()"/>
+          </div>
+          <div class="ctrl-note">Total observations collected</div>
+        </div>
+        <div class="ctrl-sec" id="nHeadsCtrl">
+          <div class="ctrl-label">
+            <span>Heads observed (k)</span>
+            <span class="ctrl-val" id="nHeadsLabel">18</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="nHeads" min="0" max="30" value="18" oninput="onHeadsChange()"/>
+          </div>
+          <div class="ctrl-note" id="pHatNote">p̂ = 0.60 — sample proportion</div>
+        </div>
+        <div class="ctrl-sec" id="truePCtrl" style="display:none">
+          <div class="ctrl-label">
+            <span>True p (for sim)</span>
+            <span class="ctrl-val" id="truePLabel">0.65</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="trueP" min="10" max="90" value="65" oninput="onTruePChange()"/>
+          </div>
+          <div class="ctrl-note">The actual coin bias — used in CI simulation &amp; prior lessons</div>
+        </div>
+        <div class="ctrl-sec" id="nSimsCtrl" style="display:none">
+          <div class="ctrl-label">
+            <span>Simulations</span>
+            <span class="ctrl-val" id="nSimsLabel">40</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="nSims" min="10" max="80" value="40" step="5" oninput="onNSimsChange()"/>
+          </div>
+          <div class="ctrl-note">Number of CI experiments to display</div>
+        </div>
+      </div>
+
+      <div class="ctrl-card" id="priorCard">
+        <h3>🟣 Bayesian Prior</h3>
+        <div class="ctrl-sec">
+          <div class="ctrl-label"><span>Prior belief about coin fairness</span></div>
+          <select id="priorSel" onchange="onPriorChange()">
+            <option value="flat">Uniform — Beta(1, 1): no prior knowledge</option>
+            <option value="weak" selected>Weakly fair — Beta(5, 5): slight pull to 0.5</option>
+            <option value="moderate">Moderately fair — Beta(10, 10)</option>
+            <option value="strong">Strongly fair — Beta(30, 30): hard to shift</option>
+            <option value="skepticLow">Skeptic low — Beta(2, 5): expects p &lt; 0.5</option>
+            <option value="optimistHigh">Optimist high — Beta(5, 2): expects p &gt; 0.5</option>
+          </select>
+        </div>
+        <div class="mini-metrics">
+          <div class="mini-metric">
+            <div class="mm-label">Prior mean</div>
+            <div class="mm-val" id="mmPriorMean">0.50</div>
+          </div>
+          <div class="mini-metric">
+            <div class="mm-label">Prior 95% range</div>
+            <div class="mm-val" id="mmPriorRange">—</div>
+          </div>
+          <div class="mini-metric">
+            <div class="mm-label">Posterior mean</div>
+            <div class="mm-val" id="mmPostMean">—</div>
+          </div>
+          <div class="mini-metric">
+            <div class="mm-label">95% Credible Int.</div>
+            <div class="mm-val" id="mmCrI">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ctrl-card" id="freqCard">
+        <h3>🔵 Frequentist Controls</h3>
+        <div class="ctrl-sec">
+          <div class="ctrl-label"><span>Significance level α</span></div>
+          <div class="chip-group">
+            <span class="chip" onclick="setAlpha(0.01)">0.01</span>
+            <span class="chip active" onclick="setAlpha(0.05)">0.05</span>
+            <span class="chip" onclick="setAlpha(0.10)">0.10</span>
+          </div>
+          <div class="ctrl-note">Threshold for rejecting H₀: p = 0.5</div>
+        </div>
+        <div class="mini-metrics">
+          <div class="mini-metric">
+            <div class="mm-label">p-value</div>
+            <div class="mm-val mono" id="mmPval">—</div>
+          </div>
+          <div class="mini-metric">
+            <div class="mm-label">Decision</div>
+            <div class="mm-val" id="mmDecision">—</div>
+          </div>
+          <div class="mini-metric">
+            <div class="mm-label">95% Conf. Int.</div>
+            <div class="mm-val" id="mmCI">—</div>
+          </div>
+          <div class="mini-metric">
+            <div class="mm-label">z-statistic</div>
+            <div class="mm-val mono" id="mmZ">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /sidebar -->
+  </div><!-- /main-grid -->
+
+</div><!-- /container -->
+
+<script>
+/* ════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════ */
+let currentLesson = 'philosophy';
+let nFlips = 30, nHeads = 18, trueP = 0.65, alpha = 0.05, nSims = 40;
+let ciSimData = null;
+
+const PRIORS = {
+  flat:         {a:1,  b:1,  label:'Uniform Beta(1,1)'},
+  weak:         {a:5,  b:5,  label:'Weakly fair Beta(5,5)'},
+  moderate:     {a:10, b:10, label:'Moderate Beta(10,10)'},
+  strong:       {a:30, b:30, label:'Strongly fair Beta(30,30)'},
+  skepticLow:   {a:2,  b:5,  label:'Skeptic-low Beta(2,5)'},
+  optimistHigh: {a:5,  b:2,  label:'Optimist-high Beta(5,2)'},
+};
+let priorA = 5, priorB = 5;
+
+/* ════════════════════════════════════════════
+   MATH
+════════════════════════════════════════════ */
+function lgamma(x){
+  const c=[76.18009172947146,-86.50532032941677,24.01409824083091,
+           -1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  let y=x, tmp=x+5.5;
+  tmp-=(x+0.5)*Math.log(tmp);
+  let ser=1.000000000190015;
+  for(let j=0;j<6;j++){y++;ser+=c[j]/y;}
+  return -tmp+Math.log(2.5066282746310005*ser/x);
+}
+function logBeta(a,b){return lgamma(a)+lgamma(b)-lgamma(a+b);}
+function betaPDF(x,a,b){
+  if(x<=0||x>=1)return 0;
+  return Math.exp((a-1)*Math.log(x)+(b-1)*Math.log(1-x)-logBeta(a,b));
+}
+// Regularized incomplete beta via uniform quadrature over [0,1]
+function betaCDF(x,a,b){
+  if(x<=0)return 0; if(x>=1)return 1;
+  const N=1000; let num=0,den=0;
+  for(let i=0;i<N;i++){
+    const t=(i+0.5)/N;
+    const v=Math.exp((a-1)*Math.log(t)+(b-1)*Math.log(1-t));
+    den+=v; if(t<=x)num+=v;
+  }
+  return num/den;
+}
+function betaQuantile(p,a,b){
+  let lo=0,hi=1;
+  for(let i=0;i<60;i++){const m=(lo+hi)/2; betaCDF(m,a,b)<p?lo=m:hi=m;}
+  return(lo+hi)/2;
+}
+function logBinomCoeff(n,k){
+  if(k<0||k>n)return -Infinity;
+  return lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1);
+}
+function binomPMF(k,n,p){
+  if(p===0)return k===0?1:0; if(p===1)return k===n?1:0;
+  if(k<0||k>n)return 0;
+  return Math.exp(logBinomCoeff(n,k)+k*Math.log(p)+(n-k)*Math.log(1-p));
+}
+function binomCDF(k,n,p){
+  let s=0; for(let i=0;i<=Math.floor(k);i++)s+=binomPMF(i,n,p);
+  return Math.min(1,s);
+}
+function pValue2sided(k,n){
+  const lo=Math.min(k,n-k), hi=Math.max(k,n-k);
+  return Math.min(1,binomCDF(lo,n,0.5)+(1-binomCDF(hi-1,n,0.5)));
+}
+function wilsonCI(k,n){
+  const z=1.96, p=k/n;
+  const c=(p+z*z/(2*n))/(1+z*z/n);
+  const m=(z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n)))/(1+z*z/n);
+  return[Math.max(0,c-m),Math.min(1,c+m)];
+}
+
+// Simple RNG for reproducible CI simulations
+let seed=42;
+function rng(){seed=(seed*1664525+1013904223)&0xffffffff;return(seed>>>0)/4294967296;}
+function sampleBinom(n,p){let k=0;for(let i=0;i<n;i++)if(rng()<p)k++;return k;}
+
+/* ════════════════════════════════════════════
+   LESSON ROUTING
+════════════════════════════════════════════ */
+const LESSON_CARDS = {
+  philosophy:`<h3>📐 Same data, two fundamentally different questions</h3>
+    <p>Below you see your coin-flip data through <strong>two lenses at once</strong>. Left: the frequentist picture — how extreme is this data assuming the coin is fair? Right: the Bayesian picture — how should we update our belief about the coin's bias? Drag the sliders and watch <strong>both pictures react to the same data</strong>. Notice they're answering completely different questions.</p>`,
+  coin:`<h3>🪙 Divergence: when do they agree, and when do they split?</h3>
+    <p>Try pushing <strong>nHeads to extremes</strong> — lots of heads or near-equal. The p-value and posterior will often agree, but sometimes diverge. This happens most when the prior is strong relative to the sample size. The purple band is the 95% credible interval. The shaded bars on the right show the p-value tail region. Look for cases where one approach says "significant" and the other doesn't.</p>`,
+  intervals:`<h3>📏 The interval trap — the most common misinterpretation in statistics</h3>
+    <p>Each line is one simulated confidence interval. <strong>Green lines contain the true p. Red lines miss it.</strong> The frequentist guarantee is about the procedure: ~95% of lines will be green in the long run. You <strong>cannot</strong> say any individual line contains p with 95% probability — it either does or doesn't. The <strong>purple line</strong> (bottom) is a Bayesian credible interval — you <em>can</em> make the direct probability statement about it.</p>`,
+  prior:`<h3>🧠 Three researchers, three priors — watch them converge</h3>
+    <p>The <strong>Skeptic</strong> (red) believes the coin is fair — Beta(20,20). The <strong>Agnostic</strong> (amber) has a flat prior — Beta(1,1). The <strong>Believer</strong> (teal) expects the coin to be biased high — Beta(5,1). As n grows, their posteriors get pulled toward the data. The black dashed curve is the likelihood function — the shared signal. <strong>Increase n to watch them converge.</strong></p>`
+};
+
+function el(id){return document.getElementById(id);}
+
+function setLesson(lesson){
+  currentLesson=lesson;
+  document.querySelectorAll('.lesson-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['philosophy','coin','intervals','prior'][i]===lesson);
+  });
+  // Controls visibility
+  const isCoin = lesson==='coin' || lesson==='philosophy';
+  el('nFlipsCtrl').style.display='';
+  el('nHeadsCtrl').style.display = isCoin?'':'none';
+  el('truePCtrl').style.display = (lesson==='intervals'||lesson==='prior')?'':'none';
+  el('nSimsCtrl').style.display = lesson==='intervals'?'':'none';
+  el('priorCard').style.display = lesson==='philosophy'?'none':'';
+  el('freqCard').style.display = lesson==='philosophy'?'none':'';
+  el('lessonCard').innerHTML = LESSON_CARDS[lesson];
+  if(lesson==='intervals') generateCISims();
+  render();
+}
+
+/* ════════════════════════════════════════════
+   CI SIMULATION
+════════════════════════════════════════════ */
+function generateCISims(){
+  seed=42;
+  ciSimData=[];
+  for(let i=0;i<nSims;i++){
+    const k=sampleBinom(nFlips,trueP);
+    const [lo,hi]=wilsonCI(k,nFlips);
+    ciSimData.push({k,lo,hi,covers:lo<=trueP&&trueP<=hi});
+  }
+}
+
+/* ════════════════════════════════════════════
+   SIDEBAR METRICS
+════════════════════════════════════════════ */
+function updateSidebar(){
+  const pa=priorA+nHeads, pb=priorB+nFlips-nHeads;
+  const priorMean=priorA/(priorA+priorB);
+  const postMean=pa/(pa+pb);
+  const prLo=betaQuantile(0.025,priorA,priorB), prHi=betaQuantile(0.975,priorA,priorB);
+  const crLo=betaQuantile(0.025,pa,pb), crHi=betaQuantile(0.975,pa,pb);
+  el('mmPriorMean').textContent=priorMean.toFixed(3);
+  el('mmPriorRange').textContent=`[${prLo.toFixed(2)}, ${prHi.toFixed(2)}]`;
+  el('mmPostMean').textContent=postMean.toFixed(3);
+  el('mmCrI').textContent=`[${crLo.toFixed(2)}, ${crHi.toFixed(2)}]`;
+  const pv=pValue2sided(nHeads,nFlips);
+  const [ciLo,ciHi]=wilsonCI(nHeads,nFlips);
+  const z=((nHeads/nFlips)-0.5)/Math.sqrt(0.25/nFlips);
+  el('mmPval').textContent=pv<0.001?'<0.001':pv.toFixed(3);
+  el('mmPval').style.color=pv<alpha?'var(--red)':'var(--text)';
+  el('mmDecision').textContent=pv<alpha?'Reject H₀':'Fail to reject';
+  el('mmDecision').style.color=pv<alpha?'var(--red)':'var(--green)';
+  el('mmCI').textContent=`[${ciLo.toFixed(2)}, ${ciHi.toFixed(2)}]`;
+  el('mmZ').textContent=z.toFixed(2);
+}
+
+/* ════════════════════════════════════════════
+   PLOTLY CONFIG HELPER
+════════════════════════════════════════════ */
+const PLY_CFG={displayModeBar:false,responsive:true};
+const PLY_BASE={paper_bgcolor:'white',plot_bgcolor:'white',font:{family:'Arial,sans-serif',size:12},margin:{t:48,r:18,l:52,b:52}};
+
+/* ════════════════════════════════════════════
+   LESSON 1 — PHILOSOPHY
+════════════════════════════════════════════ */
+function renderPhilosophy(){
+  const pv=pValue2sided(nHeads,nFlips);
+  const threshold=Math.abs(nHeads-nFlips/2);
+
+  // Right: null distribution (binomial)
+  const ks=[],pmf=[];
+  for(let k=0;k<=nFlips;k++){ks.push(k);pmf.push(binomPMF(k,nFlips,0.5));}
+  const colors=ks.map(k=>Math.abs(k-nFlips/2)>=threshold?'#2563eb':'#bfdbfe');
+
+  // Left: prior + posterior
+  const prior={a:priorA,b:priorB};
+  const pa=prior.a+nHeads,pb=prior.b+nFlips-nHeads;
+  const px=[],py_pr=[],py_po=[];
+  for(let i=0;i<=200;i++){const x=i/200;px.push(x);py_pr.push(betaPDF(x,prior.a,prior.b));py_po.push(betaPDF(x,pa,pb));}
+  const postMean=pa/(pa+pb);
+  const maxPo=Math.max(...py_po);
+  const probBiased=1-betaCDF(0.5,pa,pb);
+  const crLo=betaQuantile(0.025,pa,pb),crHi=betaQuantile(0.975,pa,pb);
+
+  const traces=[
+    // Left: prior
+    {x:px,y:py_pr,type:'scatter',mode:'lines',name:'Prior P(p)',line:{color:'#a78bfa',width:1.5,dash:'dash'},xaxis:'x',yaxis:'y',hovertemplate:'p=%{x:.3f}<br>Prior=%{y:.2f}<extra>Prior</extra>'},
+    // Left: posterior
+    {x:px,y:py_po,type:'scatter',mode:'lines',name:'Posterior P(p|data)',fill:'tozeroy',line:{color:'#7c3aed',width:2.5},fillcolor:'rgba(124,58,237,0.1)',xaxis:'x',yaxis:'y',hovertemplate:'p=%{x:.3f}<br>Posterior=%{y:.2f}<extra>Posterior</extra>'},
+    // Right: null dist
+    {x:ks,y:pmf,type:'bar',name:'Null dist P(X=k|p=0.5)',marker:{color:colors},xaxis:'x2',yaxis:'y2',hovertemplate:'k=%{x}<br>P(X=k|H₀)=%{y:.4f}<extra></extra>'}
+  ];
+
+  const layout={
+    ...PLY_BASE,
+    height:390,
+    grid:{rows:1,columns:2,pattern:'independent'},
+    xaxis:{title:'p (coin bias)',domain:[0,0.46],range:[0,1],zeroline:false},
+    yaxis:{title:'Density',zeroline:false},
+    xaxis2:{title:'k (heads out of '+nFlips+')',domain:[0.54,1],zeroline:false},
+    yaxis2:{title:'P(X = k | p = 0.5)',zeroline:false},
+    showlegend:true,
+    legend:{x:0.5,y:-0.16,xanchor:'center',orientation:'h',font:{size:11}},
+    annotations:[
+      {text:'🟣 Bayesian: P(p | data)',xref:'paper',yref:'paper',x:0.23,y:1.05,showarrow:false,font:{size:12.5,color:'#5b21b6'},xanchor:'center'},
+      {text:'🔵 Frequentist: P(data | H₀)',xref:'paper',yref:'paper',x:0.77,y:1.05,showarrow:false,font:{size:12.5,color:'#1e40af'},xanchor:'center'},
+      {text:`Posterior mean: ${postMean.toFixed(3)}`,x:postMean,y:maxPo*0.7,xref:'x',yref:'y',showarrow:true,arrowhead:2,arrowcolor:'#7c3aed',font:{size:10.5,color:'#5b21b6'},ax:-40,ay:-20},
+      {text:`Observed: ${nHeads}`,x:nHeads,y:Math.max(...pmf)*0.8,xref:'x2',yref:'y2',showarrow:true,arrowhead:2,arrowcolor:'#111827',font:{size:10.5,color:'#111827'},ax:35,ay:-30},
+    ],
+    shapes:[
+      {type:'rect',xref:'x',yref:'paper',x0:crLo,x1:crHi,y0:0,y1:1,fillcolor:'rgba(124,58,237,0.07)',line:{width:0}},
+      {type:'line',xref:'x',yref:'paper',x0:0.5,x1:0.5,y0:0,y1:1,line:{color:'#d1d5db',width:1.5,dash:'dash'}},
+      {type:'line',xref:'x2',yref:'paper',x0:nHeads,x1:nHeads,y0:0,y1:1,line:{color:'#111827',width:2.5}},
+    ]
+  };
+  Plotly.react('plot',traces,layout,PLY_CFG);
+
+  // Stat bar
+  el('statBar').innerHTML=`
+    <div class="stat-cell">
+      <div class="stat-name">🔵 Frequentist question</div>
+      <div class="stat-val" style="font-size:.78rem;font-family:Arial;line-height:1.3;padding-top:2px">P(data | H₀ is true)</div>
+      <div class="stat-sub">p-value = ${pv<0.001?'<0.001':pv.toFixed(3)} → <span style="color:${pv<alpha?'var(--red)':'var(--green);font-weight:700'}">${pv<alpha?'Reject H₀':'Fail to reject'}</span></div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name">🔵 What is "random"?</div>
+      <div class="stat-val" style="font-size:.78rem;font-family:Arial;line-height:1.3;padding-top:2px">Data is random; p is fixed</div>
+      <div class="stat-sub">Imagine repeating the experiment — what fraction of outcomes are this extreme?</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name">🟣 Bayesian question</div>
+      <div class="stat-val" style="font-size:.78rem;font-family:Arial;line-height:1.3;padding-top:2px">P(p | data observed)</div>
+      <div class="stat-sub">P(p > 0.5 | data) = ${(probBiased*100).toFixed(1)}% → posterior mean = ${postMean.toFixed(3)}</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name">🟣 What is "random"?</div>
+      <div class="stat-val" style="font-size:.78rem;font-family:Arial;line-height:1.3;padding-top:2px">p is uncertain; data is fixed</div>
+      <div class="stat-sub">Data is what we observed. p is the unknown — it gets a probability distribution.</div>
+    </div>`;
+
+  el('obsPanel').className='obs-card blue';
+  el('obsPanel').innerHTML=`<strong>Reading the two pictures simultaneously:</strong><br><br>
+    <strong>Left (Bayesian):</strong> The dashed purple curve is your prior belief about p. The solid purple curve is the posterior — your belief <em>after</em> seeing ${nHeads} heads in ${nFlips} flips. The shaded band is the 95% credible interval [${crLo.toFixed(2)}, ${crHi.toFixed(2)}]. You can directly say: P(p is in this band | data) = 95%. The posterior mean is ${postMean.toFixed(3)}, and there's a ${(probBiased*100).toFixed(1)}% posterior probability that p > 0.5.<br><br>
+    <strong>Right (Frequentist):</strong> These bars show every possible outcome under H₀: p = 0.5. The <strong>dark blue bars</strong> are outcomes "at least as extreme" as what you observed (${nHeads} heads). The p-value — ${pv<0.001?'<0.001':pv.toFixed(3)} — is the sum of those bars. It answers: <em>"If the coin were fair, how often would we see results this extreme?"</em> It does <strong>not</strong> tell you the probability that the coin is fair.`;
+}
+
+/* ════════════════════════════════════════════
+   LESSON 2 — COIN
+════════════════════════════════════════════ */
+function renderCoin(){
+  const pa=priorA+nHeads,pb=priorB+nFlips-nHeads;
+  const pv=pValue2sided(nHeads,nFlips);
+  const postMean=pa/(pa+pb), probBiased=1-betaCDF(0.5,pa,pb);
+  const crLo=betaQuantile(0.025,pa,pb),crHi=betaQuantile(0.975,pa,pb);
+  const [ciLo,ciHi]=wilsonCI(nHeads,nFlips);
+  const threshold=Math.abs(nHeads-nFlips/2);
+
+  const px=[],py_pr=[],py_po=[];
+  for(let i=0;i<=250;i++){const x=i/250;px.push(x);py_pr.push(betaPDF(x,priorA,priorB));py_po.push(betaPDF(x,pa,pb));}
+  const maxPo=Math.max(...py_po);
+
+  const ks=[],pmf=[];
+  for(let k=0;k<=nFlips;k++){ks.push(k);pmf.push(binomPMF(k,nFlips,0.5));}
+  const colors=ks.map(k=>Math.abs(k-nFlips/2)>=threshold?'#2563eb':'#bfdbfe');
+
+  const traces=[
+    {x:px,y:py_pr,type:'scatter',mode:'lines',name:'Prior',line:{color:'#a78bfa',width:1.5,dash:'dash'},xaxis:'x',yaxis:'y',hovertemplate:'p=%{x:.3f}<br>Prior=%{y:.2f}<extra>Prior</extra>'},
+    {x:px,y:py_po,type:'scatter',mode:'lines',name:'Posterior',fill:'tozeroy',line:{color:'#7c3aed',width:2.5},fillcolor:'rgba(124,58,237,0.1)',xaxis:'x',yaxis:'y',hovertemplate:'p=%{x:.3f}<br>Posterior=%{y:.2f}<extra>Posterior</extra>'},
+    {x:ks,y:pmf,type:'bar',name:'Null dist (H₀: p=0.5)',marker:{color:colors},xaxis:'x2',yaxis:'y2',hovertemplate:'k=%{x}<br>P(X=k|H₀)=%{y:.4f}<extra></extra>'}
+  ];
+
+  const layout={
+    ...PLY_BASE,
+    height:390,
+    grid:{rows:1,columns:2,pattern:'independent'},
+    xaxis:{title:'p (coin bias)',domain:[0,0.46],range:[0,1],zeroline:false},
+    yaxis:{title:'Density',zeroline:false},
+    xaxis2:{title:`k heads (n = ${nFlips})`,domain:[0.54,1],zeroline:false},
+    yaxis2:{title:'P(X = k | H₀)',zeroline:false},
+    showlegend:true,
+    legend:{x:0.5,y:-0.16,xanchor:'center',orientation:'h',font:{size:11}},
+    annotations:[
+      {text:`🟣 Posterior (mean = ${postMean.toFixed(3)})`,xref:'paper',yref:'paper',x:0.23,y:1.05,showarrow:false,font:{size:12,color:'#5b21b6'},xanchor:'center'},
+      {text:`🔵 p-value = ${pv<0.001?'<0.001':pv.toFixed(3)} ${pv<alpha?'→ REJECT H₀':'→ fail to reject'}`,xref:'paper',yref:'paper',x:0.77,y:1.05,showarrow:false,font:{size:12,color:pv<alpha?'#dc2626':'#374151'},xanchor:'center'},
+      {text:`95% CrI`,x:(crLo+crHi)/2,y:maxPo*0.15,xref:'x',yref:'y',showarrow:false,font:{size:9,color:'#7c3aed'},xanchor:'center'},
+      {text:`Observed: ${nHeads}`,x:nHeads,y:Math.max(...pmf)*0.88,xref:'x2',yref:'y2',showarrow:true,arrowhead:2,arrowcolor:'#111827',font:{size:10,color:'#111827'},ax:35,ay:-25},
+    ],
+    shapes:[
+      {type:'rect',xref:'x',yref:'paper',x0:crLo,x1:crHi,y0:0,y1:1,fillcolor:'rgba(124,58,237,0.08)',line:{width:0}},
+      {type:'line',xref:'x',yref:'paper',x0:crLo,x1:crLo,y0:0,y1:1,line:{color:'#7c3aed',width:1,dash:'dot'}},
+      {type:'line',xref:'x',yref:'paper',x0:crHi,x1:crHi,y0:0,y1:1,line:{color:'#7c3aed',width:1,dash:'dot'}},
+      {type:'line',xref:'x',yref:'paper',x0:0.5,x1:0.5,y0:0,y1:1,line:{color:'#d1d5db',width:1.5,dash:'dash'}},
+      {type:'line',xref:'x2',yref:'paper',x0:nHeads,x1:nHeads,y0:0,y1:1,line:{color:'#111827',width:2.5}},
+    ]
+  };
+  Plotly.react('plot',traces,layout,PLY_CFG);
+
+  const rejectFreq=pv<alpha, believeBiased=probBiased>0.95;
+  let obsClass='obs-card green', obsText;
+  if(rejectFreq&&believeBiased){
+    obsClass='obs-card red';
+    obsText=`<strong>Both agree: strong evidence of bias.</strong><br>The frequentist rejects H₀ (p = ${pv.toFixed(3)} < α = ${alpha}). The posterior puts ${(probBiased*100).toFixed(1)}% probability on p > 0.5 with posterior mean ${postMean.toFixed(3)}. Agreement is common when evidence is strong and priors aren't too tight.`;
+  } else if(rejectFreq&&!believeBiased){
+    obsClass='obs-card amber';
+    obsText=`<strong>Divergence: frequentist rejects — Bayesian remains uncertain.</strong><br>The p-value (${pv.toFixed(3)}) is below α = ${alpha}, but the prior is pulling the posterior toward 0.5. The posterior mean is only ${postMean.toFixed(3)} and P(p > 0.5) = ${(probBiased*100).toFixed(1)}%. This is classic prior-data tension. Try a flatter prior (Uniform) to see them converge.`;
+  } else if(!rejectFreq&&believeBiased){
+    obsClass='obs-card purple';
+    obsText=`<strong>Divergence: frequentist fails to reject — Bayesian sees bias.</strong><br>p-value = ${pv.toFixed(3)} ≥ α = ${alpha}, so the frequentist can't reject H₀. Yet the posterior mean is ${postMean.toFixed(3)} and P(p > 0.5) = ${(probBiased*100).toFixed(1)}%. The prior is accumulating probability away from 0.5 even though the frequentist threshold hasn't been crossed.`;
+  } else {
+    obsText=`<strong>Both agree: insufficient evidence of bias.</strong><br>p̂ = ${(nHeads/nFlips).toFixed(2)} (${nHeads}/${nFlips} heads). The p-value ${pv.toFixed(3)} doesn't clear the α = ${alpha} threshold. The posterior mean ${postMean.toFixed(3)} with 95% CrI [${crLo.toFixed(2)}, ${crHi.toFixed(2)}] spans 0.5. The 95% CI [${ciLo.toFixed(2)}, ${ciHi.toFixed(2)}] also includes 0.5. Both approaches: "not enough to conclude bias."`;
+  }
+
+  el('statBar').innerHTML=`
+    <div class="stat-cell">
+      <div class="stat-name">🟣 P(p > 0.5 | data) <span class="info-tip">i<span class="tip-text">Bayesian probability the coin is biased toward heads, given data and prior.</span></span></div>
+      <div class="stat-val" style="color:${probBiased>0.95?'var(--red)':probBiased>0.75?'var(--amber)':'var(--text)'}">${(probBiased*100).toFixed(1)}%</div>
+      <div class="stat-sub">Posterior mean: ${postMean.toFixed(3)}</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name">🟣 95% Credible Interval</div>
+      <div class="stat-val" style="font-size:1rem">[${crLo.toFixed(2)}, ${crHi.toFixed(2)}]</div>
+      <div class="stat-sub">P(p in this interval | data) = 95%</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name">🔵 p-value <span class="info-tip">i<span class="tip-text">P(seeing ${nHeads} or more extreme heads | p = 0.5). Small values mean the data is surprising under H₀.</span></span></div>
+      <div class="stat-val" style="color:${pv<alpha?'var(--red)':'var(--text)'}">${pv<0.001?'<0.001':pv.toFixed(3)}</div>
+      <div class="stat-sub"><span class="decision-badge ${pv<alpha?'decision-reject':'decision-ftr'}">${pv<alpha?'Reject H₀':'Fail to reject'}</span></div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name">🔵 95% Confidence Interval</div>
+      <div class="stat-val" style="font-size:1rem">[${ciLo.toFixed(2)}, ${ciHi.toFixed(2)}]</div>
+      <div class="stat-sub">95% of intervals built this way contain p</div>
+    </div>`;
+  el('obsPanel').className=obsClass;
+  el('obsPanel').innerHTML=obsText;
+}
+
+/* ════════════════════════════════════════════
+   LESSON 3 — CI vs CREDIBLE INTERVAL
+════════════════════════════════════════════ */
+function renderIntervals(){
+  if(!ciSimData)generateCISims();
+  const covered=ciSimData.filter(d=>d.covers).length;
+  const coverFrac=covered/nSims;
+
+  // Bayesian CrI for the last simulated dataset
+  const last=ciSimData[nSims-1];
+  const pa=priorA+last.k, pb=priorB+nFlips-last.k;
+  const crLo=betaQuantile(0.025,pa,pb), crHi=betaQuantile(0.975,pa,pb);
+  const crCovers=crLo<=trueP&&trueP<=crHi;
+
+  const traces=[];
+  // CI lines
+  ciSimData.forEach((d,i)=>{
+    traces.push({x:[d.lo,d.hi],y:[i,i],type:'scatter',mode:'lines',
+      line:{color:d.covers?'#16a34a':'#dc2626',width:2},showlegend:false,
+      hovertemplate:`Sim ${i+1}: [${d.lo.toFixed(2)}, ${d.hi.toFixed(2)}]<br>${d.covers?'✓ Covers true p':'✗ Misses true p'}<extra></extra>`});
+  });
+  // True p line
+  traces.push({x:[trueP,trueP],y:[-1.5,nSims+0.5],type:'scatter',mode:'lines',
+    line:{color:'#111827',width:2.5},name:`True p = ${trueP.toFixed(2)}`,hoverinfo:'skip'});
+  // Bayesian CrI as a thick purple segment below
+  traces.push({x:[crLo,crHi],y:[-1,-1],type:'scatter',mode:'lines',
+    line:{color:'#7c3aed',width:6},name:`95% Credible Interval (last sim)`,
+    hovertemplate:`Bayesian CrI: [${crLo.toFixed(2)}, ${crHi.toFixed(2)}]<br>${crCovers?'✓ Covers true p':'✗ Misses true p'}<extra></extra>`});
+
+  const layout={
+    ...PLY_BASE,
+    height:Math.max(360,nSims*7+100),
+    margin:{t:48,r:18,l:72,b:60},
+    xaxis:{title:'p (coin bias)',range:[Math.max(0,trueP-0.4),Math.min(1,trueP+0.4)],zeroline:false},
+    yaxis:{title:'Simulation #',zeroline:false,tickvals:[-1,...Array.from({length:nSims},(_,i)=>i)],ticktext:['CrI',...Array.from({length:nSims},(_,i)=>`${i+1}`)]},
+    showlegend:true,
+    legend:{x:0.5,y:-0.12,xanchor:'center',orientation:'h',font:{size:11}},
+    annotations:[{
+      text:`Empirical coverage: ${(coverFrac*100).toFixed(0)}% of ${nSims} CIs contain true p = ${trueP.toFixed(2)}`,
+      xref:'paper',yref:'paper',x:0.5,y:1.04,showarrow:false,
+      font:{size:12.5,color:Math.abs(coverFrac-0.95)<0.12?'#16a34a':'#d97706'},xanchor:'center'
+    }]
+  };
+  Plotly.react('plot',traces,layout,PLY_CFG);
+
+  const missed=nSims-covered;
+  el('statBar').innerHTML=`
+    <div class="stat-cell">
+      <div class="stat-name">🔵 Empirical CI coverage</div>
+      <div class="stat-val" style="color:${Math.abs(coverFrac-0.95)<0.12?'var(--green)':'var(--amber)'}">${(coverFrac*100).toFixed(0)}%</div>
+      <div class="stat-sub">Expected ~95% with α = 0.05</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name">🔵 CIs that miss true p</div>
+      <div class="stat-val">${missed} / ${nSims}</div>
+      <div class="stat-sub">The red horizontal lines</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name">🟣 Bayesian CrI (last sim)</div>
+      <div class="stat-val" style="font-size:1rem">[${crLo.toFixed(2)}, ${crHi.toFixed(2)}]</div>
+      <div class="stat-sub">${crCovers?'✓ Contains true p':'✗ Misses true p'} — k=${last.k}/${nFlips}</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name">🟣 What CrI actually means</div>
+      <div class="stat-val" style="font-size:.75rem;font-family:Arial;line-height:1.3;padding-top:4px">P(p ∈ CrI | data) = 95%</div>
+      <div class="stat-sub">A direct probability statement about p — what you wished CIs said</div>
+    </div>`;
+
+  el('obsPanel').className='obs-card teal';
+  el('obsPanel').innerHTML=`<strong>The most important distinction in all of applied statistics:</strong><br><br>
+    <strong>Green lines</strong> contain the true p = ${trueP.toFixed(2)}. Red lines miss it. The frequentist guarantee is: in the long run, 95% will be green — that's the procedure's property. For any <em>single</em> line, you cannot say "there's a 95% chance p is in here." The interval either contains p or it doesn't — that's not a probability, it's a fact you just don't know.<br><br>
+    <strong>The purple line (bottom)</strong> is the Bayesian credible interval for the last simulated dataset (k = ${last.k} heads). You <em>can</em> say: P(p ∈ [${crLo.toFixed(2)}, ${crHi.toFixed(2)}] | data and prior) = 95%. This is the direct probabilistic statement — and it requires a prior to make. The prior here is ${PRIORS[el('priorSel').value]?.label ?? 'current prior'}.<br><br>
+    <strong>Try increasing n</strong> — both intervals narrow. Try a more extreme true p or very small n — coverage will deviate more from 95%.`;
+}
+
+/* ════════════════════════════════════════════
+   LESSON 4 — PRIOR POWER
+════════════════════════════════════════════ */
+function renderPrior(){
+  // Three fixed prior "characters"
+  const skepticA=20,skepticB=20;   // Believes coin is fair
+  const agnostA=1,  agnostB=1;     // No opinion
+  const believerA=5, believerB=1;  // Expects bias toward heads
+
+  const pa_s=skepticA+nHeads, pb_s=skepticB+nFlips-nHeads;
+  const pa_a=agnostA+nHeads,  pb_a=agnostB+nFlips-nHeads;
+  const pa_b=believerA+nHeads,pb_b=believerB+nFlips-nHeads;
+
+  const px=[],py_pr_s=[],py_pr_a=[],py_pr_b=[],py_po_s=[],py_po_a=[],py_po_b=[],py_lik=[];
+  for(let i=0;i<=250;i++){
+    const x=i/250; px.push(x);
+    py_pr_s.push(betaPDF(x,skepticA,skepticB));
+    py_pr_a.push(betaPDF(x,agnostA,agnostB));
+    py_pr_b.push(betaPDF(x,believerA,believerB));
+    py_po_s.push(betaPDF(x,pa_s,pb_s));
+    py_po_a.push(betaPDF(x,pa_a,pb_a));
+    py_po_b.push(betaPDF(x,pa_b,pb_b));
+    py_lik.push(binomPMF(nHeads,nFlips,x));
+  }
+  // Scale likelihood to visible range
+  const maxPo=Math.max(...py_po_s,...py_po_a,...py_po_b);
+  const maxLik=Math.max(...py_lik);
+  const likScale=maxPo/maxLik;
+  const py_lik_sc=py_lik.map(v=>v*likScale);
+
+  const traces=[
+    // Priors (dashed, thin)
+    {x:px,y:py_pr_s,type:'scatter',mode:'lines',name:'Skeptic prior Beta(20,20)',line:{color:'#dc2626',width:1.5,dash:'dot'},opacity:0.5,hoverinfo:'skip'},
+    {x:px,y:py_pr_a,type:'scatter',mode:'lines',name:'Agnostic prior Beta(1,1)',line:{color:'#d97706',width:1.5,dash:'dot'},opacity:0.5,hoverinfo:'skip'},
+    {x:px,y:py_pr_b,type:'scatter',mode:'lines',name:'Believer prior Beta(5,1)',line:{color:'#0891b2',width:1.5,dash:'dot'},opacity:0.5,hoverinfo:'skip'},
+    // Posteriors (solid + filled)
+    {x:px,y:py_po_s,type:'scatter',mode:'lines',name:'Skeptic posterior',fill:'tozeroy',line:{color:'#dc2626',width:2.5},fillcolor:'rgba(220,38,38,0.08)',hovertemplate:'p=%{x:.3f}<br>Skeptic post=%{y:.2f}<extra></extra>'},
+    {x:px,y:py_po_a,type:'scatter',mode:'lines',name:'Agnostic posterior',fill:'tozeroy',line:{color:'#d97706',width:2.5},fillcolor:'rgba(217,119,6,0.08)',hovertemplate:'p=%{x:.3f}<br>Agnostic post=%{y:.2f}<extra></extra>'},
+    {x:px,y:py_po_b,type:'scatter',mode:'lines',name:'Believer posterior',fill:'tozeroy',line:{color:'#0891b2',width:2.5},fillcolor:'rgba(8,145,178,0.08)',hovertemplate:'p=%{x:.3f}<br>Believer post=%{y:.2f}<extra></extra>'},
+    // Likelihood
+    {x:px,y:py_lik_sc,type:'scatter',mode:'lines',name:'Likelihood (scaled)',line:{color:'#374151',width:2,dash:'dash'},hovertemplate:'p=%{x:.3f}<extra>Likelihood</extra>'}
+  ];
+
+  const postMean_s=pa_s/(pa_s+pb_s), postMean_a=pa_a/(pa_a+pb_a), postMean_b=pa_b/(pa_b+pb_b);
+  const spread=Math.max(postMean_s,postMean_a,postMean_b)-Math.min(postMean_s,postMean_a,postMean_b);
+  const crLo_s=betaQuantile(0.025,pa_s,pb_s),crHi_s=betaQuantile(0.975,pa_s,pb_s);
+  const crLo_a=betaQuantile(0.025,pa_a,pb_a),crHi_a=betaQuantile(0.975,pa_a,pb_a);
+  const crLo_b=betaQuantile(0.025,pa_b,pb_b),crHi_b=betaQuantile(0.975,pa_b,pb_b);
+  const mle=nFlips>0?nHeads/nFlips:0.5;
+
+  const layout={
+    ...PLY_BASE,
+    height:390,
+    xaxis:{title:'p (coin bias)',range:[0,1],zeroline:false},
+    yaxis:{title:'Density',zeroline:false},
+    showlegend:true,
+    legend:{x:0.5,y:-0.14,xanchor:'center',orientation:'h',font:{size:11},ncols:4},
+    annotations:[{
+      text:`Observed: ${nHeads}/${nFlips} = ${mle.toFixed(2)} — MLE (what data alone says)`,
+      xref:'paper',yref:'paper',x:0.5,y:1.04,showarrow:false,
+      font:{size:12,color:'#374151'},xanchor:'center'
+    }],
+    shapes:[
+      {type:'line',xref:'x',yref:'paper',x0:0.5,x1:0.5,y0:0,y1:1,line:{color:'#d1d5db',width:1.5,dash:'dash'}},
+      {type:'line',xref:'x',yref:'paper',x0:mle,x1:mle,y0:0,y1:1,line:{color:'#374151',width:2,dash:'dot'}},
+    ]
+  };
+  Plotly.react('plot',traces,layout,PLY_CFG);
+
+  el('statBar').innerHTML=`
+    <div class="stat-cell">
+      <div class="stat-name" style="color:#dc2626">🔴 Skeptic posterior mean</div>
+      <div class="stat-val" style="color:#dc2626">${postMean_s.toFixed(3)}</div>
+      <div class="stat-sub">95% CrI: [${crLo_s.toFixed(2)}, ${crHi_s.toFixed(2)}]<br>Prior: Beta(20,20) — "coin is fair"</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name" style="color:#d97706">🟡 Agnostic posterior mean</div>
+      <div class="stat-val" style="color:#d97706">${postMean_a.toFixed(3)}</div>
+      <div class="stat-sub">95% CrI: [${crLo_a.toFixed(2)}, ${crHi_a.toFixed(2)}]<br>Prior: Beta(1,1) — no prior info</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name" style="color:#0891b2">🔵 Believer posterior mean</div>
+      <div class="stat-val" style="color:#0891b2">${postMean_b.toFixed(3)}</div>
+      <div class="stat-sub">95% CrI: [${crLo_b.toFixed(2)}, ${crHi_b.toFixed(2)}]<br>Prior: Beta(5,1) — "expects high p"</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-name">Posterior spread (max − min)</div>
+      <div class="stat-val" style="color:${spread<0.03?'var(--green)':spread<0.08?'var(--amber)':'var(--red)'}">${spread.toFixed(3)}</div>
+      <div class="stat-sub">${spread<0.03?'✅ Converged — data dominates':spread<0.08?'⚠️ Near convergence':'🔺 Prior still influential'}</div>
+    </div>`;
+
+  const converged=spread<0.03;
+  const priorSizes=`The skeptic's prior has ${skepticA+skepticB} "phantom observations." The agnostic has ${agnostA+agnostB}. The believer has ${believerA+believerB}. You need roughly that many real observations to start washing each prior out.`;
+  el('obsPanel').className=converged?'obs-card green':'obs-card amber';
+  el('obsPanel').innerHTML=`<strong>${converged?'✅ Priors have converged — the data has spoken.':'⚠️ Priors are still shaping the conclusions.'}</strong><br><br>
+    With ${nFlips} flips and ${nHeads} heads (p̂ = ${mle.toFixed(2)}), the three researchers' posterior means differ by ${spread.toFixed(3)}.
+    ${converged
+      ? `All three curves have been squeezed onto roughly the same location by the weight of the data. This is why scientists with strong disagreements can still reach consensus — given enough evidence.`
+      : `The skeptic's strong prior (centered at 0.5) keeps their estimate near the middle. The believer's prior (centered above 0.5) pushes theirs higher. <strong>Try increasing n to 100+ to watch convergence.</strong>`}
+    <br><br><strong>Intuition:</strong> ${priorSizes} With the MLE (dashed vertical line) at ${mle.toFixed(2)}, posteriors are being pulled between their respective priors and the data signal. The agnostic's posterior tracks the MLE most closely since their prior adds zero information.`;
+}
+
+/* ════════════════════════════════════════════
+   MAIN RENDER DISPATCHER
+════════════════════════════════════════════ */
+function render(){
+  updateSidebar();
+  if(currentLesson==='philosophy') renderPhilosophy();
+  else if(currentLesson==='coin')  renderCoin();
+  else if(currentLesson==='intervals') renderIntervals();
+  else if(currentLesson==='prior') renderPrior();
+}
+
+/* ════════════════════════════════════════════
+   EVENT HANDLERS
+════════════════════════════════════════════ */
+function onFlipsChange(){
+  nFlips=parseInt(el('nFlips').value);
+  el('nFlipsLabel').textContent=nFlips;
+  const hs=el('nHeads'); hs.max=nFlips;
+  if(nHeads>nFlips){nHeads=nFlips;hs.value=nFlips;}
+  el('nHeadsLabel').textContent=nHeads;
+  el('pHatNote').textContent=`p̂ = ${(nHeads/nFlips).toFixed(2)} — sample proportion`;
+  if(currentLesson==='intervals')generateCISims();
+  render();
+}
+function onHeadsChange(){
+  nHeads=parseInt(el('nHeads').value);
+  el('nHeadsLabel').textContent=nHeads;
+  el('pHatNote').textContent=`p̂ = ${(nHeads/nFlips).toFixed(2)} — sample proportion`;
+  render();
+}
+function onTruePChange(){
+  trueP=parseInt(el('trueP').value)/100;
+  el('truePLabel').textContent=trueP.toFixed(2);
+  if(currentLesson==='intervals')generateCISims();
+  render();
+}
+function onNSimsChange(){
+  nSims=parseInt(el('nSims').value);
+  el('nSimsLabel').textContent=nSims;
+  generateCISims();
+  render();
+}
+function onPriorChange(){
+  const p=PRIORS[el('priorSel').value];
+  priorA=p.a; priorB=p.b;
+  render();
+}
+function setAlpha(a){
+  alpha=a;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',parseFloat(c.textContent)===a));
+  if(currentLesson==='intervals')generateCISims();
+  render();
+}
+el('btnGuide').addEventListener('click',()=>{
+  const g=el('guideSection'),btn=el('btnGuide');
+  g.classList.toggle('open');
+  btn.textContent=g.classList.contains('open')?'▲ Hide Guide':'▼ Quick Guide';
+});
+el('btnRef').addEventListener('click',()=>{
+  const rc=el('refCard'),btn=el('btnRef');
+  rc.classList.toggle('open');
+  btn.textContent=rc.classList.contains('open')?'▲ Hide Reference':'📖 Reference';
+  if(rc.classList.contains('open'))rc.scrollIntoView({behavior:'smooth'});
+});
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+setLesson('philosophy');
+</script>
+</body>
+</html>
