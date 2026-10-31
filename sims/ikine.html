@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gondola Kinematics</title>
+<style>
+:root{--bg:#0f1115;--card:#181b22;--fg:#e8eaf0;--mut:#8a90a0;--acc:#4f9dff;--x:#ff5c6c;--y:#3ddc84;--z:#4f9dff;--w:#ffb84f;--bd:#272b35}
+@media (prefers-color-scheme:light){:root{--bg:#f4f5f8;--card:#fff;--fg:#14161c;--mut:#646a78;--bd:#dfe2e8}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,sans-serif;padding:16px;padding-bottom:48px;max-width:720px;margin-inline:auto}
+h1{font-size:20px;margin:0 0 2px}
+.sub{color:var(--mut);margin:0 0 12px;font-size:13px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.card h2{font-size:14px;margin:0 0 10px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+label{font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+input,select{background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:8px;padding:8px;font:14px system-ui;width:100%}
+input[type=range]{padding:0}
+input[type=checkbox]{width:auto}
+.bar{display:flex;gap:8px;flex-wrap:wrap}
+button{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:11px 14px;font:600 14px system-ui;cursor:pointer;flex:1;min-width:90px}
+button.sec{background:var(--bg);color:var(--fg);border:1px solid var(--bd)}
+button.red{background:var(--x)}
+button:disabled{opacity:.4}
+.pill{display:inline-block;padding:4px 10px;border-radius:99px;font-size:13px;font-weight:600;background:var(--bg);border:1px solid var(--bd)}
+.pill.armed{background:var(--w);color:#000}.pill.rec{background:var(--x);color:#fff}.pill.done{background:var(--y);color:#000}
+.live{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.v{background:var(--bg);border-radius:8px;padding:6px 8px;font-variant-numeric:tabular-nums}
+.v b{display:block;font-size:11px;color:var(--mut);font-weight:500}.v span{font-size:16px;font-weight:600}
+canvas{width:100%;height:150px;display:block;margin-top:8px;background:var(--bg);border-radius:8px}
+#liveCv{height:90px}
+.stats{display:grid;grid-template-columns:1fr auto;gap:0 12px;font-variant-numeric:tabular-nums;font-size:14px}
+.stats div{padding:4px 0;border-bottom:1px dashed var(--bd)}.stats div:nth-child(odd){color:var(--mut)}
+.stats .hd{grid-column:1/-1;color:var(--fg)!important;font-weight:700;border:0;padding-top:10px}
+.trim{display:grid;grid-template-columns:auto 1fr auto;gap:6px 8px;align-items:center;font-size:12px;color:var(--mut);margin-top:8px}
+#log{font:12px ui-monospace,monospace;color:var(--mut);white-space:pre-wrap;max-height:140px;overflow:auto}
+details summary{cursor:pointer;font-weight:600;font-size:14px}
+details ol{padding-left:18px;margin:8px 0 0;font-size:13px;color:var(--mut)}
+.note{font-size:12px;color:var(--mut);margin-top:6px}
+.msg{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13px;border:1px solid var(--bd)}
+.msg.err{background:rgba(255,92,108,.14);border-color:var(--x)}
+.msg.ok{background:rgba(61,220,132,.12);border-color:var(--y)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<h1>Gondola Kinematics</h1>
+<p class="sub">Arm → mount → auto-records on release → analyse &amp; export. Needs HTTPS.</p>
+
+<div class="card">
+<details><summary>Procedure</summary><ol>
+<li>Open the page via its <b>https://</b> link directly in Safari or Chrome (not a file, not an in-app preview).</li>
+<li>Set mass (phone + gondola) and wire length if known.</li>
+<li>Tap <b>Arm</b>. During the countdown, fix the phone rigidly to the gondola, screen on.</li>
+<li>Keep it still for calibration (beep). Two beeps = armed.</li>
+<li>Release. Recording starts automatically when acceleration exceeds the trigger.</li>
+<li>At the bottom, tap <b>Stop</b> before handling the phone, or trim the handling out afterwards.</li>
+<li>Check the trim markers, then export.</li>
+</ol></details>
+</div>
+
+<div class="card">
+<h2>Setup</h2>
+<div class="form">
+<label>Sensor source<select id="src"><option value="auto">Auto</option><option value="generic">Generic Sensor API</option><option value="motion">DeviceMotion</option></select></label>
+<label>Target rate<select id="hz"><option value="0">Max native</option><option value="200">200 Hz</option><option value="100" selected>100 Hz</option><option value="50">50 Hz</option><option value="25">25 Hz</option><option value="10">10 Hz</option></select></label>
+<label>Mass, phone+gondola (kg)<input id="mass" type="number" step="0.01" value="0.2"></label>
+<label>Wire length (m, optional)<input id="wire" type="number" step="0.1" value=""></label>
+<label>Trigger threshold (m/s²)<input id="trig" type="number" step="0.1" value="0.6"></label>
+<label>Trigger hold (ms)<input id="hold" type="number" step="10" value="40"></label>
+<label>Record GPS<select id="gpson"><option value="1">Yes</option><option value="0">No</option></select></label>
+<label>Pre-trigger buffer (s)<input id="pre" type="number" step="0.5" value="1"></label>
+<label>Max duration (s)<input id="maxdur" type="number" step="1" value="120"></label>
+<label>Auto-stop when still (s, 0=off; must exceed any coasting time)<input id="still" type="number" step="1" value="0"></label>
+<label>Mount countdown (s)<input id="cd" type="number" step="1" value="10"></label>
+<label>Calibration (s)<input id="calib" type="number" step="0.5" value="2"></label>
+</div>
+<p class="note">The browser caps the real rate, often 60 Hz on Android and ~100 Hz on iOS. The measured rate is shown and logged.</p>
+</div>
+
+<div class="card">
+<div class="bar">
+<button id="arm">Arm</button>
+<button id="force" class="sec" disabled>Force start</button>
+<button id="stop" class="red" disabled>Stop</button>
+</div>
+<div style="margin-top:10px"><span class="pill" id="phase">idle</span></div>
+<div id="msg" class="msg hidden"></div>
+<div id="hint" class="note"></div>
+<div class="live">
+<div class="v"><b>Elapsed</b><span id="el">–</span></div>
+<div class="v"><b>Samples</b><span id="ns">–</span></div>
+<div class="v"><b>Actual rate</b><span id="hzv">–</span></div>
+<div class="v"><b>|a| linear</b><span id="amag">–</span></div>
+<div class="v"><b>GPS speed</b><span id="gps">–</span></div>
+<div class="v"><b>GPS acc.</b><span id="gpsa">–</span></div>
+</div>
+<canvas id="liveCv"></canvas>
+<div class="bar" style="margin-top:10px"><button id="loadLast" class="sec hidden">Load last saved run</button></div>
+</div>
+
+<div class="card hidden" id="res">
+<h2>Analysis</h2>
+<div class="form">
+<label>Frame<select id="frame"><option value="earth">Earth (corrects swing)</option><option value="device">Device</option></select></label>
+<label>Gravity removal<select id="grav"><option value="fused">Sensor-fused</option><option value="calib">Calibration subtract</option></select></label>
+<label>Motion axis<select id="axis"><option value="auto">Auto (PCA)</option><option value="x">X</option><option value="y">Y</option><option value="z">Z</option><option value="mag">Magnitude (biased)</option></select></label>
+<label>Smoothing (ms)<input id="smooth" type="number" step="10" value="50"></label>
+<label>Drift correction<select id="drift"><option value="end">Ends at rest</option><option value="none">None</option></select></label>
+<label>Initial velocity (m/s)<input id="v0" type="number" step="0.1" value="0"></label>
+</div>
+<div class="trim">
+<span>Start</span><input id="t0r" type="range" step="0.01"><span id="t0v">–</span>
+<span>End</span><input id="t1r" type="range" step="0.01"><span id="t1v">–</span>
+</div>
+<div class="bar" style="margin-top:8px"><button id="autotrim" class="sec">Auto-trim</button></div>
+<canvas id="cO"></canvas>
+<canvas id="cA"></canvas>
+<canvas id="cV"></canvas>
+<canvas id="cX"></canvas>
+<canvas id="cG"></canvas>
+<div class="stats" id="stats"></div>
+<h2 style="margin-top:14px">Export</h2>
+<div class="bar">
+<button id="eRaw" class="sec">Raw CSV</button>
+<button id="eProc" class="sec">Processed CSV</button>
+<button id="eGps" class="sec">GPS CSV</button>
+<button id="eJson" class="sec">Summary JSON</button>
+</div>
+<div class="bar" style="margin-top:8px"><button id="eAll">Share all files</button></div>
+<label style="flex-direction:row;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="useShare" checked> Use share sheet (Save to Files) when available</label>
+</div>
+
+<div class="card"><h2>Log</h2><div id="log"></div></div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const G0=9.80665, R2D=180/Math.PI;
+// sample layout: [t_ms, ax,ay,az (incl g), lx,ly,lz (linear), gx,gy,gz (deg/s), alpha,beta,gamma (deg)]
+const I={T:0,AX:1,AY:2,AZ:3,LX:4,LY:5,LZ:6,GX:7,GY:8,GZ:9,OA:10,OB:11,OG:12};
+let phase='idle',run=null,preBuf=[],srcStop=null,lastKeep=-1e9,ori=[null,null,null],gpsWatch=null,wakeLock=null,audio=null,timers=[];
+let armTok=0;
+let live={over:0,overT:null,peak:0,lastT:null,hzN:0,hz:0,mag:0,gps:null,gpsAcc:null,ema:0,stillSince:null,buf:[]};
+let opts={frame:'earth',grav:'fused',axis:'auto',smooth:50,drift:'end',v0:0,t0:null,t1:null};
+let lastRes=null;
+
+const f=(v,d=2)=>v==null||!isFinite(v)?'–':(+v).toFixed(d);
+const log=m=>{$('log').textContent=new Date().toLocaleTimeString()+'  '+m+'\n'+$('log').textContent};
+const mean=V=>{const m=[0,0,0];V.forEach(v=>{m[0]+=v[0];m[1]+=v[1];m[2]+=v[2]});return m.map(x=>x/(V.length||1))};
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const norm=a=>{const n=Math.hypot(...a)||1;return a.map(x=>x/n)};
+const num=v=>v==null?null:+v;
+
+/* ---------- settings persistence ---------- */
+const SET=['src','hz','mass','wire','trig','hold','gpson','pre','maxdur','still','cd','calib'];
+try{const s=JSON.parse(localStorage.getItem('gk_cfg2')||'{}');SET.forEach(k=>{if(s[k]!=null)$(k).value=s[k]})}catch(e){}
+SET.forEach(k=>$(k).addEventListener('change',()=>{try{localStorage.setItem('gk_cfg2',JSON.stringify(Object.fromEntries(SET.map(k=>[k,$(k).value]))))}catch(e){}}));
+const cfg=()=>({src:$('src').value,hz:+$('hz').value,mass:+$('mass').value||0,wire:+$('wire').value||0,trig:+$('trig').value||0.6,hold:+$('hold').value||0,gps:$('gpson').value==='1',pre:+$('pre').value||0,maxDur:+$('maxdur').value||0,still:+$('still').value||0,cd:+$('cd').value||0,calib:+$('calib').value||2});
+
+function msg(t,k){const e=$('msg');e.textContent=t;e.className='msg '+(k||'');e.classList.toggle('hidden',!t);if(t)log(t)}
+(function env(){const p=[];
+  if(!isSecureContext)p.push('Not HTTPS: the browser blocks motion sensors. Host the file (GitHub Pages / Netlify Drop) and open the https:// link.');
+  let framed=true;try{framed=window.self!==window.top}catch(e){}
+  if(framed)p.push('This page is embedded in another app/preview, where sensors are usually blocked. Open it directly in Safari or Chrome.');
+  if(!('DeviceMotionEvent' in window)&&!('Accelerometer' in window))p.push('This browser exposes no motion sensors.');
+  if(p.length)msg(p.join(' '),'err')})();
+try{if(localStorage.getItem('gk_last'))$('loadLast').classList.remove('hidden')}catch(e){}
+
+/* ---------- UI helpers ---------- */
+function setPhase(p,label){phase=p;const e=$('phase');e.textContent=label||p;e.className='pill '+(p==='armed'?'armed':p==='rec'?'rec':p==='done'?'done':'');
+  const running=['perm','countdown','calib','armed','rec'].includes(p);
+  $('arm').disabled=running;$('stop').disabled=!running;$('force').disabled=p!=='armed';
+  SET.forEach(k=>$(k).disabled=running)}
+function beep(fq=880,ms=120,n=1){try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+  for(let i=0;i<n;i++){const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime+i*(ms/1000+.08);
+  o.frequency.value=fq;g.gain.value=.25;o.connect(g);g.connect(audio.destination);o.start(t);o.stop(t+ms/1000)}}catch(e){}
+  if(navigator.vibrate)navigator.vibrate(Array(n).fill([ms,80]).flat())}
+const withTimeout=(p,ms,label)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error(label+' timed out')),ms))]);
+async function lockWake(){try{if('wakeLock' in navigator)wakeLock=await withTimeout(navigator.wakeLock.request('screen'),3000,'Wake lock')}catch(e){log('Wake lock unavailable: set a long screen timeout!')}}
+function fail(t){teardown();setPhase('idle','idle');msg(t,'err');beep(220,400)}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden&&['armed','rec','calib'].includes(phase))log('⚠ Page hidden: sensors pause, data gap likely');
+  if(!document.hidden&&['countdown','armed','rec','calib'].includes(phase))lockWake()});
+
+/* ---------- sensors ---------- */
+function onOri(e){if(e.beta!=null)ori=[e.alpha,e.beta,e.gamma]}
+function startGPS(){if(!navigator.geolocation){log('No geolocation');return}
+  gpsWatch=navigator.geolocation.watchPosition(p=>{const c=p.coords;
+    if(run)run.gps.push([performance.now(),c.latitude,c.longitude,c.accuracy,c.speed,c.altitude,c.heading]);
+    live.gps=c.speed;live.gpsAcc=c.accuracy},
+    e=>log('GPS: '+e.message),{enableHighAccuracy:true,maximumAge:0,timeout:20000})}
+function startSource(c){lastKeep=-1e9;
+  const want=c.src==='auto'?('Accelerometer' in window?'generic':'motion'):c.src;
+  if(want==='generic'&&startGeneric(c))return;
+  startMotion()}
+function startMotion(){addEventListener('devicemotion',onMotion);run.source='DeviceMotion';srcStop=()=>removeEventListener('devicemotion',onMotion);log('Source: DeviceMotion')}
+function onMotion(e){
+  let t=e.timeStamp;if(!t||t>1e12)t=performance.now();
+  const hz=run.cfg.hz;if(hz>0&&t-lastKeep<1000/hz*0.9)return;lastKeep=t;
+  const a=e.accelerationIncludingGravity||{},l=e.acceleration||{},r=e.rotationRate||{};
+  onSample([t,num(a.x),num(a.y),num(a.z),num(l.x),num(l.y),num(l.z),num(r.beta),num(r.gamma),num(r.alpha),ori[0],ori[1],ori[2]])}
+function startGeneric(c){
+  try{const freq=c.hz>0?c.hz:200;
+    const acc=new Accelerometer({frequency:freq});let lin=null,gyr=null,L=[null,null,null],Gy=[null,null,null];
+    try{lin=new LinearAccelerationSensor({frequency:freq});lin.onreading=()=>L=[lin.x,lin.y,lin.z];lin.onerror=()=>{};lin.start()}catch(e){}
+    try{gyr=new Gyroscope({frequency:freq});gyr.onreading=()=>Gy=[gyr.x*R2D,gyr.y*R2D,gyr.z*R2D];gyr.onerror=()=>{};gyr.start()}catch(e){}
+    const stop=()=>[acc,lin,gyr].forEach(s=>{try{s&&s.stop()}catch(e){}});
+    acc.onreading=()=>onSample([acc.timestamp,acc.x,acc.y,acc.z,...L,...Gy,...ori]);
+    acc.onerror=e=>{log('Generic sensor error: '+e.error.name+' → falling back to DeviceMotion');stop();if(run&&run.source==='Generic Sensor API')startMotion()};
+    acc.start();run.source='Generic Sensor API';srcStop=stop;log('Source: Generic Sensor API @ '+freq+' Hz requested');return true
+  }catch(e){log('Generic sensors unavailable ('+e.name+')');return false}}
+
+function linMagLive(s){const c=run&&run.cal;if(!c)return 0;
+  if(s[I.LX]!=null&&c.lb)return Math.hypot(s[I.LX]-c.lb[0],s[I.LY]-c.lb[1],s[I.LZ]-c.lb[2]);
+  return Math.hypot(s[I.AX]-c.g[0],s[I.AY]-c.g[1],s[I.AZ]-c.g[2])}
+
+function onSample(s){
+  if(s[I.AX]==null||!run)return;
+  live.hzN++;run.n=(run.n||0)+1;live.lastT=s[0];
+  if(phase==='calib'){run.calib.push(s);return}
+  const m=linMagLive(s);live.mag=m;live.buf.push([s[0],m]);while(live.buf.length&&s[0]-live.buf[0][0]>5000)live.buf.shift();
+  if(phase==='armed'){preBuf.push(s);while(preBuf.length&&s[0]-preBuf[0][0]>run.cfg.pre*1000)preBuf.shift();
+    live.peak=Math.max(live.peak,m);
+    if(m>run.cfg.trig){if(!live.over)live.overT=s[0];live.over++;
+      if(live.over>=run.need)startRec(live.overT,'auto trigger ('+m.toFixed(2)+' m/s², '+live.over+' samples over)')}
+    else live.over=0;return}
+  if(phase==='rec'){run.samples.push(s);
+    const el=(s[0]-run.trigT)/1000;
+    if(run.cfg.maxDur>0&&el>=run.cfg.maxDur){stopRec('max duration');return}
+    if(run.cfg.still>0){live.ema=live.ema*.9+m*.1;const thr=Math.max(.2,4*run.cal.noise);
+      if(live.ema<thr&&el>2){if(live.stillSince==null)live.stillSince=s[0];else if(s[0]-live.stillSince>run.cfg.still*1000)stopRec('still for '+run.cfg.still+' s')}
+      else live.stillSince=null}}}
+
+/* ---------- run control ---------- */
+function gpsPermission(){return withTimeout(new Promise(res=>{
+  if(!navigator.geolocation)return res(false);
+  navigator.geolocation.getCurrentPosition(()=>res(true),e=>{log('GPS: '+e.message);res(e.code!==1)},{enableHighAccuracy:true,timeout:8000,maximumAge:60000})}),20000,'Location').catch(e=>{log(e.message);return false})}
+function watchdog(c){let tries=0;
+  const check=()=>{if(!run||!['countdown','calib'].includes(phase))return;
+    if(run.n>0){log('Sensor data OK ('+run.source+', '+live.hz+' Hz)');return}
+    if(tries++===0){log('No samples from '+run.source+'; switching source');if(srcStop)srcStop();srcStop=null;
+      if(run.source==='DeviceMotion'){if(!startGeneric(c)){noData();return}}else startMotion();
+      timers.push(setTimeout(check,1500))}
+    else noData()};
+  timers.push(setTimeout(check,1500))}
+function noData(){fail('No sensor data from the phone. Check: (1) opened via https:// directly in Safari/Chrome, not a file or in-app preview; (2) motion access allowed (iPhone: Settings → Apps → Safari → Advanced → Website Data → delete this site, reload); (3) Android Chrome: lock icon → Site settings → Motion sensors → Allow.')}
+$('arm').onclick=async()=>{
+  const c=cfg(),tok=++armTok;beep(660,60);msg('');
+  setPhase('perm','Requesting motion access…');
+  // Motion is required; orientation is optional (only enables swing correction).
+  const pm=window.DeviceMotionEvent&&typeof DeviceMotionEvent.requestPermission==='function'?DeviceMotionEvent.requestPermission():Promise.resolve('granted');
+  const po=window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==='function'?DeviceOrientationEvent.requestPermission().catch(()=>'error'):Promise.resolve('granted');
+  try{const [rm,ro]=await withTimeout(Promise.all([pm,po]),20000,'Motion permission');
+    log('Permission: motion '+rm+', orientation '+ro);
+    if(rm!=='granted'){fail('Motion access '+rm+'. iPhone: Settings → Apps → Safari → Advanced → Website Data → delete this site, reload, tap Arm, choose Allow. Android Chrome: lock icon → Site settings → Motion sensors → Allow.');return}
+    if(ro!=='granted')log('Orientation not granted: analysis will use device frame (no swing correction)')}
+  catch(e){fail('Motion permission failed ('+e.message+'). If the page is inside an app preview, open it directly in Safari/Chrome.');return}
+  if(tok!==armTok||phase!=='perm')return;
+  run={cfg:c,calib:[],samples:[],gps:[],n:0,trigT:null,stopT:null,cal:null,source:null,startedAt:new Date().toISOString(),ua:navigator.userAgent,trigger:null};
+  preBuf=[];live.buf=[];live.stillSince=null;live.ema=0;live.over=0;live.peak=0;opts.t0=opts.t1=null;
+  $('res').classList.add('hidden');
+  if(c.gps){setPhase('perm','Allow location if asked…');const ok=await gpsPermission();
+    if(tok!==armTok||phase!=='perm')return;
+    if(ok)startGPS();else log('Continuing without GPS')}
+  await lockWake();if(tok!==armTok||phase!=='perm')return;
+  addEventListener('deviceorientation',onOri);startSource(c);watchdog(c);
+  let n=c.cd;setPhase('countdown','Mount phone… '+n+' s');
+  const go=()=>{if(!run.n){setPhase('countdown','Waiting for sensor data…');timers.push(setTimeout(go,250));return}
+    run.calib=[];setPhase('calib','Calibrating: keep still');beep(880,150);
+    timers.push(setTimeout(finishCalib,c.calib*1000))};
+  if(n<=0)go();else{const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);go()}else{setPhase('countdown','Mount phone… '+n+' s');if(n<=3)beep(500,40)}},1000);timers.push(iv)}
+};
+function finishCalib(){
+  const C=run.calib;
+  if(C.length<10){fail('Calibration got only '+C.length+' samples. Keep the page open and in front during calibration (a permission pop-up or app switch pauses sensors), then Arm again.');return}
+  const g=mean(C.map(s=>[s[I.AX],s[I.AY],s[I.AZ]]));
+  const hasL=C.every(s=>s[I.LX]!=null);const lb=hasL?mean(C.map(s=>[s[I.LX],s[I.LY],s[I.LZ]])):null;
+  run.cal={g,lb,gmag:Math.hypot(...g),noise:0,n:C.length,hz:(C.length-1)/((C.at(-1)[0]-C[0][0])/1000)};
+  const mags=C.map(linMagLive);run.cal.noise=Math.sqrt(mags.reduce((a,b)=>a+b*b,0)/mags.length);
+  log('Calibrated: '+C.length+' samples @ '+f(run.cal.hz,1)+' Hz, |g|='+f(run.cal.gmag,3)+', noise='+f(run.cal.noise,3)+' m/s²');
+  if(Math.abs(run.cal.gmag-G0)>0.4)log('⚠ |g| differs from 9.81 by '+f(run.cal.gmag-G0,2)+' — sensor bias');
+  if(run.cal.noise>0.15)log('⚠ Phone moved during calibration — results may be biased');
+  run.need=Math.max(2,Math.round(run.cfg.hold/1000*run.cal.hz));
+  if(run.cfg.trig<5*run.cal.noise)msg('Trigger '+run.cfg.trig+' m/s² is close to sensor noise; false triggers likely. Consider ≥ '+f(6*run.cal.noise,2)+'.','err');
+  else msg('Armed. Needs '+run.need+' consecutive samples above '+run.cfg.trig+' m/s². Use Force start if it does not trigger.','ok');
+  setPhase('armed','ARMED: release when ready');beep(1000,120,2)}
+function startRec(t,why){msg('');run.trigT=t;run.trigger=why;run.samples=preBuf.slice();preBuf=[];setPhase('rec','RECORDING');beep(1400,80);log('Recording: '+why)}
+$('force').onclick=()=>{if(phase==='armed')startRec(live.lastT??performance.now(),'manual')};
+$('stop').onclick=()=>{if(phase==='rec')stopRec('manual');else abort()};
+function teardown(){if(srcStop)srcStop();srcStop=null;removeEventListener('deviceorientation',onOri);
+  if(gpsWatch!=null)navigator.geolocation.clearWatch(gpsWatch);gpsWatch=null;
+  timers.forEach(t=>{clearTimeout(t);clearInterval(t)});timers=[];
+  if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}}
+function abort(){armTok++;teardown();setPhase('idle','idle');log('Aborted')}
+function stopRec(why){run.stopT=performance.now();teardown();beep(440,300);
+  log('Stopped: '+why+' · '+run.samples.length+' samples, '+run.gps.length+' GPS fixes');
+  if(run.samples.length<5){setPhase('idle','idle');log('Too little data');return}
+  setPhase('done','done');saveRun();openResults()}
+function saveRun(){try{localStorage.setItem('gk_last',JSON.stringify(run));$('loadLast').classList.remove('hidden')}catch(e){log('Not saved locally ('+e.name+') — export now!')}}
+$('loadLast').onclick=()=>{try{run=JSON.parse(localStorage.getItem('gk_last'));opts.t0=opts.t1=null;openResults();log('Loaded run from '+run.startedAt)}catch(e){log('Load failed: '+e.message)}};
+
+/* ---------- live display ---------- */
+setInterval(()=>{live.hz=live.hzN;live.hzN=0},1000);
+let lastLive=0;
+(function loop(ts){requestAnimationFrame(loop);if(ts-lastLive<100)return;lastLive=ts;
+  if(!['countdown','calib','armed','rec'].includes(phase)){$('hint').textContent='';return}
+  $('hint').textContent=phase==='armed'?'Live |a| '+f(live.mag)+' · peak since armed '+f(live.peak)+' · trigger '+run.cfg.trig+' m/s²':phase==='countdown'||phase==='calib'?'Sensor rate '+live.hz+' Hz'+(live.hz?'':' (no data yet)'):'';
+  $('el').textContent=phase==='rec'&&run.trigT?f((performance.now()-run.trigT)/1000,1)+' s':'–';
+  $('ns').textContent=phase==='rec'?run.samples.length:phase==='calib'?run.calib.length:'–';
+  $('hzv').textContent=live.hz+' Hz';$('amag').textContent=f(live.mag)+' m/s²';
+  $('gps').textContent=live.gps==null?'–':f(live.gps*3.6,1)+' km/h';$('gpsa').textContent=live.gpsAcc==null?'–':'±'+f(live.gpsAcc,0)+' m';
+  if(live.buf.length>1){const t0=live.buf.at(-1)[0];plot($('liveCv'),live.buf.map(b=>(b[0]-t0)/1000),[{y:live.buf.map(b=>b[1]),c:cssv('--w'),l:''},{y:live.buf.map(()=>run.cfg.trig),c:cssv('--x'),l:'trigger'}],'|a| m/s²')}
+})(0);
+
+/* ---------- processing ---------- */
+function rot(a,b,g,v){const d=Math.PI/180,ca=Math.cos(a*d),sa=Math.sin(a*d),cb=Math.cos(b*d),sb=Math.sin(b*d),cg=Math.cos(g*d),sg=Math.sin(g*d),[x,y,z]=v;
+  return[(ca*cg-sa*sb*sg)*x-sa*cb*y+(ca*sg+sa*sb*cg)*z,(sa*cg+ca*sb*sg)*x+ca*cb*y+(sa*sg-ca*sb*cg)*z,-cb*sg*x+sb*y+cb*cg*z]}
+function ffill(A){let last=null;for(let i=0;i<A.length;i++){if(A[i]&&A[i].every(isFinite))last=A[i];else A[i]=last}
+  const first=A.find(x=>x);if(!first)return null;for(let i=0;i<A.length&&!A[i];i++)A[i]=first;return A}
+function smooth(L,k){if(k<1)return L;const n=L.length,P=[[0,0,0]];
+  for(let i=0;i<n;i++){const p=P[i];P.push([p[0]+L[i][0],p[1]+L[i][1],p[2]+L[i][2]])}
+  return L.map((_,i)=>{const a=Math.max(0,i-k),b=Math.min(n-1,i+k),c=b-a+1;return[0,1,2].map(j=>(P[b+1][j]-P[a][j])/c)})}
+function pca(V){const C=[[0,0,0],[0,0,0],[0,0,0]];
+  V.forEach(v=>{for(let i=0;i<3;i++)for(let j=0;j<3;j++)C[i][j]+=v[i]*v[j]});
+  let u=norm([1,.9,.8]);for(let k=0;k<200;k++)u=norm([0,1,2].map(i=>dot(C[i],u)));
+  const tr=C[0][0]+C[1][1]+C[2][2];return{u,ratio:tr?dot(u,[0,1,2].map(i=>dot(C[i],u)))/tr:0}}
+function hav(a,b,c,d){const R=6371e3,r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+function times(){return run.samples.map(s=>(s[0]-run.trigT)/1000)}
+
+function process(){
+  const S=run.samples,T=times(),n=S.length;
+  const fusedOK=S.some(s=>s[I.LX]!=null),oriOK=S.some(s=>s[I.OB]!=null);
+  const fused=opts.grav==='fused'&&fusedOK,earth=opts.frame==='earth'&&oriOK;
+  const R=(s,v)=>earth?rot(s[I.OA]||0,s[I.OB]||0,s[I.OG]||0,v):v;
+  const raw=s=>{const v=fused?[s[I.LX],s[I.LY],s[I.LZ]]:[s[I.AX],s[I.AY],s[I.AZ]];return v.some(x=>x==null)||(earth&&s[I.OB]==null)?null:R(s,v)};
+  const gv=s=>(earth&&s[I.OB]==null)?null:R(s,[s[I.AX],s[I.AY],s[I.AZ]]);
+  const Cb=run.calib.length?run.calib:S.slice(0,Math.min(20,n));
+  const cr=ffill(Cb.map(raw)),cg=ffill(Cb.map(gv));let L=ffill(S.map(raw));
+  if(!L||!cr||!cg)return{err:'Missing sensor data for this frame/gravity combination.'};
+  const bias=mean(cr),gHat=norm(mean(cg));
+  L=L.map(v=>sub(v,bias));
+  const fs=(n-1)/((T[n-1]-T[0])||1);L=smooth(L,Math.round(opts.smooth/1000*fs/2));
+  const t0=opts.t0??T[0],t1=opts.t1??T[n-1];
+  let i0=T.findIndex(t=>t>=t0);if(i0<0)i0=0;let i1=n-1;while(i1>0&&T[i1]>t1)i1--;
+  if(i1-i0<3)return{err:'Trim window too short.'};
+  const W=L.slice(i0,i1+1),TW=T.slice(i0,i1+1),SW=S.slice(i0,i1+1),m=W.length;
+  let u=null,ratio=null,a;
+  if(opts.axis==='mag')a=W.map(v=>Math.hypot(...v));
+  else{if(opts.axis==='auto')({u,ratio}=pca(W));else u={x:[1,0,0],y:[0,1,0],z:[0,0,1]}[opts.axis];
+    a=W.map(v=>dot(v,u));const tc=TW[0]+Math.min(1,(TW[m-1]-TW[0])/3);let s=0;for(let i=0;i<m&&TW[i]<=tc;i++)s+=a[i];
+    if(s<0){a=a.map(x=>-x);u=u.map(x=>-x)}}
+  const v=new Array(m),x=new Array(m);v[0]=opts.v0;x[0]=0;
+  for(let i=1;i<m;i++)v[i]=v[i-1]+.5*(a[i]+a[i-1])*(TW[i]-TW[i-1]);
+  const D=TW[m-1]-TW[0];let driftBias=0;
+  if(opts.drift==='end'&&D>0){const e=v[m-1];driftBias=e/D;for(let i=0;i<m;i++)v[i]-=e*(TW[i]-TW[0])/D;for(let i=0;i<m;i++)a[i]-=driftBias}
+  for(let i=1;i<m;i++)x[i]=x[i-1]+.5*(v[i]+v[i-1])*(TW[i]-TW[i-1]);
+  const mass=run.cfg.mass,amag=W.map(w=>Math.hypot(...w)),gtot=SW.map(s=>Math.hypot(s[I.AX],s[I.AY],s[I.AZ])/G0),
+    gyro=SW.map(s=>s[I.GX]==null?null:Math.hypot(s[I.GX],s[I.GY],s[I.GZ]));
+  const imax=a.indexOf(Math.max(...a)),imin=a.indexOf(Math.min(...a)),ivx=v.indexOf(Math.max(...v));
+  let maxGap=0;for(let i=1;i<m;i++)maxGap=Math.max(maxGap,TW[i]-TW[i-1]);
+  let slope=null,a0=null,mu=null;
+  if(u){slope=Math.asin(Math.min(1,Math.abs(dot(u,gHat))));let s=0,c=0;for(let i=0;i<m&&TW[i]-TW[0]<=.5;i++){s+=a[i];c++}a0=s/c;
+    if(Math.cos(slope)>.05)mu=(G0*Math.sin(slope)-a0)/(G0*Math.cos(slope))}
+  const gps=run.gps.map(p=>[(p[0]-run.trigT)/1000,...p.slice(1)]).filter(p=>p[0]>=TW[0]-.5&&p[0]<=TW[m-1]+.5);
+  let gd=0;for(let i=1;i<gps.length;i++)gd+=hav(gps[i-1][1],gps[i-1][2],gps[i][1],gps[i][2]);
+  const gmax=gps.reduce((mx,p)=>p[4]!=null&&p[4]>mx?p[4]:mx,-1);
+  const gpsOnT=TW.map(t=>{let best=null;for(const p of gps)if(p[0]<=t&&t-p[0]<1.5)best=p;return best&&best[4]!=null?best[4]:null});
+  return{T,L:L.map(w=>Math.hypot(...w)),i0,i1,TW,a,v,x,amag,gtot,gyro,gpsOnT,gps,
+    st:{fused,earth,fusedOK,oriOK,u,ratio,driftBias,D,m,fs:(m-1)/D,maxGap,mass,
+      amax:a[imax],tamax:TW[imax],amin:a[imin],tamin:TW[imin],vmax:v[ivx],tvmax:TW[ivx],vend:v[m-1],xend:x[m-1],
+      amagMax:Math.max(...amag),gMax:Math.max(...gtot),gyroMax:Math.max(...gyro.filter(g=>g!=null),0),
+      slope,a0,mu,gpsN:gps.length,gpsDist:gd,gpsMax:gmax<0?null:gmax}}}
+
+function autoTrim(){
+  const S=run.samples,T=times(),n=S.length;
+  let m=S.map(linMagLive);const k=Math.max(1,Math.round(.1*(n-1)/((T[n-1]-T[0])||1)));
+  m=smooth(m.map(x=>[x,0,0]),k).map(x=>x[0]);
+  const thr=Math.max(.15,4*(run.cal?run.cal.noise:.05));
+  let s=T.findIndex(t=>t>=0);if(s<0)s=0;while(s>0&&m[s-1]>thr)s--;
+  // Zero acceleration ≠ at rest (constant-speed coasting). So find the LAST motion sample,
+  // then require ≥0.5 s of quiet after it before treating the end as rest.
+  let last=n-1;while(last>s&&m[last]<=thr)last--;
+  let e=last;while(e<n-1&&T[e]-T[last]<0.3)e++;
+  const found=last<n-1&&T[n-1]-T[last]>=0.5;
+  opts.t0=T[s];opts.t1=T[e];opts.drift=found?'end':'none';$('drift').value=opts.drift;
+  log('Auto-trim: '+f(T[s])+' → '+f(T[e])+' s'+(found?' (rest detected at end)':' (no rest found; drift correction off)'))}
+
+/* ---------- results UI ---------- */
+function openResults(){
+  const S=run.samples,T=times();
+  const fusedOK=S.some(s=>s[I.LX]!=null),oriOK=S.some(s=>s[I.OB]!=null);
+  $('frame').querySelector('[value=earth]').disabled=!oriOK;$('grav').querySelector('[value=fused]').disabled=!fusedOK;
+  opts.frame=oriOK?'earth':'device';opts.grav=fusedOK?'fused':'calib';$('frame').value=opts.frame;$('grav').value=opts.grav;
+  ['t0r','t1r'].forEach(id=>{$(id).min=T[0];$(id).max=T.at(-1)});
+  if(opts.t0==null)autoTrim();
+  $('res').classList.remove('hidden');render();
+  setTimeout(()=>$('res').scrollIntoView({behavior:'smooth'}),50)}
+['frame','grav','axis','smooth','drift','v0'].forEach(id=>$(id).addEventListener('change',()=>{opts[id]=['smooth','v0'].includes(id)?+$(id).value||0:$(id).value;render()}));
+let rq=0;const rr=()=>{cancelAnimationFrame(rq);rq=requestAnimationFrame(render)};
+$('t0r').oninput=()=>{opts.t0=Math.min(+$('t0r').value,opts.t1-.05);rr()};
+$('t1r').oninput=()=>{opts.t1=Math.max(+$('t1r').value,opts.t0+.05);rr()};
+$('autotrim').onclick=()=>{autoTrim();render()};
+addEventListener('resize',()=>{if(lastRes)rr()});
+
+function render(){
+  const r=process();lastRes=r;
+  $('t0r').value=opts.t0;$('t1r').value=opts.t1;$('t0v').textContent=f(opts.t0)+' s';$('t1v').textContent=f(opts.t1)+' s';
+  if(r.err){$('stats').innerHTML='<div class="hd">'+r.err+'</div>';return}
+  const s=r.st,M=s.mass,c=cssv;
+  plot($('cO'),r.T,[{y:r.L,c:c('--w'),l:'|a| full recording'}],'m/s²',[opts.t0,opts.t1]);
+  plot($('cA'),r.TW,[{y:r.a,c:c('--x'),l:'a along'}],'m/s²');
+  plot($('cV'),r.TW,[{y:r.v,c:c('--y'),l:'v integrated'},{y:r.gpsOnT,c:c('--z'),l:'GPS'}],'m/s');
+  plot($('cX'),r.TW,[{y:r.x,c:c('--z'),l:'distance'}],'m');
+  plot($('cG'),r.TW,[{y:r.gyro,c:c('--mut'),l:'rotation rate (swing)'}],'°/s');
+  const rows=[['hd','Run'],
+    ['Duration',f(s.D,2)+' s'],['Samples / mean rate',s.m+' / '+f(s.fs,1)+' Hz'],['Largest gap',f(s.maxGap*1000,0)+' ms'],
+    ['Source',run.source||'?'],['Trigger',run.trigger||'?'],
+    ['hd','Acceleration'],
+    ['Peak forward',f(s.amax)+' m/s² @ '+f(s.tamax)+' s'],['Peak braking',f(s.amin)+' m/s² @ '+f(s.tamin)+' s'],
+    ['Peak |a| (3-axis linear)',f(s.amagMax)+' m/s²'],['Peak total g (incl. gravity)',f(s.gMax)+' g'],
+    ['Initial accel (first 0.5 s)',f(s.a0)+' m/s²'],
+    ['hd','Velocity & distance (integrated)'],
+    ['Max speed',f(s.vmax)+' m/s ('+f(s.vmax*3.6,1)+' km/h) @ '+f(s.tvmax)+' s'],['End speed',f(s.vend)+' m/s'],
+    ['Distance',f(s.xend,1)+' m'],['Average speed',f(s.xend/s.D)+' m/s'],
+    ['Drift bias removed',f(s.driftBias,3)+' m/s²'+(Math.abs(s.driftBias)>.3?' ⚠ large':'')]];
+  if(run.cfg.wire>0)rows.push(['Avg speed from wire length',f(run.cfg.wire/s.D)+' m/s'],['Integrated vs wire length',f(s.xend/run.cfg.wire*100,0)+' %']);
+  rows.push(['hd','Force & energy (m = '+M+' kg)'],
+    ['Peak net force forward',f(M*s.amax)+' N'],['Peak net braking force',f(M*s.amin)+' N'],
+    ['Impulse (m·Δv)',f(M*(s.vend-opts.v0),3)+' N·s'],['Max kinetic energy',f(.5*M*s.vmax**2)+' J']);
+  if(s.slope!=null)rows.push(['hd','Wire geometry (estimate)'],['Slope along motion axis',f(s.slope*R2D,1)+'°'],
+    ['Frictionless accel g·sinθ',f(G0*Math.sin(s.slope))+' m/s²'],['Effective friction coeff μ',f(s.mu,3)]);
+  rows.push(['hd','GPS cross-check'],['Fixes in window',s.gpsN],['GPS max speed',s.gpsMax==null?'–':f(s.gpsMax)+' m/s'],['GPS distance',s.gpsN>1?f(s.gpsDist,1)+' m':'–'],
+    ['hd','Processing'],['Frame / gravity',(s.earth?'earth':'device')+' / '+(s.fused?'fused':'calibration')],
+    ['Axis (unit vector)',s.u?s.u.map(x=>f(x,2)).join(', '):'magnitude'],['PCA energy on axis',s.ratio==null?'–':f(s.ratio*100,0)+' %'+(s.ratio<.6?' ⚠ ambiguous':'')]);
+  $('stats').innerHTML=rows.map(([k,v])=>k==='hd'?'<div class="hd">'+v+'</div>':'<div>'+k+'</div><div>'+v+'</div>').join('')}
+
+function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function plot(cv,t,series,yl,mark){
+  const r=devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;if(!W)return;cv.width=W*r;cv.height=H*r;
+  const g=cv.getContext('2d');g.scale(r,r);
+  const pl=44,pr=8,pt=16,pb=18,w=W-pl-pr,h=H-pt-pb;
+  let lo=Infinity,hi=-Infinity;series.forEach(s=>s.y.forEach(v=>{if(v!=null&&isFinite(v)){lo=Math.min(lo,v);hi=Math.max(hi,v)}}));
+  if(!isFinite(lo)){lo=-1;hi=1}lo=Math.min(lo,0);hi=Math.max(hi,0);if(hi-lo<1e-6){hi+=1;lo-=1}const pd=(hi-lo)*.06;lo-=pd;hi+=pd;
+  const a=t[0],b=t[t.length-1],X=v=>pl+(v-a)/((b-a)||1)*w,Y=v=>pt+(hi-v)/(hi-lo)*h;
+  const mut=cssv('--mut'),bd=cssv('--bd');g.font='10px system-ui';g.lineWidth=1;
+  for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,y=Y(v);g.strokeStyle=bd;g.beginPath();g.moveTo(pl,y);g.lineTo(pl+w,y);g.stroke();g.fillStyle=mut;g.fillText(Math.abs(v)>=100?v.toFixed(0):v.toFixed(1),4,y+3)}
+  for(let i=0;i<=4;i++){const v=a+(b-a)*i/4;g.fillText(v.toFixed(1)+'s',Math.min(X(v)-8,W-28),H-4)}
+  g.strokeStyle=mut;g.beginPath();g.moveTo(pl,Y(0));g.lineTo(pl+w,Y(0));g.stroke();
+  if(mark){g.fillStyle='rgba(128,128,128,.25)';g.fillRect(pl,pt,Math.max(0,X(mark[0])-pl),h);g.fillRect(X(mark[1]),pt,Math.max(0,pl+w-X(mark[1])),h)}
+  const step=Math.max(1,Math.floor(t.length/(w*2)));
+  series.forEach(s=>{g.strokeStyle=s.c;g.lineWidth=1.5;g.beginPath();let on=false;
+    for(let i=0;i<t.length;i+=step){const v=s.y[i];if(v==null||!isFinite(v)){on=false;continue}const px=X(t[i]),py=Y(v);on?g.lineTo(px,py):g.moveTo(px,py);on=true}g.stroke()});
+  g.fillStyle=mut;g.fillText(yl,pl,11);let lx=pl+g.measureText(yl).width+10;
+  series.forEach(s=>{if(!s.l)return;g.fillStyle=s.c;g.fillText('● '+s.l,lx,11);lx+=g.measureText('● '+s.l).width+10})}
+
+/* ---------- export ---------- */
+const cv=v=>v==null||!isFinite(v)?'':String(+(+v).toPrecision(10));
+const toCSV=(head,rows)=>head.join(',')+'\n'+rows.map(r=>r.map(cv).join(',')).join('\n');
+const base=()=>'gondola_'+run.startedAt.replace(/[:.]/g,'-').slice(0,19);
+function files(){const r=lastRes,s=r.st;
+  const raw=toCSV(['t_s','ax_inclgrav_ms2','ay_inclgrav_ms2','az_inclgrav_ms2','lin_x_ms2','lin_y_ms2','lin_z_ms2','gyro_x_dps','gyro_y_dps','gyro_z_dps','alpha_deg','beta_deg','gamma_deg'],
+    run.samples.map(x=>[(x[0]-run.trigT)/1000,...x.slice(1)]));
+  const proc=toCSV(['t_s','a_along_ms2','v_ms','x_m','F_net_N','a_lin_mag_ms2','g_total','gyro_mag_dps','gps_speed_ms'],
+    r.TW.map((t,i)=>[t,r.a[i],r.v[i],r.x[i],s.mass*r.a[i],r.amag[i],r.gtot[i],r.gyro[i],r.gpsOnT[i]]));
+  const gps=toCSV(['t_s','lat','lon','accuracy_m','speed_ms','altitude_m','heading_deg'],run.gps.map(p=>[(p[0]-run.trigT)/1000,...p.slice(1)]));
+  const sum=JSON.stringify({startedAt:run.startedAt,device:run.ua,source:run.source,trigger:run.trigger,config:run.cfg,calibration:run.cal,
+    processing:{...opts},results:{...s,impulse_Ns:s.mass*(s.vend-opts.v0),ke_max_J:.5*s.mass*s.vmax**2,peakForce_N:s.mass*s.amax,brakingForce_N:s.mass*s.amin,
+    slope_deg:s.slope==null?null:s.slope*R2D},units:{accel:'m/s^2',velocity:'m/s',distance:'m',force:'N',time:'s (0 = trigger)',gyro:'deg/s'}},null,2);
+  const b=base();return{raw:[b+'_raw.csv',raw,'text/csv'],proc:[b+'_processed.csv',proc,'text/csv'],gps:[b+'_gps.csv',gps,'text/csv'],json:[b+'_summary.json',sum,'application/json']}}
+async function save([name,text,mime]){const blob=new Blob([text],{type:mime}),file=new File([blob],name,{type:mime});
+  if($('useShare').checked&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name});return}catch(e){if(e.name==='AbortError')return}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
+const need=fn=>()=>{if(!lastRes||lastRes.err){log('Nothing to export');return}fn()};
+$('eRaw').onclick=need(()=>save(files().raw));$('eProc').onclick=need(()=>save(files().proc));
+$('eGps').onclick=need(()=>save(files().gps));$('eJson').onclick=need(()=>save(files().json));
+$('eAll').onclick=need(async()=>{const F=Object.values(files()).map(([n,t,m])=>new File([t],n,{type:m}));
+  if(navigator.canShare&&navigator.canShare({files:F})){try{await navigator.share({files:F,title:base()})}catch(e){}}
+  else{log('Multi-file share unsupported; downloading individually');for(const x of Object.values(files())){await save(x);await new Promise(r=>setTimeout(r,400))}}});
+</script>
+</body>
+</html>
